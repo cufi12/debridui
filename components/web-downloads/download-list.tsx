@@ -11,8 +11,17 @@ import { useWebDownloads } from "./web-downloads-provider";
 
 export function DownloadList() {
     const { currentAccount } = useAuthGuaranteed();
-    const { downloads, isLoading, deleteDownload, getDownloadLink, setAirlocked, currentPage, totalPages, setPage } =
-        useWebDownloads();
+    const {
+        downloads,
+        isLoading,
+        deleteDownload,
+        retryDownload,
+        getDownloadLink,
+        setAirlocked,
+        currentPage,
+        totalPages,
+        setPage,
+    } = useWebDownloads();
 
     // Selection state with account tracking to reset on account change
     const [selection, setSelection] = useState<{ accountId: string; ids: Set<string> }>({
@@ -123,6 +132,7 @@ export function DownloadList() {
                         key={download.id}
                         download={download}
                         onDelete={deleteDownload}
+                        onRetry={retryDownload}
                         onGetLink={getDownloadLink}
                         onSetAirlocked={setAirlocked}
                         isSelected={selectedIds.has(download.id)}

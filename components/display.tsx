@@ -96,25 +96,26 @@ const webDownloadStatusConfig: Record<WebDownloadStatus, WebStatusConfig> = {
     failed: { icon: OctagonAlertIcon, label: "Failed", color: "red" },
 };
 
-export const WebDownloadStatusBadge = memo(function WebDownloadStatusBadge({
-    status,
-    className,
-}: {
-    status: WebDownloadStatus;
-    className?: string;
-}) {
+const statusTextStyles: Record<StatusColor, string> = {
+    slate: "text-slate-600 dark:text-slate-400",
+    blue: "text-blue-600 dark:text-blue-400",
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    amber: "text-amber-600 dark:text-amber-400",
+    green: "text-green-600 dark:text-green-400",
+    sky: "text-sky-600 dark:text-sky-400",
+    red: "text-red-600 dark:text-red-400",
+    violet: "text-violet-600 dark:text-violet-400",
+    gray: "text-gray-600 dark:text-gray-400",
+};
+
+export const WebDownloadStatusLabel = memo(function WebDownloadStatusLabel({ status }: { status: WebDownloadStatus }) {
     const config = webDownloadStatusConfig[status];
     const Icon = config.icon;
 
     return (
-        <span
-            className={cn(
-                "inline-flex items-center justify-center gap-1.5 h-6 px-2 border rounded-sm text-xs font-medium shrink-0",
-                statusStyles[config.color],
-                className
-            )}>
-            <Icon className="size-3.5 shrink-0" strokeWidth={2.5} />
-            <span className="hidden sm:inline tracking-wide">{config.label}</span>
+        <span className={cn("inline-flex items-center gap-1 font-medium shrink-0", statusTextStyles[config.color])}>
+            <Icon className="size-3.5 shrink-0" strokeWidth={2.25} />
+            {config.label}
         </span>
     );
 });

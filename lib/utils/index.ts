@@ -88,12 +88,12 @@ export const calculateAge = (birthDate?: string, endDate?: string): number | nul
     return differenceInYears(end, birth);
 };
 
-export const downloadLinks = (downloads: DebridLinkInfo[]) => {
+export const downloadLinks = (downloads: Pick<DebridLinkInfo, "link" | "name">[]) => {
     const downloadContainer = document.createElement("a");
     downloadContainer.style.display = "none";
     document.body.appendChild(downloadContainer);
 
-    const download = (url: DebridLinkInfo) => {
+    const download = (url: Pick<DebridLinkInfo, "link" | "name">) => {
         downloadContainer.href = url.link;
         downloadContainer.download = url.name;
         downloadContainer.target = "_blank";

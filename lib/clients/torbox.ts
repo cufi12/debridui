@@ -646,6 +646,7 @@ export default class TorBoxClient extends BaseClient {
     private mapToWebDownload(dl: TorBoxWebDownload): WebDownload {
         const isReady = dl.download_finished && dl.download_present;
         const downloadLink = isReady ? this.buildDownloadUrl("webdl", dl.id, 0) : undefined;
+        const status = this.mapWebDownloadStatus(dl.download_state, dl.download_finished);
 
         return {
             id: dl.id.toString(),
@@ -653,10 +654,18 @@ export default class TorBoxClient extends BaseClient {
             originalLink: dl.original_url,
             downloadLink,
             size: dl.size || undefined,
-            status: this.mapWebDownloadStatus(dl.download_state, dl.download_finished),
+            status,
             progress: dl.progress * 100,
             createdAt: new Date(dl.created_at),
-            error: dl.error || undefined,
+            // Reason is embedded in download_state: "failed (Download): ERROR: [youtube] <id>: <reason>"
+            error:
+                dl.error ||
+                (status === "failed"
+                    ? dl.download_state.replace(
+                          /^(failed|error)\s*(\([^)]*\))?:\s*(ERROR:\s*)?(\[[^\]]+\]\s*[\w-]+:\s*)?/i,
+                          ""
+                      )
+                    : undefined),
             airlocked: dl.airlocked ?? false,
         };
     }
@@ -666,7 +675,7 @@ export default class TorBoxClient extends BaseClient {
         const stateLower = state.toLowerCase();
         if (stateLower === "downloading" || stateLower === "metadl") return "processing";
         if (stateLower === "cached" || stateLower === "completed") return "completed";
-        if (stateLower === "error" || stateLower === "failed") return "failed";
+        if (stateLower.startsWith("error") || stateLower.startsWith("failed")) return "failed";
         if (stateLower === "pending" || stateLower === "queued") return "pending";
         return "processing";
     }

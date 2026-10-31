@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { WebDownload } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, downloadLinks } from "@/lib/utils";
 import { useWebDownloads } from "./web-downloads-provider";
 
 interface DownloadsBulkActionsProps {
@@ -77,27 +77,18 @@ export function DownloadsBulkActions({ selectedDownloads, onClearSelection }: Do
 
         setLoading("download");
         try {
-            let count = 0;
+            const links: { link: string; name: string }[] = [];
             for (const download of readyDownloads) {
                 try {
-                    const link = await getDownloadLink(download);
-                    const a = document.createElement("a");
-                    a.href = link;
-                    a.download = download.name;
-                    a.target = "_blank";
-                    a.click();
-                    count++;
-                    // Small delay between downloads to prevent browser blocking
-                    if (count < readyDownloads.length) {
-                        await new Promise((r) => setTimeout(r, 200));
-                    }
+                    links.push({ link: await getDownloadLink(download), name: download.name });
                 } catch {
                     // Skip failed
                 }
             }
 
-            if (count > 0) {
-                toast.success(`Started ${count} download${count !== 1 ? "s" : ""}`);
+            if (links.length > 0) {
+                downloadLinks(links);
+                toast.success(`Started ${links.length} download${links.length !== 1 ? "s" : ""}`);
             }
         } finally {
             setLoading(null);

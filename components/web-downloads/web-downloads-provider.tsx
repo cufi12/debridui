@@ -18,6 +18,7 @@ interface WebDownloadsContextValue {
     saveLinks: ((links: string[]) => Promise<void>) | null;
     isSaving: boolean;
     deleteDownload: (id: string) => Promise<unknown>;
+    retryDownload: (download: WebDownload) => Promise<void>;
     setAirlocked: ((params: { id: string; airlocked: boolean }) => Promise<unknown>) | null;
     getDownloadLink: (download: WebDownload) => Promise<string>;
     refetch: () => void;
@@ -124,6 +125,15 @@ export function WebDownloadsProvider({ children }: { children: ReactNode }) {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: [currentAccount.id, "webDownloads", "list"] }),
     });
 
+    // No provider exposes a retry op (TorBox webdl only accepts "delete"), so re-add the original link
+    const retryMutation = useMutation({
+        mutationFn: async (download: WebDownload) => {
+            const [result] = await client.addWebDownloads([download.originalLink]);
+            if (!result?.success) throw new Error(result?.error || "Failed to retry");
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: [currentAccount.id, "webDownloads", "list"] }),
+    });
+
     // Airlock (TorBox only) - keeps a cached download from being removed for inactivity
     const airlockMutation = useMutation({
         mutationFn: ({ id, airlocked }: { id: string; airlocked: boolean }) =>
@@ -144,6 +154,7 @@ export function WebDownloadsProvider({ children }: { children: ReactNode }) {
             saveLinks: client.saveWebDownloadLinks ? saveMutation.mutateAsync : null,
             isSaving: saveMutation.isPending,
             deleteDownload: deleteMutation.mutateAsync,
+            retryDownload: retryMutation.mutateAsync,
             setAirlocked: client.setAirlocked ? airlockMutation.mutateAsync : null,
             getDownloadLink: async (download: WebDownload): Promise<string> => {
                 // Use cached downloadLink if available
@@ -173,6 +184,7 @@ export function WebDownloadsProvider({ children }: { children: ReactNode }) {
             addMutation,
             saveMutation,
             deleteMutation,
+            retryMutation,
             airlockMutation,
             client,
         ]
