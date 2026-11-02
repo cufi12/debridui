@@ -179,7 +179,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (sessionError) {
         return (
             <SplashErrorScreen
-                title="Session Error"
+                title="Couldn't verify your session"
+                description="Your sign-in couldn't be checked. Reload to try again."
                 error={sessionError instanceof Error ? sessionError : new Error("Failed to verify session")}
                 onRetry={() => window.location.reload()}
             />
@@ -194,7 +195,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isUserError && currentAccount) {
         return (
             <SplashErrorScreen
-                title="Debrid Account Error"
+                title="Couldn't load your debrid account"
+                description="The provider didn't respond or rejected the request. Try again, or remove the account and add it back with a fresh API key."
                 error={userError}
                 onRetry={refetchUser}
                 onDelete={() => removeAccount(currentAccount.id)}

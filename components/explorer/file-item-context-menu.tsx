@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Download, List, Loader2, Lock, LockOpen, RotateCw, Trash2 } from "lucide-react";
+import { Copy, Download, List, Lock, LockOpen, RotateCw, Trash2 } from "lucide-react";
 import {
     ContextMenu,
     ContextMenuContent,
@@ -9,133 +9,62 @@ import {
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { canAirlock, useFileLinkActions, useFileMutationActions } from "@/hooks/use-file-actions";
+import { useListContextMenu } from "@/hooks/use-list-context-menu";
 import type { DebridFile } from "@/lib/types";
 
-interface FileItemContextMenuProps {
-    file: DebridFile;
-    children: React.ReactNode;
-    className?: string;
-}
-
-export function FileItemContextMenu({ file, children, className }: FileItemContextMenuProps) {
-    const { copyMutation, downloadMutation, playlistMutation } = useFileLinkActions(file.id, { fileName: file.name });
+/** One menu for the whole list instead of a Radix root + six mutations per row. Rows need `data-file-id`. */
+export function FileContextMenu({ files, children }: { files: DebridFile[]; children: React.ReactNode }) {
+    const { targetId, onOpenChange, triggerProps } = useListContextMenu("data-file-id");
+    const file = files.find((f) => f.id === targetId);
+    const { copyMutation, downloadMutation, playlistMutation } = useFileLinkActions(targetId ?? "", {
+        fileName: file?.name,
+    });
     const { deleteMutation, retryMutation, airlockMutation, supportsAirlock } = useFileMutationActions();
 
-    const isAnyActionPending =
-        copyMutation.isPending ||
-        downloadMutation.isPending ||
-        playlistMutation.isPending ||
-        deleteMutation.isPending ||
-        retryMutation.isPending ||
-        airlockMutation.isPending;
-
-    const showAirlock = supportsAirlock && canAirlock(file);
-
     return (
-        <ContextMenu>
-            <ContextMenuTrigger className={className} asChild>
+        <ContextMenu onOpenChange={onOpenChange}>
+            <ContextMenuTrigger asChild {...triggerProps}>
                 {children}
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-56">
-                {file.status === "completed" && (
-                    <>
-                        <ContextMenuItem
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                copyMutation.mutate();
-                            }}
-                            disabled={isAnyActionPending}>
-                            {copyMutation.isPending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Copy className="mr-2 h-4 w-4" />
-                            )}
-                            Copy Links
+            {file && (
+                <ContextMenuContent className="w-60">
+                    {file.status === "completed" && (
+                        <>
+                            <ContextMenuItem onSelect={() => downloadMutation.mutate()}>
+                                <Download />
+                                Download
+                            </ContextMenuItem>
+                            <ContextMenuItem onSelect={() => copyMutation.mutate()}>
+                                <Copy />
+                                Copy links
+                            </ContextMenuItem>
+                            <ContextMenuItem onSelect={() => playlistMutation.mutate()}>
+                                <List />
+                                Download playlist
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                        </>
+                    )}
+                    {file.status === "failed" && (
+                        <ContextMenuItem onSelect={() => retryMutation.mutate([file.id])}>
+                            <RotateCw />
+                            Retry
                         </ContextMenuItem>
+                    )}
+                    {supportsAirlock && canAirlock(file) && (
                         <ContextMenuItem
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                downloadMutation.mutate();
-                            }}
-                            disabled={isAnyActionPending}>
-                            {downloadMutation.isPending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Download className="mr-2 h-4 w-4" />
-                            )}
-                            Download
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                playlistMutation.mutate();
-                            }}
-                            disabled={isAnyActionPending}>
-                            {playlistMutation.isPending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <List className="mr-2 h-4 w-4" />
-                            )}
-                            Download Playlist
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                    </>
-                )}
-                {file.status === "failed" && (
-                    <ContextMenuItem
-                        className="cursor-pointer"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            retryMutation.mutate([file.id]);
-                        }}
-                        disabled={isAnyActionPending}>
-                        {retryMutation.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <RotateCw className="mr-2 h-4 w-4" />
-                        )}
-                        Retry
-                    </ContextMenuItem>
-                )}
-                {showAirlock && (
-                    <>
-                        <ContextMenuItem
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                airlockMutation.mutate({ fileIds: [file.id], airlocked: !file.airlocked });
-                            }}
-                            disabled={isAnyActionPending}>
-                            {airlockMutation.isPending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : file.airlocked ? (
-                                <LockOpen className="mr-2 h-4 w-4" />
-                            ) : (
-                                <Lock className="mr-2 h-4 w-4" />
-                            )}
+                            onSelect={() => airlockMutation.mutate({ fileIds: [file.id], airlocked: !file.airlocked })}>
+                            {file.airlocked ? <LockOpen /> : <Lock />}
                             {file.airlocked ? "Remove from Airlock" : "Add to Airlock"}
                         </ContextMenuItem>
-                        <ContextMenuSeparator />
-                    </>
-                )}
-                <ContextMenuItem
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        deleteMutation.mutate([file.id]);
-                    }}
-                    disabled={isAnyActionPending}
-                    className="cursor-pointer text-destructive focus:text-destructive">
-                    {deleteMutation.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Trash2 className="mr-2 h-4 w-4" />
                     )}
-                    Delete
-                </ContextMenuItem>
-            </ContextMenuContent>
+                    {(file.status === "failed" || (supportsAirlock && canAirlock(file))) && <ContextMenuSeparator />}
+                    <ContextMenuItem variant="destructive" onSelect={() => deleteMutation.mutate([file.id])}>
+                        <Trash2 />
+                        Delete
+                    </ContextMenuItem>
+                </ContextMenuContent>
+            )}
         </ContextMenu>
     );
 }

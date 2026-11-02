@@ -12,30 +12,20 @@ import {
     Trash2,
     View,
 } from "lucide-react";
-import { memo, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { memo, useState } from "react";
 import { WebDownloadStatusLabel } from "@/components/display";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { openInPlayer } from "@/lib/media/player";
-import { canPreviewFile } from "@/lib/preview/registry";
-import { usePreviewStore } from "@/lib/stores/preview";
-import { useSettingsStore } from "@/lib/stores/settings";
-import { FileType, MediaPlayer, type WebDownload } from "@/lib/types";
-import { cn, downloadLinks, formatSize, getFileType } from "@/lib/utils";
+import type { WebDownload } from "@/lib/types";
+import { cn, formatSize } from "@/lib/utils";
+import { type DownloadAction, useDownloadActions } from "./use-download-actions";
 
 interface DownloadItemProps {
     download: WebDownload;
-    onDelete: (id: string) => Promise<unknown>;
-    onRetry: (download: WebDownload) => Promise<unknown>;
-    onGetLink: (download: WebDownload) => Promise<string>;
-    onSetAirlocked?: ((params: { id: string; airlocked: boolean }) => Promise<unknown>) | null;
     isSelected?: boolean;
     onToggleSelect?: (id: string) => void;
 }
-
-type Busy = "copy" | "download" | "preview" | "delete" | "retry" | "airlock";
 
 function hostOf(url: string) {
     try {
@@ -67,85 +57,33 @@ function IconAction({
 
 export const DownloadItem = memo(function DownloadItem({
     download,
-    onDelete,
-    onRetry,
-    onGetLink,
-    onSetAirlocked,
     isSelected = false,
     onToggleSelect,
 }: DownloadItemProps) {
-    const [busy, setBusy] = useState<Busy | null>(null);
+    const [busy, setBusy] = useState<DownloadAction | null>(null);
     const [errorExpanded, setErrorExpanded] = useState(false);
-    const openSinglePreview = usePreviewStore((s) => s.openSinglePreview);
-    const mediaPlayer = useSettingsStore((s) => s.settings.mediaPlayer);
+    const { actions, supportsAirlock, canPreview, usesExternalPlayer } = useDownloadActions();
 
-    const fileType = useMemo(() => getFileType(download.name), [download.name]);
-    const isPreviewable = canPreviewFile(fileType);
-    const usesExternalPlayer = fileType === FileType.VIDEO && mediaPlayer !== MediaPlayer.BROWSER;
     const isReady = download.status === "completed" || download.status === "cached";
     const isFailed = download.status === "failed";
     const showProgress = download.status === "processing" && download.progress !== undefined;
     const host = download.host ?? hostOf(download.originalLink);
+    const external = usesExternalPlayer(download);
 
-    const run = async <T,>(action: Busy, fn: () => Promise<T>, fallback: string) => {
+    const run = (action: DownloadAction) => async () => {
         setBusy(action);
-        try {
-            return await fn();
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : fallback);
-            return null;
-        } finally {
-            setBusy(null);
-        }
-    };
-
-    const handleCopy = async () => {
-        const link = await run("copy", () => onGetLink(download), "Failed to get link");
-        if (!link) return;
-        await navigator.clipboard.writeText(link);
-        toast.success("Link copied to clipboard");
-    };
-
-    const handleDownload = async () => {
-        const link = await run("download", () => onGetLink(download), "Failed to get link");
-        if (link) downloadLinks([{ link, name: download.name }]);
-    };
-
-    const handlePreview = async () => {
-        const link = await run("preview", () => onGetLink(download), "Failed to get link");
-        if (!link) return;
-        if (usesExternalPlayer) {
-            openInPlayer({ url: link, fileName: download.name, player: mediaPlayer });
-        } else {
-            openSinglePreview({ url: link, title: download.name, fileType });
-        }
-    };
-
-    const handleRetry = async () => {
-        if ((await run("retry", () => onRetry(download), "Failed to retry")) !== null) toast.success("Retrying");
-    };
-
-    const handleDelete = async () => {
-        if ((await run("delete", () => onDelete(download.id), "Failed to remove")) !== null) toast.success("Removed");
-    };
-
-    const handleAirlock = async () => {
-        const wasAirlocked = download.airlocked;
-        const done = await run(
-            "airlock",
-            async () => onSetAirlocked?.({ id: download.id, airlocked: !wasAirlocked }),
-            "Failed to update Airlock"
-        );
-        if (done !== null) toast.success(wasAirlocked ? "Removed from Airlock" : "Added to Airlock");
+        await actions[action](download);
+        setBusy(null);
     };
 
     const isFetchingLink = busy === "copy" || busy === "download" || busy === "preview";
 
     return (
         <div
+            data-download-id={download.id}
             className={cn(
                 "flex items-start gap-3 px-3 py-2.5 border-b border-border/50 last:border-b-0 transition-colors",
-                isSelected ? "bg-primary/5" : "hover:bg-muted/20"
+                isSelected ? "bg-primary/5" : "hover:bg-muted/20 data-menu-open:bg-muted/40"
             )}>
             {onToggleSelect && (
                 <Checkbox
@@ -183,10 +121,7 @@ export const DownloadItem = memo(function DownloadItem({
                             <span className="text-border">·</span>
                             <button
                                 type="button"
-                                onClick={async () => {
-                                    await navigator.clipboard.writeText(download.originalLink);
-                                    toast.success("Original link copied");
-                                }}
+                                onClick={run("copyOriginal")}
                                 title={download.originalLink}
                                 className="truncate cursor-pointer hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                                 {host}
@@ -202,18 +137,18 @@ export const DownloadItem = memo(function DownloadItem({
                             label="Retry"
                             busy={busy === "retry"}
                             disabled={busy === "retry"}
-                            onClick={handleRetry}
+                            onClick={run("retry")}
                         />
                     )}
                     {isReady && (
                         <>
-                            {isPreviewable && (
+                            {canPreview(download) && (
                                 <IconAction
-                                    icon={usesExternalPlayer ? PlayCircle : View}
-                                    label={usesExternalPlayer ? "Play" : "Preview"}
+                                    icon={external ? PlayCircle : View}
+                                    label={external ? "Play" : "Preview"}
                                     busy={busy === "preview"}
                                     disabled={isFetchingLink}
-                                    onClick={handlePreview}
+                                    onClick={run("preview")}
                                 />
                             )}
                             <IconAction
@@ -221,22 +156,22 @@ export const DownloadItem = memo(function DownloadItem({
                                 label="Copy link"
                                 busy={busy === "copy"}
                                 disabled={isFetchingLink}
-                                onClick={handleCopy}
+                                onClick={run("copy")}
                             />
                             <IconAction
                                 icon={Download}
                                 label="Download"
                                 busy={busy === "download"}
                                 disabled={isFetchingLink}
-                                onClick={handleDownload}
+                                onClick={run("download")}
                             />
-                            {onSetAirlocked && (
+                            {supportsAirlock && (
                                 <IconAction
                                     icon={download.airlocked ? Lock : LockOpen}
                                     label={download.airlocked ? "Remove from Airlock" : "Add to Airlock"}
                                     busy={busy === "airlock"}
                                     disabled={busy === "airlock"}
-                                    onClick={handleAirlock}
+                                    onClick={run("airlock")}
                                     className={cn(download.airlocked && "text-foreground")}
                                 />
                             )}
@@ -247,7 +182,7 @@ export const DownloadItem = memo(function DownloadItem({
                         label="Remove"
                         busy={busy === "delete"}
                         disabled={busy === "delete"}
-                        onClick={handleDelete}
+                        onClick={run("delete")}
                         className="hover:text-destructive"
                     />
                 </div>

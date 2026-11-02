@@ -5,6 +5,7 @@ import type { SearchState } from "@/hooks/use-search-logic";
 import type { TraktSearchResult } from "@/lib/trakt";
 import type { DebridFile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { FileContextMenu } from "../explorer/file-item-context-menu";
 import { SearchFileItem } from "./search-file-item";
 import { SearchHistorySection } from "./search-history-section";
 import { SearchMediaItem } from "./search-media-item";
@@ -155,11 +156,13 @@ export function SearchResults({
                         count={fileResults.length}
                         className={headerPadding}
                     />
-                    <div className={listClass}>
-                        {fileResults.map((file) => (
-                            <SearchFileItem key={file.id} file={file} onSelect={onFileSelect} variant={variant} />
-                        ))}
-                    </div>
+                    <FileContextMenu files={fileResults}>
+                        <div className={listClass}>
+                            {fileResults.map((file) => (
+                                <SearchFileItem key={file.id} file={file} onSelect={onFileSelect} variant={variant} />
+                            ))}
+                        </div>
+                    </FileContextMenu>
                 </section>
             )}
 

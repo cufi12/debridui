@@ -1,30 +1,34 @@
-import { FileQuestion } from "lucide-react";
-import { UserMenu } from "@/components/auth/user-menu";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ErrorScreen } from "@/components/error-screen";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-10 p-6">
-            <UserMenu />
+    const pathname = usePathname();
 
-            <div className="flex flex-col items-center gap-6 text-center max-w-md">
-                <FileQuestion className="size-10 text-muted-foreground" strokeWidth={1.5} />
-                <div className="space-y-3">
-                    <h1 className="text-2xl sm:text-3xl font-light">Page not found</h1>
-                    <p className="text-sm text-muted-foreground">
-                        The page you&apos;re looking for doesn&apos;t exist or has been moved.
-                    </p>
-                </div>
-                <span className="text-xs tracking-widest uppercase text-muted-foreground">404</span>
-            </div>
-            <div className="flex gap-3">
-                <Button asChild>
-                    <a href="/dashboard">Go to Dashboard</a>
-                </Button>
-                <Button variant="outline" asChild>
-                    <a href="/files">Browse Files</a>
-                </Button>
-            </div>
-        </div>
+    return (
+        <ErrorScreen
+            tone="missing"
+            code="404"
+            title="Nothing at this address"
+            description={
+                <>
+                    <code className="font-mono text-foreground break-all">{pathname}</code>
+                    {" doesn't match any page. The link may be mistyped, or the page may have moved."}
+                </>
+            }
+            actions={
+                <>
+                    <Button asChild>
+                        <Link href="/dashboard">Go to dashboard</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href="/files">Browse files</Link>
+                    </Button>
+                </>
+            }
+        />
     );
 }

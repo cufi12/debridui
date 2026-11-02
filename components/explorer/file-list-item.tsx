@@ -8,7 +8,6 @@ import type { DebridFile } from "@/lib/types";
 import { cn, formatRelativeTime, formatSize, formatSpeed } from "@/lib/utils";
 import { StatusBadge } from "../display";
 import { Badge } from "../ui/badge";
-import { FileItemContextMenu } from "./file-item-context-menu";
 
 interface FileListItemProps {
     file: DebridFile;
@@ -19,6 +18,13 @@ interface FileListItemProps {
     onToggleExpand: () => void;
     className?: string;
 }
+
+// Matches the DL (blue) / UL (green) speed colors below
+const progressStyles: Partial<Record<DebridFile["status"], { fill: string; badge: string }>> = {
+    uploading: { fill: "bg-green-500/10", badge: "bg-green-500/10 text-green-600 dark:text-green-400" },
+    paused: { fill: "bg-amber-500/10", badge: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+};
+const defaultProgressStyle = { fill: "bg-blue-500/10", badge: "bg-blue-500/10 text-blue-500" };
 
 // Extracted sub-components for cleaner code and better readability
 const SizeDisplay = memo(function SizeDisplay({
@@ -141,17 +147,29 @@ export const FileListItem = memo(function FileListItem({
     className,
 }: FileListItemProps) {
     const showProgress = !!file.progress && file.status !== "completed";
+    const progressStyle = progressStyles[file.status] ?? defaultProgressStyle;
 
     return (
-        <FileItemContextMenu file={file}>
+        <>
             {/* biome-ignore lint/a11y/noStaticElementInteractions: row click is a mouse convenience; the expand button below is the keyboard target */}
             <div
+                data-file-id={file.id}
                 className={cn(
-                    "flex items-center gap-1 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-3 border-b border-border/50 transition-colors duration-300 bg-card max-md:select-none",
+                    "relative isolate flex items-center gap-1 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-3 border-b border-border/50 transition-colors duration-300 bg-card data-menu-open:bg-muted/40 max-md:select-none",
                     canExpand && "cursor-pointer hover:bg-muted/30",
                     className
                 )}
                 onClick={canExpand ? onToggleExpand : undefined}>
+                {showProgress && file.progress! < 100 && (
+                    <div
+                        aria-hidden
+                        className={cn(
+                            "absolute inset-y-0 left-0 -z-10 transition-[width] duration-500 ease-out",
+                            progressStyle.fill
+                        )}
+                        style={{ width: `${file.progress}%` }}
+                    />
+                )}
                 <div className="shrink-0 px-1">
                     <Checkbox
                         checked={isSelected}
@@ -189,7 +207,11 @@ export const FileListItem = memo(function FileListItem({
                                     </Tooltip>
                                 )}
                                 {showProgress && (
-                                    <Badge className="px-1 md:px-1.5 pb-0 border-0 rounded-sm text-xs md:text-sm bg-blue-500/10 text-blue-500">
+                                    <Badge
+                                        className={cn(
+                                            "px-1 md:px-1.5 pb-0 border-0 rounded-sm text-xs md:text-sm",
+                                            progressStyle.badge
+                                        )}>
                                         {file.progress?.toFixed(2)}%
                                     </Badge>
                                 )}
@@ -221,6 +243,6 @@ export const FileListItem = memo(function FileListItem({
                     </div>
                 </div>
             </div>
-        </FileItemContextMenu>
+        </>
     );
 });

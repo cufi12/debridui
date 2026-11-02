@@ -5,23 +5,14 @@ import { useCallback, useMemo, useState } from "react";
 import { useAuthGuaranteed } from "@/components/auth/auth-provider";
 import { ListPagination } from "@/components/common/pagination";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DownloadContextMenu } from "./download-context-menu";
 import { DownloadItem, DownloadItemSkeleton } from "./download-item";
 import { DownloadsBulkActions } from "./downloads-bulk-actions";
 import { useWebDownloads } from "./web-downloads-provider";
 
 export function DownloadList() {
     const { currentAccount } = useAuthGuaranteed();
-    const {
-        downloads,
-        isLoading,
-        deleteDownload,
-        retryDownload,
-        getDownloadLink,
-        setAirlocked,
-        currentPage,
-        totalPages,
-        setPage,
-    } = useWebDownloads();
+    const { downloads, isLoading, currentPage, totalPages, setPage } = useWebDownloads();
 
     // Selection state with account tracking to reset on account change
     const [selection, setSelection] = useState<{ accountId: string; ids: Set<string> }>({
@@ -126,19 +117,18 @@ export function DownloadList() {
                     )}
                 </div>
 
-                {/* Download items */}
-                {downloads.map((download) => (
-                    <DownloadItem
-                        key={download.id}
-                        download={download}
-                        onDelete={deleteDownload}
-                        onRetry={retryDownload}
-                        onGetLink={getDownloadLink}
-                        onSetAirlocked={setAirlocked}
-                        isSelected={selectedIds.has(download.id)}
-                        onToggleSelect={toggle}
-                    />
-                ))}
+                <DownloadContextMenu downloads={downloads}>
+                    <div>
+                        {downloads.map((download) => (
+                            <DownloadItem
+                                key={download.id}
+                                download={download}
+                                isSelected={selectedIds.has(download.id)}
+                                onToggleSelect={toggle}
+                            />
+                        ))}
+                    </div>
+                </DownloadContextMenu>
             </div>
 
             {/* Pagination */}

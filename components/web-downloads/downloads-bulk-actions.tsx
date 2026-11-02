@@ -1,11 +1,11 @@
 "use client";
 
-import { Copy, Download, Loader2, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Copy, Download, Lock, LockOpen, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { SelectionBar, SelectionBarAction } from "@/components/common/selection-bar";
 import type { WebDownload } from "@/lib/types";
-import { cn, downloadLinks } from "@/lib/utils";
+import { copyLinksToClipboard, downloadLinks } from "@/lib/utils";
 import { useWebDownloads } from "./web-downloads-provider";
 
 interface DownloadsBulkActionsProps {
@@ -14,197 +14,149 @@ interface DownloadsBulkActionsProps {
 }
 
 export function DownloadsBulkActions({ selectedDownloads, onClearSelection }: DownloadsBulkActionsProps) {
-    const { deleteDownload, getDownloadLink } = useWebDownloads();
-    const [isVisible, setIsVisible] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [loading, setLoading] = useState<"copy" | "delete" | "download" | null>(null);
+    const { deleteDownload, getDownloadLink, retryDownload, setAirlocked } = useWebDownloads();
+    const [loading, setLoading] = useState<"copy" | "download" | "retry" | "airlock" | "delete" | null>(null);
 
-    const hasSelection = selectedDownloads.length > 0;
+    const readyDownloads = selectedDownloads.filter((d) => d.status === "completed" || d.status === "cached");
+    const failedDownloads = selectedDownloads.filter((d) => d.status === "failed" && d.originalLink);
+    // Airlock needs a cached item; direction follows the selection, unlocking only when all are airlocked
+    const airlockTargets = setAirlocked ? readyDownloads : [];
+    const isUnairlocking = airlockTargets.length > 0 && airlockTargets.every((d) => d.airlocked);
+    const plural = (n: number, unit: string) => `${n} ${unit}${n !== 1 ? "s" : ""}`;
 
-    // Filter to ready downloads only
-    const readyDownloads = useMemo(
-        () => selectedDownloads.filter((d) => d.status === "completed" || d.status === "cached"),
-        [selectedDownloads]
-    );
-
-    // Handle visibility with animation
-    useEffect(() => {
-        let timeout: NodeJS.Timeout;
-        if (hasSelection) {
-            setIsVisible(true);
-            timeout = setTimeout(() => setIsAnimating(true), 10);
-        } else {
-            setIsAnimating(false);
-            timeout = setTimeout(() => setIsVisible(false), 300);
+    // Failed lookups are skipped so one bad item doesn't block the rest
+    const resolveLinks = async () => {
+        const links: { link: string; name: string; size: number }[] = [];
+        for (const d of readyDownloads) {
+            try {
+                links.push({ link: await getDownloadLink(d), name: d.name, size: d.size ?? 0 });
+            } catch {}
         }
-        return () => clearTimeout(timeout);
-    }, [hasSelection]);
+        if (links.length === 0) toast.error("Failed to get any links");
+        return links;
+    };
 
-    const handleCopyLinks = async () => {
-        if (readyDownloads.length === 0) {
-            toast.error("No ready downloads selected");
+    const withLoading = (action: NonNullable<typeof loading>, fn: () => Promise<void>) => async () => {
+        setLoading(action);
+        try {
+            await fn();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Action failed");
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleCopy = withLoading("copy", async () => {
+        const links = await resolveLinks();
+        if (links.length === 0) return;
+        copyLinksToClipboard(links);
+        toast.success(`Copied ${links.length} link${links.length !== 1 ? "s" : ""} to clipboard`);
+    });
+
+    const handleDownload = withLoading("download", async () => {
+        const links = await resolveLinks();
+        if (links.length === 0) return;
+        downloadLinks(links);
+        toast.success(`Started ${links.length} download${links.length !== 1 ? "s" : ""}`);
+    });
+
+    // Sequential: each retry re-adds the link, which providers may rate-limit
+    const handleRetry = withLoading("retry", async () => {
+        let retried = 0;
+        for (const d of failedDownloads) {
+            try {
+                await retryDownload(d);
+                retried++;
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : `Failed to retry ${d.name}`);
+            }
+        }
+        if (retried > 0) toast.success(`Retrying ${plural(retried, "download")}`);
+    });
+
+    const handleAirlock = withLoading("airlock", async () => {
+        let updated = 0;
+        for (const d of airlockTargets) {
+            try {
+                await setAirlocked?.({ id: d.id, airlocked: !isUnairlocking });
+                updated++;
+            } catch {}
+        }
+        if (updated === 0) throw new Error("Failed to update Airlock");
+        toast.success(
+            `${isUnairlocking ? "Removed" : "Added"} ${plural(updated, "download")} ${isUnairlocking ? "from" : "to"} Airlock`
+        );
+    });
+
+    const handleDelete = withLoading("delete", async () => {
+        let deleted = 0;
+        for (const d of selectedDownloads) {
+            try {
+                await deleteDownload(d.id);
+                deleted++;
+            } catch {}
+        }
+        if (deleted === 0) {
+            toast.error("Failed to remove downloads");
             return;
         }
-
-        setLoading("copy");
-        try {
-            const links: string[] = [];
-            for (const download of readyDownloads) {
-                try {
-                    const link = await getDownloadLink(download);
-                    links.push(link);
-                } catch {
-                    // Skip failed links
-                }
-            }
-
-            if (links.length > 0) {
-                await navigator.clipboard.writeText(links.join("\n"));
-                toast.success(`Copied ${links.length} link${links.length !== 1 ? "s" : ""} to clipboard`);
-            } else {
-                toast.error("Failed to get any links");
-            }
-        } finally {
-            setLoading(null);
-        }
-    };
-
-    const handleDownloadAll = async () => {
-        if (readyDownloads.length === 0) {
-            toast.error("No ready downloads selected");
-            return;
-        }
-
-        setLoading("download");
-        try {
-            const links: { link: string; name: string }[] = [];
-            for (const download of readyDownloads) {
-                try {
-                    links.push({ link: await getDownloadLink(download), name: download.name });
-                } catch {
-                    // Skip failed
-                }
-            }
-
-            if (links.length > 0) {
-                downloadLinks(links);
-                toast.success(`Started ${links.length} download${links.length !== 1 ? "s" : ""}`);
-            }
-        } finally {
-            setLoading(null);
-        }
-    };
-
-    const handleDeleteAll = async () => {
-        setLoading("delete");
-        try {
-            let deleted = 0;
-            for (const download of selectedDownloads) {
-                try {
-                    await deleteDownload(download.id);
-                    deleted++;
-                } catch {
-                    // Continue on error
-                }
-            }
-
-            if (deleted > 0) {
-                toast.success(`Removed ${deleted} download${deleted !== 1 ? "s" : ""}`);
-                onClearSelection();
-            } else {
-                toast.error("Failed to remove downloads");
-            }
-        } finally {
-            setLoading(null);
-        }
-    };
-
-    if (!isVisible) return null;
-
-    const isDisabled = loading !== null;
+        toast.success(`Removed ${deleted} download${deleted !== 1 ? "s" : ""}`);
+        onClearSelection();
+    });
 
     return (
-        <>
-            {/* Spacer */}
-            <div className={cn("transition-all duration-300 ease-in-out", isAnimating ? "h-20" : "h-0")} />
-
-            {/* Drawer */}
-            <div
-                className={cn(
-                    "fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg transition-transform duration-300 ease-in-out",
-                    isAnimating ? "translate-y-0" : "translate-y-full"
-                )}>
-                <div className="container mx-auto max-w-4xl">
-                    <div className="flex flex-col items-center gap-3 p-4">
-                        {/* Selection info */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">{selectedDownloads.length}</span>
-                            <span>selected</span>
-                            {readyDownloads.length !== selectedDownloads.length && (
-                                <>
-                                    <span className="text-border">·</span>
-                                    <span>{readyDownloads.length} ready</span>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-2 flex-wrap justify-center">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopyLinks}
-                                disabled={isDisabled || readyDownloads.length === 0}
-                                className="text-xs sm:text-sm">
-                                {loading === "copy" ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    <Copy className="size-4" />
-                                )}
-                                Copy Links
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDownloadAll}
-                                disabled={isDisabled || readyDownloads.length === 0}
-                                className="text-xs sm:text-sm">
-                                {loading === "download" ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    <Download className="size-4" />
-                                )}
-                                Download
-                            </Button>
-
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={handleDeleteAll}
-                                disabled={isDisabled}
-                                className="text-xs sm:text-sm">
-                                {loading === "delete" ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    <Trash2 className="size-4" />
-                                )}
-                                Remove
-                            </Button>
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={onClearSelection}
-                                disabled={isDisabled}
-                                className="text-xs sm:text-sm text-muted-foreground">
-                                <X className="size-4" />
-                                Clear
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
+        <SelectionBar
+            summary={[{ count: selectedDownloads.length, unit: "download" }]}
+            onClear={onClearSelection}
+            end={
+                <>
+                    {failedDownloads.length > 0 && (
+                        <SelectionBarAction
+                            label="Retry failed"
+                            icon={RotateCcw}
+                            isPending={loading === "retry"}
+                            disabled={loading !== null}
+                            onClick={handleRetry}
+                        />
+                    )}
+                    {airlockTargets.length > 0 && (
+                        <SelectionBarAction
+                            label={isUnairlocking ? "Remove from Airlock" : "Add to Airlock"}
+                            icon={isUnairlocking ? LockOpen : Lock}
+                            isPending={loading === "airlock"}
+                            disabled={loading !== null}
+                            onClick={handleAirlock}
+                        />
+                    )}
+                    <SelectionBarAction
+                        label="Remove"
+                        icon={Trash2}
+                        destructive
+                        isPending={loading === "delete"}
+                        disabled={loading !== null}
+                        onClick={handleDelete}
+                    />
+                </>
+            }>
+            {readyDownloads.length > 0 && (
+                <>
+                    <SelectionBarAction
+                        label="Copy links"
+                        icon={Copy}
+                        isPending={loading === "copy"}
+                        disabled={loading !== null}
+                        onClick={handleCopy}
+                    />
+                    <SelectionBarAction
+                        label="Download"
+                        icon={Download}
+                        isPending={loading === "download"}
+                        disabled={loading !== null}
+                        onClick={handleDownload}
+                    />
+                </>
+            )}
+        </SelectionBar>
     );
 }

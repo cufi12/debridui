@@ -12,6 +12,7 @@ import type { DebridFile } from "@/lib/types";
 import { AddContent } from "./add-content";
 import { CacheCheck } from "./cache-check";
 import { FileActionsDrawer } from "./file-actions-drawer";
+import { FileContextMenu } from "./file-item-context-menu";
 import { FileList, FileListBody, FileListEmpty, FileListLoading } from "./file-list";
 import { FileListHeader } from "./file-list-header";
 import { FileListRow } from "./file-list-row";
@@ -122,9 +123,15 @@ export const FileExplorer = memo(function FileExplorer() {
                         isRefreshing={isRefetching}
                     />
                     <FileListBody>
-                        {activeData.length > 0 &&
-                            !isSearching &&
-                            activeData.map((file) => <FileListRow key={file.id} file={file} autoExpand={isIdSearch} />)}
+                        {activeData.length > 0 && !isSearching && (
+                            <FileContextMenu files={activeData}>
+                                <div>
+                                    {activeData.map((file) => (
+                                        <FileListRow key={file.id} file={file} autoExpand={isIdSearch} />
+                                    ))}
+                                </div>
+                            </FileContextMenu>
+                        )}
                         {isLoading || isSearching ? <FileListLoading /> : activeData.length === 0 && <FileListEmpty />}
                     </FileListBody>
                 </FileList>
