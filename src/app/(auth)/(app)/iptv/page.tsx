@@ -108,12 +108,21 @@ export default function IPTVPage() {
         filter !== "Favoriten" || favorites.includes(channel.id)
     ), [channels, filter, favorites]);
     const groupedChannels = useMemo(() => {
+        const labels = [
+            { name: "Albanisch", terms: ["alban", "shqip"] },
+            { name: "German", terms: ["german", "deutsch", "germany", "deu"] },
+            { name: "Schweiz", terms: ["schweiz", "swiss", "suisse", "svizzera", "swi"] },
+            { name: "Austria", terms: ["austria", "österreich", "osterreich", "aut"] },
+            { name: "Turkish", terms: ["turk", "türk", "turkiye", "türkiye"] },
+        ];
         const groups = new Map<string, IPTVChannel[]>();
+        for (const label of labels) groups.set(label.name, []);
         for (const channel of visible) {
-            const name = channel.group?.trim() || "Weitere Sender";
-            groups.set(name, [...(groups.get(name) || []), channel]);
+            const sourceGroup = (channel.group || "").toLocaleLowerCase("de");
+            const match = labels.find((label) => label.terms.some((term) => sourceGroup.includes(term)));
+            if (match) groups.get(match.name)?.push(channel);
         }
-        return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, "de"));
+        return Array.from(groups.entries()).filter(([, items]) => items.length > 0);
     }, [visible]);
 
     function saveConfig(nextPlaylist = playlistUrl, nextEpg = epgUrl) {
