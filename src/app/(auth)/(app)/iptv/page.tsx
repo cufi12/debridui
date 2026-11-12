@@ -16,20 +16,21 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
 async function fetchIPTVText(url: string): Promise<string> {
-    try {
-        const direct = await fetch(url);
-        if (!direct.ok) throw new Error(`HTTP ${direct.status}`);
-        return await direct.text();
-    } catch (directError) {
-        const proxy = process.env.NEXT_PUBLIC_CORS_PROXY_URL;
-        if (!proxy) throw directError;
-        const proxyUrl = /[?&]url=$/.test(proxy)
-            ? `${proxy}${encodeURIComponent(url)}`
-            : `${proxy}${proxy.includes("?") ? "&" : "?"}url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`Abruf fehlgeschlagen (HTTP ${response.status}).`);
-        return await response.text();
+    const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
+        method: "GET",
+        cache: "no-store",
+    });
+    if (!response.ok) {
+        let message = `IPTV-Abruf fehlgeschlagen (HTTP ${response.status}).`;
+        try {
+            const data = await response.json() as { error?: string };
+            if (data.error) message = data.error;
+        } catch {
+            // Keep the HTTP status message when the response is not JSON.
+        }
+        throw new Error(message);
     }
+    return await response.text();
 }
 
 function getNowNext(channel: IPTVChannel, programs: XMLTVProgram[]) {
