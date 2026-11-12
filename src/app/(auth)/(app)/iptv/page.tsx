@@ -129,7 +129,9 @@ export default function IPTVPage() {
                 else if (selected) setSelected(null);
                 return;
             }
-            if (!visible.length || !["ArrowUp", "ArrowDown", "ChannelUp", "ChannelDown"].includes(event.key)) return;
+            const channelKey = event.key === "ChannelUp" || event.key === "ChannelDown";
+            const fullscreenArrow = Boolean(document.fullscreenElement) && (event.key === "ArrowUp" || event.key === "ArrowDown");
+            if (!visible.length || (!channelKey && !fullscreenArrow)) return;
             event.preventDefault();
             const currentIndex = selected ? visible.findIndex((channel) => channel.id === selected.id) : -1;
             const direction = event.key === "ArrowUp" || event.key === "ChannelUp" ? -1 : 1;
