@@ -23,8 +23,10 @@ async function fetchIPTVText(url: string): Promise<string> {
     } catch (directError) {
         const proxy = process.env.NEXT_PUBLIC_CORS_PROXY_URL;
         if (!proxy) throw directError;
-        const separator = proxy.includes("?") ? "&" : "?";
-        const response = await fetch(`${proxy}${separator}url=${encodeURIComponent(url)}`);
+        const proxyUrl = /[?&]url=$/.test(proxy)
+            ? `${proxy}${encodeURIComponent(url)}`
+            : `${proxy}${proxy.includes("?") ? "&" : "?"}url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error(`Abruf fehlgeschlagen (HTTP ${response.status}).`);
         return await response.text();
     }
