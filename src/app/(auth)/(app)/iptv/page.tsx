@@ -11,6 +11,7 @@ import { parseXMLTV, type XMLTVProgram } from "@/lib/iptv/xmltv";
 const STORAGE_KEY = "debridui-iptv-config";
 const FAVORITES_KEY = "debridui-iptv-favorites";
 const EPG_CACHE_KEY = "debridui-iptv-epg";
+const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
@@ -64,6 +65,10 @@ export default function IPTVPage() {
             setPlaylistUrl(config.playlistUrl || "");
             setEpgUrl(config.epgUrl || "");
             autoLoadUrlRef.current = config.playlistUrl || "";
+            const playlistCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
+            if (playlistCache?.url === config.playlistUrl && Array.isArray(playlistCache.channels) && playlistCache.channels.length) {
+                setChannels(playlistCache.channels);
+            }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
             if (cached?.savedAt && Date.now() - cached.savedAt < EPG_CACHE_TTL && Array.isArray(cached.programs)) setPrograms(cached.programs);
@@ -77,6 +82,8 @@ export default function IPTVPage() {
     useEffect(() => {
         const savedUrl = autoLoadUrlRef.current.trim();
         if (!configReady || !savedUrl) return;
+        const cached = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
+        if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) return;
         let cancelled = false;
         setLoading(true);
         setError("");
@@ -85,6 +92,7 @@ export default function IPTVPage() {
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
+            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* Keep the playlist available for this session if storage is full. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             saveConfig(savedUrl, epgUrl || embeddedEpg || "");
@@ -125,6 +133,7 @@ export default function IPTVPage() {
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
+            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed })); } catch { /* Keep the playlist available for this session if storage is full. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             saveConfig(playlistUrl.trim(), epgUrl || embeddedEpg || "");
