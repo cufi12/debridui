@@ -8,6 +8,7 @@ import {
     Moon,
     Puzzle,
     SettingsIcon,
+    Tv,
     Sun,
     UsersIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 type Item = { label: string; href: string; icon: LucideIcon; description?: string };
 
 const PRIMARY: Item[] = [
+    { label: "IPTV", href: "/iptv", icon: Tv, description: "Live-TV und Senderliste" },
     { label: "Settings", href: "/settings", icon: SettingsIcon, description: "App preferences & account" },
     { label: "Addons", href: "/addons", icon: Puzzle, description: "Browse & install addons" },
     { label: "Accounts", href: "/accounts", icon: UsersIcon, description: "Manage debrid accounts" },
