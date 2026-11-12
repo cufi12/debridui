@@ -55,6 +55,8 @@ export default function IPTVPage() {
     const [epgLoading, setEpgLoading] = useState(false);
     const [error, setError] = useState("");
     const [epgMessage, setEpgMessage] = useState("");
+    const [configReady, setConfigReady] = useState(false);
+    const autoLoadUrlRef = useRef("");
     const playerContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -62,13 +64,38 @@ export default function IPTVPage() {
             const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
             setPlaylistUrl(config.playlistUrl || "");
             setEpgUrl(config.epgUrl || "");
+            autoLoadUrlRef.current = config.playlistUrl || "";
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
             if (cached?.savedAt && Date.now() - cached.savedAt < EPG_CACHE_TTL && Array.isArray(cached.programs)) setPrograms(cached.programs);
         } catch {
             setFavorites([]);
+        } finally {
+            setConfigReady(true);
         }
     }, []);
+
+    useEffect(() => {
+        const savedUrl = autoLoadUrlRef.current.trim();
+        if (!configReady || !savedUrl) return;
+        let cancelled = false;
+        setLoading(true);
+        setError("");
+        fetchIPTVText(savedUrl).then((source) => {
+            if (cancelled) return;
+            const parsed = parseM3U(source);
+            if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
+            setChannels(parsed);
+            const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
+            if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
+            saveConfig(savedUrl, epgUrl || embeddedEpg || "");
+        }).catch((cause) => {
+            if (!cancelled) setError(cause instanceof Error ? cause.message : "Gespeicherte Playlist konnte nicht geladen werden.");
+        }).finally(() => {
+            if (!cancelled) setLoading(false);
+        });
+        return () => { cancelled = true; };
+    }, [configReady]);
 
     const categories = useMemo(() => ["Alle", ...Array.from(new Set(channels.map((channel) => channel.group))).sort(),], [channels]);
     const visible = useMemo(() => channels.filter((channel) =>
@@ -164,8 +191,8 @@ export default function IPTVPage() {
                 <section className="rounded-lg border border-border/60 p-4 space-y-3">
                     <h2 className="font-medium">Playlist verbinden</h2>
                     <p className="text-sm text-muted-foreground">Playlist- und EPG-Adressen werden nur lokal in diesem Browser gespeichert.</p>
-                    <Input type="url" value={playlistUrl} onChange={(event) => setPlaylistUrl(event.target.value)} placeholder="M3U-URL" aria-label="M3U-Playlist-URL" />
-                    <Input type="url" value={epgUrl} onChange={(event) => setEpgUrl(event.target.value)} placeholder="XMLTV-EPG-URL (optional)" aria-label="XMLTV-EPG-URL" />
+                    <Input type="url" value={playlistUrl} onChange={(event) => { setPlaylistUrl(event.target.value); saveConfig(event.target.value, epgUrl); }} placeholder="M3U-URL" aria-label="M3U-Playlist-URL" />
+                    <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL (optional)" aria-label="XMLTV-EPG-URL" />
                     <Button onClick={loadPlaylist} disabled={loading || !playlistUrl.trim()} className="w-full">
                         <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} /> {loading ? "Lädt…" : "Playlist laden"}
                     </Button>
@@ -182,7 +209,7 @@ export default function IPTVPage() {
                     </div>
                     <section className="rounded-lg border border-border/60 p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="url" value={epgUrl} onChange={(event) => setEpgUrl(event.target.value)} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL" />
+                            <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL" />
                             <Button onClick={loadEpg} disabled={epgLoading || !epgUrl.trim()} variant="outline" className="shrink-0">
                                 <CalendarDays className="size-4" /> {epgLoading ? "Lädt…" : "EPG laden"}
                             </Button>
@@ -216,7 +243,7 @@ export default function IPTVPage() {
                             ) : (
                                 <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 text-muted-foreground"><Tv className="size-10" /><span className="text-sm">Sender auswählen</span></div>
                             )}
-                            <div className="flex gap-2 overflow-x-auto pb-1">
+                            <div className="flex flex-wrap gap-2 pb-1">
                                 {categories.map((item) => <Button key={item} size="sm" variant={category === item ? "default" : "outline"} onClick={() => setCategory(item)} className="shrink-0">{item}</Button>)}
                             </div>
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
