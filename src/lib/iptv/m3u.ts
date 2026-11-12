@@ -8,7 +8,7 @@ export type IPTVChannel = {
 };
 
 export function parseM3U(source: string): IPTVChannel[] {
-    const lines = source.replace(/^\\uFEFF/, "").split(/\\r?\\n/);
+    const lines = source.replace(/^\uFEFF/, "").split(/\r?\n/);
     const channels: IPTVChannel[] = [];
     let metadata = "";
     let explicitGroup = "";
@@ -25,10 +25,10 @@ export function parseM3U(source: string): IPTVChannel[] {
             explicitGroup = line.slice(8).trim();
             continue;
         }
-        if (line.startsWith("#") || !/^https?:\\/\\//i.test(line)) continue;
+        if (line.startsWith("#") || !/^https?:\/\//i.test(line)) continue;
 
         const name = metadata.match(/,(.*)$/)?.[1]?.trim() || new URL(line).hostname;
-        const attr = (key: string) => metadata.match(new RegExp("(?:^|\\\\s)" + key + '="([^"]*)"', "i"))?.[1];
+        const attr = (key: string) => metadata.match(new RegExp("(?:^|\\s)" + key + '="([^"]*)"', "i"))?.[1];
         const group = attr("group-title") || attr("tvg-group") || explicitGroup || "Weitere Sender";
         channels.push({
             id: attr("tvg-id") || line,
