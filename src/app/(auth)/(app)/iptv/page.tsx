@@ -15,6 +15,21 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
+async function fetchIPTVText(url: string): Promise<string> {
+    try {
+        const direct = await fetch(url);
+        if (!direct.ok) throw new Error(`HTTP ${direct.status}`);
+        return await direct.text();
+    } catch (directError) {
+        const proxy = process.env.NEXT_PUBLIC_CORS_PROXY_URL;
+        if (!proxy) throw directError;
+        const separator = proxy.includes("?") ? "&" : "?";
+        const response = await fetch(`${proxy}${separator}url=${encodeURIComponent(url)}`);
+        if (!response.ok) throw new Error(`Abruf fehlgeschlagen (HTTP ${response.status}).`);
+        return await response.text();
+    }
+}
+
 function getNowNext(channel: IPTVChannel, programs: XMLTVProgram[]) {
     const matching = programs.filter((program) => program.channelId === channel.tvgId).sort((a, b) => a.start - b.start);
     const now = Date.now();
@@ -71,9 +86,7 @@ export default function IPTVPage() {
         setError("");
         setSelected(null);
         try {
-            const response = await fetch(playlistUrl.trim());
-            if (!response.ok) throw new Error("Playlist konnte nicht geladen werden.");
-            const source = await response.text();
+            const source = await fetchIPTVText(playlistUrl.trim());
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
@@ -95,9 +108,8 @@ export default function IPTVPage() {
         setEpgLoading(true);
         setEpgMessage("");
         try {
-            const response = await fetch(epgUrl.trim());
-            if (!response.ok) throw new Error("EPG konnte nicht geladen werden.");
-            const parsed = parseXMLTV(await response.text());
+            const source = await fetchIPTVText(epgUrl.trim());
+            const parsed = parseXMLTV(source);
             if (!parsed.length) throw new Error("Keine Programmdaten in der XMLTV-Datei gefunden.");
             setPrograms(parsed);
             localStorage.setItem(EPG_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), programs: parsed }));
