@@ -222,7 +222,7 @@ export default function IPTVPage() {
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {visible.map((channel) => (
                                     <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
-                                        <button type="button" onClick={() => setSelected(channel)} className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                        <button type="button" onClick={() => setSelected(channel)} onTouchEnd={(event) => { event.preventDefault(); setSelected(channel); }} className="relative z-10 flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                             {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
                                             <span className="truncate text-sm">{channel.name}</span>
                                         </button>
@@ -236,7 +236,7 @@ export default function IPTVPage() {
                             <h2 className="text-sm font-medium">Senderliste</h2>
                             <div className="max-h-[65vh] space-y-1 overflow-y-auto">
                                 {visible.map((channel, index) => (
-                                    <button key={channel.id} type="button" onClick={() => setSelected(channel)} className={"flex w-full items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
+                                    <button key={channel.id} type="button" onClick={() => setSelected(channel)} onTouchEnd={(event) => { event.preventDefault(); setSelected(channel); }} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
                                         <span className="w-6 text-right text-xs text-muted-foreground">{index + 1}</span><span className="flex-1 truncate">{channel.name}</span><Play className="size-3 shrink-0" />
                                     </button>
                                 ))}
