@@ -14,6 +14,7 @@ https://cdn.corsfix.workers.dev/?url=https://api.example.com/endpoint
 // Supports: "*" (all), "*.domain.com" (wildcard), exact strings
 const ORIGINS = [
     // "*",
+    "https://debridui.onrender.com", // Production DebridUI
     "http://localhost:3000", // Local development
 ];
 
