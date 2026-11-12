@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, HomeIcon, Link2, type LucideIcon, MoreHorizontal, SearchIcon } from "lucide-react";
+import { FolderOpen, HomeIcon, Link2, type LucideIcon, MoreHorizontal, SearchIcon, Tv } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
