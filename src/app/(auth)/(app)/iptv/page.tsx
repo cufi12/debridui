@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heart, Play, RefreshCw, Tv, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ const STORAGE_KEY = "debridui-iptv-config";
 const FAVORITES_KEY = "debridui-iptv-favorites";
 
 export default function IPTVPage() {
-    const [playlistUrl, setPlaylistUrl] = useState(() => typeof window === "undefined" ? "" : localStorage.getItem(STORAGE_KEY) || "");
+    const [playlistUrl, setPlaylistUrl] = useState("");
     const [channels, setChannels] = useState<IPTVChannel[]>([]);
     const [favorites, setFavorites] = useState<string[]>(() => {
         if (typeof window === "undefined") return [];
@@ -23,7 +23,7 @@ export default function IPTVPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const categories = useMemo(() => ["Alle", ...Array.from(new Set(channels.map(c => c.group))).sort()], [channels]);
+    useEffect(() => {\n        setPlaylistUrl(localStorage.getItem(STORAGE_KEY) || "");\n        try { setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]")); } catch { setFavorites([]); }\n    }, []);\n\n    const categories = useMemo(() => ["Alle", ...Array.from(new Set(channels.map(c => c.group))).sort()], [channels]);
     const visible = useMemo(() => channels.filter(c =>
         (category === "Alle" || c.group === category) &&
         (filter !== "Favoriten" || favorites.includes(c.id))
