@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Heart, Play, RefreshCw, Tv, X, CalendarDays } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Heart, Play, RefreshCw, Tv, X, CalendarDays, Maximize } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ export default function IPTVPage() {
     const [epgLoading, setEpgLoading] = useState(false);
     const [error, setError] = useState("");
     const [epgMessage, setEpgMessage] = useState("");
+    const playerContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         try {
@@ -119,6 +120,26 @@ export default function IPTVPage() {
 
     const nowNext = selected ? getNowNext(selected, programs) : null;
 
+    useEffect(() => {
+        function handleRemoteKey(event: KeyboardEvent) {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest("input, textarea, select")) return;
+            if (event.key === "Escape") {
+                if (document.fullscreenElement) void document.exitFullscreen();
+                else if (selected) setSelected(null);
+                return;
+            }
+            if (!visible.length || !["ArrowUp", "ArrowDown", "ChannelUp", "ChannelDown"].includes(event.key)) return;
+            event.preventDefault();
+            const currentIndex = selected ? visible.findIndex((channel) => channel.id === selected.id) : -1;
+            const direction = event.key === "ArrowUp" || event.key === "ChannelUp" ? -1 : 1;
+            const nextIndex = currentIndex < 0 ? 0 : (currentIndex + direction + visible.length) % visible.length;
+            setSelected(visible[nextIndex]);
+        }
+        window.addEventListener("keydown", handleRemoteKey);
+        return () => window.removeEventListener("keydown", handleRemoteKey);
+    }, [visible, selected]);
+
     return (
         <div className="mx-auto w-full max-w-6xl space-y-4 pb-16">
             <PageHeader icon={Tv} title="IPTV" description="Live-TV aus deiner M3U-Playlist" />
@@ -156,8 +177,16 @@ export default function IPTVPage() {
                         <section className="min-w-0 space-y-3">
                             {selected ? (
                                 <div className="space-y-2">
-                                    <div className="aspect-video overflow-hidden rounded-lg bg-black">
+                                    <div ref={playerContainerRef} className="aspect-video overflow-hidden rounded-lg bg-black">
                                         <video key={selected.url} src={selected.url} controls autoPlay playsInline className="h-full w-full" />
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button size="sm" variant="outline" onClick={() => {
+                                            const container = playerContainerRef.current;
+                                            if (container?.requestFullscreen) void container.requestFullscreen();
+                                        }}>
+                                            <Maximize className="size-4" /> Vollbild
+                                        </Button>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
                                         <h2 className="truncate font-medium">{selected.name}</h2>
@@ -200,7 +229,7 @@ export default function IPTVPage() {
                     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
                 </>
             )}
-            {!channels.length && <p className="text-xs text-muted-foreground">Hinweis: Wiedergabe hängt vom Streamformat und den Browser-Fähigkeiten ab. HLS- und Sony-Fernbedienungsoptimierung folgen.</p>}
+            {!channels.length && <p className="text-xs text-muted-foreground">Hinweis: Wiedergabe hängt vom Streamformat und den Browser-Fähigkeiten ab. Mit Hoch/Runter wechselst du Sender; Escape schließt Player oder Vollbild. HLS hängt weiterhin vom TV-Browser ab.</p>}
         </div>
     );
 }
