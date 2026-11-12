@@ -49,7 +49,6 @@ export default function IPTVPage() {
     const [programs, setPrograms] = useState<XMLTVProgram[]>([]);
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selected, setSelected] = useState<IPTVChannel | null>(null);
-    const [category, setCategory] = useState("Alle");
     const [filter, setFilter] = useState("Alle");
     const [loading, setLoading] = useState(false);
     const [epgLoading, setEpgLoading] = useState(false);
@@ -97,11 +96,17 @@ export default function IPTVPage() {
         return () => { cancelled = true; };
     }, [configReady]);
 
-    const categories = useMemo(() => ["Alle", ...Array.from(new Set(channels.map((channel) => channel.group))).sort(),], [channels]);
     const visible = useMemo(() => channels.filter((channel) =>
-        (category === "Alle" || channel.group === category) &&
-        (filter !== "Favoriten" || favorites.includes(channel.id))
-    ), [channels, category, filter, favorites]);
+        filter !== "Favoriten" || favorites.includes(channel.id)
+    ), [channels, filter, favorites]);
+    const groupedChannels = useMemo(() => {
+        const groups = new Map<string, IPTVChannel[]>();
+        for (const channel of visible) {
+            const name = channel.group?.trim() || "Weitere Sender";
+            groups.set(name, [...(groups.get(name) || []), channel]);
+        }
+        return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, "de"));
+    }, [visible]);
 
     function saveConfig(nextPlaylist = playlistUrl, nextEpg = epgUrl) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ playlistUrl: nextPlaylist, epgUrl: nextEpg }));
@@ -243,27 +248,34 @@ export default function IPTVPage() {
                             ) : (
                                 <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 text-muted-foreground"><Tv className="size-10" /><span className="text-sm">Sender auswählen</span></div>
                             )}
-                            <div className="flex flex-wrap gap-2 pb-1">
-                                {categories.map((item) => <Button key={item} size="sm" variant={category === item ? "default" : "outline"} onClick={() => setCategory(item)} className="shrink-0">{item}</Button>)}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                                {visible.map((channel) => (
-                                    <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
-                                        <button type="button" onClick={() => setSelected(channel)} className="relative z-10 flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                            {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
-                                            <span className="truncate text-sm">{channel.name}</span>
-                                        </button>
-                                        <Button size="icon" variant="ghost" className="size-8 shrink-0" onClick={() => toggleFavorite(channel.id)} aria-label="Favorit umschalten"><Heart className={favorites.includes(channel.id) ? "size-4 fill-current text-red-500" : "size-4"} /></Button>
-                                    </div>
+                            <div className="space-y-2">
+                                {groupedChannels.map(([groupName, groupChannels], groupIndex) => (
+                                    <details key={groupName} open={groupIndex === 0} className="overflow-hidden rounded-lg border border-border/60">
+                                        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 bg-muted/30 px-3 py-2 font-medium">
+                                            <span className="truncate">{groupName}</span>
+                                            <span className="shrink-0 text-xs text-muted-foreground">{groupChannels.length} Sender</span>
+                                        </summary>
+                                        <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">
+                                            {groupChannels.map((channel) => (
+                                                <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
+                                                    <button type="button" onClick={() => setSelected(channel)} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                        {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
+                                                        <span className="truncate text-sm">{channel.name}</span>
+                                                    </button>
+                                                    <Button size="icon" variant="ghost" className="size-8 shrink-0" onClick={() => toggleFavorite(channel.id)} aria-label="Favorit umschalten"><Heart className={favorites.includes(channel.id) ? "size-4 fill-current text-red-500" : "size-4"} /></Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </details>
                                 ))}
                             </div>
                             {!visible.length && <p className="py-6 text-center text-sm text-muted-foreground">Keine Sender in dieser Auswahl.</p>}
                         </section>
-                        <aside className="space-y-2 rounded-lg border border-border/60 p-3">
+                        <aside className="hidden space-y-2 rounded-lg border border-border/60 p-3 lg:block">
                             <h2 className="text-sm font-medium">Senderliste</h2>
                             <div className="max-h-[65vh] space-y-1 overflow-y-auto">
                                 {visible.map((channel, index) => (
-                                    <button key={channel.id} type="button" onClick={() => setSelected(channel)} onTouchEnd={(event) => { event.preventDefault(); setSelected(channel); }} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
+                                    <button key={channel.id} type="button" onClick={() => setSelected(channel)} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
                                         <span className="w-6 text-right text-xs text-muted-foreground">{index + 1}</span><span className="flex-1 truncate">{channel.name}</span><Play className="size-3 shrink-0" />
                                     </button>
                                 ))}
