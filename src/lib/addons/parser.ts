@@ -29,24 +29,24 @@ export function getResolutionIndex(resolution: Resolution | undefined): number {
 const QUALITY_REGEXES: [SourceQuality, RegExp][] = [
     // Priority order: lower index = higher quality (based on Wikipedia release types)
     // Blu-ray sources (highest quality)
-    [SourceQuality.BLURAY_REMUX, /(?:^|[\s[(_.-])(?:bd|br|b|uhd)?[-_.\\s]?remux(?=[\s)\]_.\-,]|$)/i],
-    [SourceQuality.BLURAY, /(?:^|[\s[(_.-])(?:bd|blu[-_.\\s]?ray|(?:bd|br)[-_.\\s]?rip)(?!.*remux)(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.BLURAY_REMUX, /(?:^|[\s[(_.-])(?:bd|br|b|uhd)?[-_.\s]?remux(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.BLURAY, /(?:^|[\s[(_.-])(?:bd|blu[-_.\s]?ray|(?:bd|br)[-_.\s]?rip)(?!.*remux)(?=[\s)\]_.\-,]|$)/i],
     // Web sources
-    [SourceQuality.WEB_DL, /(?:^|[\s[(_.-])web[-_.\\s]?(?:dl)?(?![-_.\\s]?(?:rip|DLRip|cam))(?=[\s)\]_.\-,]|$)/i],
-    [SourceQuality.WEBRIP, /(?:^|[\s[(_.-])web[-_.\\s]?rip(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.WEB_DL, /(?:^|[\s[(_.-])web[-_.\s]?(?:dl)?(?![-_.\s]?(?:rip|DLRip|cam))(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.WEBRIP, /(?:^|[\s[(_.-])web[-_.\s]?rip(?=[\s)\]_.\-,]|$)/i],
     // TV/DVD sources
     [
         SourceQuality.HDTV,
-        /(?:^|[\s[(_.-])(?:(?:hd|pd)tv|tv[-_.\\s]?rip|hdtv[-_.\\s]?rip|dsr(?:ip)?|sat[-_.\\s]?rip)(?=[\s)\]_.\-,]|$)/i,
+        /(?:^|[\s[(_.-])(?:(?:hd|pd)tv|tv[-_.\s]?rip|hdtv[-_.\s]?rip|dsr(?:ip)?|sat[-_.\s]?rip)(?=[\s)\]_.\-,]|$)/i,
     ],
-    [SourceQuality.DVDRIP, /(?:^|[\s[(_.-])(?:dvd(?:[-_.\\s]?(?:rip|mux|r|full|5|9))?(?!scr))(?=[\s)\]_.\-,]|$)/i],
-    [SourceQuality.HDRIP, /(?:^|[\s[(_.-])hd[-_.\\s]?rip(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.DVDRIP, /(?:^|[\s[(_.-])(?:dvd(?:[-_.\s]?(?:rip|mux|r|full|5|9))?(?!scr))(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.HDRIP, /(?:^|[\s[(_.-])hd[-_.\s]?rip(?=[\s)\]_.\-,]|$)/i],
     // Pre-release sources
-    [SourceQuality.SCR, /(?:^|[\s[(_.-])(?:(?:dvd|bd|web|hd)?[-_.\\s]?)?scr(?:eener)?(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.SCR, /(?:^|[\s[(_.-])(?:(?:dvd|bd|web|hd)?[-_.\s]?)?scr(?:eener)?(?=[\s)\]_.\-,]|$)/i],
     // Theater recordings (lowest quality)
     [SourceQuality.TC, /(?:^|[\s[(_.-])(?:telecine|tc)(?=[\s)\]_.\-,]|$)/i],
-    [SourceQuality.TS, /(?:^|[\s[(_.-])(?:telesync|ts(?!$)|hd[-_.\\s]?ts|p(?:re)?dvd(?:rip)?)(?=[\s)\]_.\-,]|$)/i],
-    [SourceQuality.CAM, /(?:^|[\s[(_.-])(?:cam(?:[-_.\\s]?rip)?|hdcam)(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.TS, /(?:^|[\s[(_.-])(?:telesync|ts(?!$)|hd[-_.\s]?ts|p(?:re)?dvd(?:rip)?)(?=[\s)\]_.\-,]|$)/i],
+    [SourceQuality.CAM, /(?:^|[\s[(_.-])(?:cam(?:[-_.\s]?rip)?|hdcam)(?=[\s)\]_.\-,]|$)/i],
 ];
 
 /** Ordered list of source qualities from highest to lowest */
@@ -165,16 +165,16 @@ export function parseStream(stream: AddonStream, addonId: string, addonName: str
     // Label only languages explicitly indicated by addon metadata.
     const metadata = [name, title, description].filter(Boolean).join(" ");
     const audioLanguage =
-        /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\\s*[:=]?\\s*DE\\b/i.test(metadata)
+        /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\\b/i.test(metadata)
             ? "Deutsch laut Quelle – nicht geprüft"
-            : /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\\s*[:=]?\\s*EN\\b/i.test(metadata)
+            : /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\\b/i.test(metadata)
               ? "Englisch laut Quelle – nicht geprüft"
-              : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\\s*[:=]?\\s*ES\\b/i.test(metadata)
+              : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\\b/i.test(metadata)
                 ? "Spanisch laut Quelle – nicht geprüft"
-                : /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\\s*[:=]?\\s*IT\\b/i.test(metadata)
+                : /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\\b/i.test(metadata)
                   ? "Italienisch laut Quelle – nicht geprüft"
                   : "Tonspur nicht geprüft";
-    const combinedDescription = [title, description, `Audio-Angabe: ${audioLanguage}`].filter(Boolean).join("\\n");
+    const combinedDescription = [title, description, `Audio-Angabe: ${audioLanguage}`].filter(Boolean).join("\n");
     const size = extractSize(stream);
     const resolution = extractResolution(stream);
     const quality = detectQuality(stream);
