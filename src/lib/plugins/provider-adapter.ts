@@ -1,5 +1,5 @@
-import { sanitizeStreamHeaders } from "@/lib/addons/parser";
-import type { AddonStream, TvSearchParams } from "@/lib/addons/types";
+import { parseStreams, sanitizeStreamHeaders } from "@/lib/addons/parser";
+import type { AddonSource, AddonStream, TvSearchParams } from "@/lib/addons/types";
 import type { Media } from "@/lib/trakt";
 
 /** Check a repository provider's declared media compatibility. */
@@ -80,4 +80,18 @@ export function normalizeProviderStreams(
             headers: sanitizeStreamHeaders(item.headers),
         }];
     });
+}
+
+/** Convert normalized repository-provider results into DebridUI's shared source model. */
+export function parseRepositoryProviderStreams(
+    result: unknown,
+    repositoryId: string,
+    providerId: string,
+    providerName: string
+): AddonSource[] {
+    const streams = normalizeProviderStreams(result, providerId, providerName);
+    // Namespaced IDs prevent providers with the same manifest ID in different
+    // repositories from colliding with each other or with Stremio add-ons.
+    const sourceId = `repository:${repositoryId}:${providerId}`;
+    return parseStreams(streams, sourceId, providerName);
 }
