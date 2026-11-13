@@ -14,7 +14,7 @@ const EPG_CACHE_KEY = "debridui-iptv-epg";
 const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
-type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
+type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "inline" | "external"; autoplay?: boolean; startMuted?: boolean };
 
 async function fetchIPTVText(url: string): Promise<string> {
     const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
