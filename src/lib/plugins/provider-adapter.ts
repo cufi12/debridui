@@ -2,6 +2,16 @@ import { sanitizeStreamHeaders } from "@/lib/addons/parser";
 import type { AddonStream, TvSearchParams } from "@/lib/addons/types";
 import type { Media } from "@/lib/trakt";
 
+/** Check a repository provider's declared media compatibility. */
+export function providerSupportsMediaType(
+    supportedTypes: readonly string[],
+    mediaType: "movie" | "tv"
+): boolean {
+    return mediaType === "movie"
+        ? supportedTypes.includes("movie")
+        : supportedTypes.includes("tv") || supportedTypes.includes("series");
+}
+
 /** Arguments exposed to a Nuvio-compatible provider's getStreams function. */
 export interface ProviderInvocation {
     tmdbId: number;
