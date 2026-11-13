@@ -162,3 +162,48 @@ export async function removePluginRepository(repositoryId: string) {
     await writeRepositories(userId, repos.filter((repo) => repo.id !== repositoryId));
     return { success: true };
 }
+
+/**
+ * Fetch one opted-in provider module without executing it on the server.
+ * The source is returned to the client-side sandbox layer; callers must never
+ * evaluate it in the application realm.
+ */
+export async function getRepositoryProviderSource(repositoryId: string, providerId: string) {
+    const userId = await currentUserId();
+    const repositories = await readRepositories(userId);
+    const repository = repositories.find((item) => item.id === repositoryId);
+    if (!repository) throw new Error("Repository nicht gefunden.");
+
+    const provider = repository.providers.find((item) => item.id === providerId);
+    if (!provider) throw new Error("Provider nicht gefunden.");
+    if (!provider.enabled) throw new Error("Provider ist deaktiviert.");
+
+    const manifestUrl = validateRepositoryUrl(repository.url);
+    const base = new URL(".", manifestUrl);
+    const file = new URL(provider.filename, base);
+    const folder = base.pathname.replace(/[^/]*$/, "");
+    if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(folder)) {
+        throw new Error("Ungültiger Provider-Pfad.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    try {
+        const response = await fetch(file, {
+            headers: { accept: "text/javascript, application/javascript, text/plain" },
+            cache: "no-store",
+            redirect: "error",
+            signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Provider antwortet mit HTTP ${response.status}.`);
+        const length = Number(response.headers.get("content-length") || 0);
+        if (length > 1_000_000) throw new Error("Provider-Datei ist zu groß (maximal 1 MB).");
+        const source = await response.text();
+        if (new TextEncoder().encode(source).byteLength > 1_000_000) {
+            throw new Error("Provider-Datei ist zu groß (maximal 1 MB).");
+        }
+        return { providerId: provider.id, providerName: provider.name, source };
+    } finally {
+        clearTimeout(timeout);
+    }
+}
