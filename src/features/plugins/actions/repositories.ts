@@ -23,9 +23,14 @@ const providerSchema = z.object({
 
 const repositoryManifestSchema = z.object({
     name: z.string().min(1).max(120),
+    description: z.string().max(500).optional().default(""),
     version: z.string().max(40).optional().default(""),
-    scrapers: z.array(providerSchema).max(300),
-}).passthrough();
+    // Nuvio repositories use either "providers" or the older "scrapers" key.
+    providers: z.array(providerSchema).max(300).optional(),
+    scrapers: z.array(providerSchema).max(300).optional(),
+}).passthrough().refine((manifest) => manifest.providers !== undefined || manifest.scrapers !== undefined, {
+    message: "Manifest must contain providers or scrapers",
+});
 
 type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
 type Repository = {
@@ -72,7 +77,7 @@ async function loadManifest(url: string) {
         if (new TextEncoder().encode(text).byteLength > 1_000_000) throw new Error("Das Manifest ist zu groß (maximal 1 MB).");
         const parsed = repositoryManifestSchema.parse(JSON.parse(text));
         const base = new URL(".", url);
-        const providers = parsed.scrapers.map((provider) => {
+        const providers = (parsed.providers ?? parsed.scrapers ?? []).map((provider) => {
             const file = new URL(provider.filename, base);
             if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(base.pathname.replace(/[^/]*$/, ""))) {
                 throw new Error(`Ungültiger Provider-Pfad bei ${provider.name}.`);
