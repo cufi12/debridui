@@ -88,7 +88,7 @@ export default function IPTVPage() {
             setExternalPlayer(config.externalPlayer || "vlc");
             autoLoadUrlRef.current = config.playlistUrl || "";
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-            if (localCache?.url === config.playlistUrl && Array.isArray(localCache.channels) && localCache.channels.length) {
+            if (localCache?.url === config.playlistUrl && Array.isArray(localCache?.channels) && localCache.channels.length) {
                 setChannels(localCache.channels);
             }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
