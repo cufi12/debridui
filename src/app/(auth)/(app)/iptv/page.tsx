@@ -173,7 +173,7 @@ export default function IPTVPage() {
 
     function saveConfig(nextPlaylist = playlistUrl, nextEpg = epgUrl) {
         const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playlistUrl: nextPlaylist, epgUrl: nextEpg }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playlistUrl: nextPlaylist, epgUrl: nextEpg, playerMode, externalPlayer, autoplay: playerAutoplay, startMuted: playerMuted }));
     }
 
     async function loadPlaylist() {
@@ -346,6 +346,49 @@ export default function IPTVPage() {
                         placeholder="Sender, Gruppe oder TVG-ID suchen…"
                         aria-label="Sender suchen"
                     />
+                    <section className="rounded-lg border border-border/60 p-3 space-y-3">
+                        <h2 className="text-sm font-medium">Wiedergabe</h2>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <label className="space-y-1 text-sm">
+                                <span className="text-muted-foreground">Player auswählen</span>
+                                <select
+                                    value={playerMode}
+                                    onChange={(event) => {
+                                        const mode = event.target.value as "auto" | "native" | "external";
+                                        setPlayerMode(mode);
+                                        const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+                                        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playerMode: mode, externalPlayer, playlistUrl, epgUrl, autoplay: playerAutoplay, startMuted: playerMuted }));
+                                    }}
+                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option value="auto">Automatisch (Browser / HLS.js)</option>
+                                    <option value="native">Browser (nativ)</option>
+                                    <option value="external">VLC (extern)</option>
+                                </select>
+                            </label>
+                            {playerMode === "external" && (
+                                <label className="space-y-1 text-sm">
+                                    <span className="text-muted-foreground">Externer Player</span>
+                                    <select
+                                        value={externalPlayer}
+                                        onChange={(event) => {
+                                            const player = event.target.value as "vlc" | "mx" | "just" | "kodi";
+                                            setExternalPlayer(player);
+                                            const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+                                            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playerMode: "external", externalPlayer: player, playlistUrl, epgUrl, autoplay: playerAutoplay, startMuted: playerMuted }));
+                                        }}
+                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                    >
+                                        <option value="vlc">VLC</option>
+                                        <option value="mx">MX Player</option>
+                                        <option value="just">Just Player</option>
+                                        <option value="kodi">Kodi</option>
+                                    </select>
+                                </label>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Bei VLC wird der Sender direkt in der externen App geöffnet.</p>
+                    </section>
                     <section className="rounded-lg border border-border/60 p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
                             <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL" />
