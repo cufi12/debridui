@@ -16,7 +16,7 @@ const EPG_CACHE_KEY = "debridui-iptv-epg";
 const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
-type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; autoplay?: boolean; startMuted?: boolean };
+type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; externalPlayer?: "vlc" | "mx" | "just" | "kodi"; autoplay?: boolean; startMuted?: boolean };
 
 function getProxiedStreamUrl(url: string): string {
     return `/api/iptv/stream?url=${encodeURIComponent(url)}`;
@@ -59,6 +59,7 @@ export default function IPTVPage() {
     const [playerAutoplay, setPlayerAutoplay] = useState(true);
     const [playerMuted, setPlayerMuted] = useState(false);
     const [playerMode, setPlayerMode] = useState<"auto" | "native" | "external">("auto");
+    const [externalPlayer, setExternalPlayer] = useState<"vlc" | "mx" | "just" | "kodi">("vlc");
     const [playerError, setPlayerError] = useState("");
     const [channels, setChannels] = useState<IPTVChannel[]>([]);
     const [programs, setPrograms] = useState<XMLTVProgram[]>([]);
@@ -84,6 +85,7 @@ export default function IPTVPage() {
             setPlayerAutoplay(config.autoplay ?? true);
             setPlayerMuted(config.startMuted ?? false);
             setPlayerMode(config.playerMode === "external" || config.playerMode === "native" ? config.playerMode : "auto");
+            setExternalPlayer(config.externalPlayer || "vlc");
             autoLoadUrlRef.current = config.playlistUrl || "";
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
             if (localCache?.url === config.playlistUrl && Array.isArray(localCache.channels) && localCache.channels.length) {
@@ -224,7 +226,10 @@ export default function IPTVPage() {
     function playChannel(channel: IPTVChannel) {
         setPlayerError("");
         if (playerMode === "external") {
-            window.open(getProxiedStreamUrl(channel.url), "_blank", "noopener,noreferrer");
+            const packages = { vlc: "org.videolan.vlc", mx: "com.mxtech.videoplayer.ad", just: "com.brouken.player", kodi: "org.xbmc.kodi" };
+            const stream = getProxiedStreamUrl(channel.url);
+            const intent = `intent://${window.location.host}${stream}#Intent;scheme=${window.location.protocol.slice(0, -1)};package=${packages[externalPlayer]};type=video/*;S.browser_fallback_url=${encodeURIComponent(window.location.origin + stream)};end`;
+            window.location.href = intent;
             return;
         }
         setSelected(channel);
