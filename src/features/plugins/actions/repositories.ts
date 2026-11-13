@@ -220,6 +220,92 @@ export async function removePluginRepository(repositoryId: string) {
  * The source is returned to the client-side sandbox layer; callers must never
  * evaluate it in the application realm.
  */
+/** Fetch a bounded batch of enabled provider modules for the isolated runtime. */
+export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "tv") {
+    const userId = await currentUserId();
+    const repositories = await readRepositories(userId);
+    const providers = repositories.flatMap((repository) =>
+        repository.providers
+            .filter((provider) => provider.enabled)
+            .filter((provider) => mediaType === "movie"
+                ? provider.supportedTypes.includes("movie")
+                : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series"))
+            .map((provider) => ({ repository, provider }))
+    ).slice(0, 20);
+
+    const output: Array<{
+        repositoryId: string;
+        repositoryName: string;
+        providerId: string;
+        providerName: string;
+        source?: string;
+        error?: string;
+    }> = [];
+    let totalBytes = 0;
+
+    for (let index = 0; index < providers.length; index += 4) {
+        const batch = await Promise.all(providers.slice(index, index + 4).map(async ({ repository, provider }) => {
+            try {
+                const base = new URL(".", validateRepositoryUrl(repository.url));
+                const file = new URL(provider.filename, base);
+                const folder = base.pathname.replace(/[^/]*$/, "");
+                if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(folder)) {
+                    throw new Error("Ungültiger Provider-Pfad.");
+                }
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 12_000);
+                try {
+                    const response = await fetch(file, {
+                        headers: { accept: "text/javascript, application/javascript, text/plain" },
+                        cache: "no-store",
+                        redirect: "error",
+                        signal: controller.signal,
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const source = await readLimitedText(response, 500_000);
+                    return {
+                        repositoryId: repository.id,
+                        repositoryName: repository.name,
+                        providerId: provider.id,
+                        providerName: provider.name,
+                        source,
+                        bytes: new TextEncoder().encode(source).byteLength,
+                    };
+                } finally {
+                    clearTimeout(timeout);
+                }
+            } catch {
+                return {
+                    repositoryId: repository.id,
+                    repositoryName: repository.name,
+                    providerId: provider.id,
+                    providerName: provider.name,
+                    error: "Provider-Quelldatei konnte nicht geladen werden.",
+                    bytes: 0,
+                };
+            }
+        }));
+        for (const item of batch) {
+            if (item.source) {
+                if (totalBytes + item.bytes > 3_000_000) {
+                    output.push({
+                        repositoryId: item.repositoryId,
+                        repositoryName: item.repositoryName,
+                        providerId: item.providerId,
+                        providerName: item.providerName,
+                        error: "Gesamtlimit für Provider-Code erreicht.",
+                    });
+                    continue;
+                }
+                totalBytes += item.bytes;
+            }
+            const { bytes: _bytes, ...publicItem } = item;
+            output.push(publicItem);
+        }
+    }
+    return output;
+}
+
 export async function getRepositoryProviderSource(repositoryId: string, providerId: string) {
     const userId = await currentUserId();
     const repositories = await readRepositories(userId);
