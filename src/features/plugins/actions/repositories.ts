@@ -28,9 +28,16 @@ const repositoryManifestSchema = z.object({
     // Nuvio repositories use either "providers" or the older "scrapers" key.
     providers: z.array(providerSchema).max(300).optional(),
     scrapers: z.array(providerSchema).max(300).optional(),
-}).passthrough().refine((manifest) => manifest.providers !== undefined || manifest.scrapers !== undefined, {
-    message: "Manifest must contain providers or scrapers",
-});
+}).passthrough()
+    .refine((manifest) => manifest.providers !== undefined || manifest.scrapers !== undefined, {
+        message: "Manifest must contain providers or scrapers",
+    })
+    .refine((manifest) => {
+        const providers = manifest.providers ?? manifest.scrapers ?? [];
+        return new Set(providers.map((provider) => provider.id)).size === providers.length;
+    }, {
+        message: "Provider IDs must be unique within a repository",
+    });
 
 type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
 type Repository = {
