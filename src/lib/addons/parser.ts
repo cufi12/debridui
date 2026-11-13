@@ -166,15 +166,15 @@ export function parseStream(stream: AddonStream, addonId: string, addonName: str
     const metadata = [name, title, description].filter(Boolean).join(" ");
     const audioLanguage =
         /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\\s*[:=]?\\s*DE\\b/i.test(metadata)
-            ? "Deutsch erkannt"
+            ? "Deutsch laut Quelle – nicht geprüft"
             : /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\\s*[:=]?\\s*EN\\b/i.test(metadata)
-              ? "Englisch erkannt"
+              ? "Englisch laut Quelle – nicht geprüft"
               : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\\s*[:=]?\\s*ES\\b/i.test(metadata)
-                ? "Spanisch erkannt"
+                ? "Spanisch laut Quelle – nicht geprüft"
                 : /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\\s*[:=]?\\s*IT\\b/i.test(metadata)
-                  ? "Italienisch erkannt"
-                  : "Sprache unbekannt";
-    const combinedDescription = [title, description, `Audio-Sprache: ${audioLanguage}`].filter(Boolean).join("\\n");
+                  ? "Italienisch laut Quelle – nicht geprüft"
+                  : "Tonspur nicht geprüft";
+    const combinedDescription = [title, description, `Audio-Angabe: ${audioLanguage}`].filter(Boolean).join("\\n");
     const size = extractSize(stream);
     const resolution = extractResolution(stream);
     const quality = detectQuality(stream);
