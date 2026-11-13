@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { getStreamCapableAddons } from "@/features/addons/hooks/use-addons";
 import { recordPlayback } from "@/features/media/actions/playback-history";
+import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
 import { selectBestSource } from "@/features/media/utils/source-selector";
 import { usePreviewStore } from "@/features/preview/stores/preview";
 import { AddonClient } from "@/lib/addons/client";
@@ -152,13 +153,6 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
         const enabled = addons.filter((a) => a.enabled).sort((a, b) => a.order - b.order);
         const enabledAddons = await getStreamCapableAddons(enabled, queryClient);
 
-        if (enabledAddons.length === 0) {
-            toast.error("No addons enabled", {
-                description: "Configure addons with stream support in settings",
-            });
-            return;
-        }
-
         // Cancel previous request: dismiss old toast and increment request ID
         dismissToast();
         const currentRequestId = ++requestId;
@@ -189,12 +183,18 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
                 }
             });
 
-            const results = await Promise.all(sourcePromises);
+            const [results, repositorySources] = await Promise.all([
+                Promise.all(sourcePromises),
+                getRepositoryProviderStreams(media, type, tvParams).catch((error) => {
+                    console.warn("Repository provider discovery failed:", error);
+                    return [] as AddonSource[];
+                }),
+            ]);
 
             // Ignore results if a newer request was started
             if (currentRequestId !== requestId) return;
 
-            const allSources = results.flat();
+            const allSources = [...results.flat(), ...repositorySources];
 
             const streamingSettings = useSettingsStore.getState().get("streaming");
             // xREL is metadata-only: use verified German release names to rank matching addon sources.
@@ -224,7 +224,7 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
                     description:
                         allSources.length > 0
                             ? "No sources match your quality preferences"
-                            : "No sources available from enabled addons",
+                            : "No sources available from enabled addons or repository providers",
                 });
                 return;
             }
