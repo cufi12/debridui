@@ -97,8 +97,12 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const torrents = await rdRequest<TorrentListItem[]>("/torrents?limit=100&page=1", account.apiKey);
-        const torrent = torrents.find((item) => item.hash?.toLowerCase() === hash);
+        let torrent: TorrentListItem | undefined;
+        for (let page = 1; page <= 10 && !torrent; page++) {
+            const torrents = await rdRequest<TorrentListItem[]>(`/torrents?limit=100&page=${page}`, account.apiKey);
+            torrent = torrents.find((item) => item.hash?.toLowerCase() === hash);
+            if (torrents.length < 100) break;
+        }
         if (!torrent) {
             return NextResponse.json({ error: "Dieser Torrent liegt nicht in deinem Real-Debrid-Konto." }, { status: 404 });
         }
@@ -131,7 +135,9 @@ export async function POST(request: NextRequest) {
         });
 
         // The signed download URL stays on the server and is never returned to the browser.
-        const ffprobePath = require("ffprobe-static") as string;
+        const ffprobeModule = require("ffprobe-static") as string | { path?: string };
+        const ffprobePath = typeof ffprobeModule === "string" ? ffprobeModule : ffprobeModule.path;
+        if (!ffprobePath) throw new Error("ffprobe-static binary path is unavailable");
         const { stdout } = await execFileAsync(ffprobePath, [
             "-v", "error",
             "-show_entries", "stream=index,codec_type,codec_name:stream_tags=language,title",
