@@ -1,0 +1,52 @@
+name: Build DebridUI Android TV APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android-tv.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Build Android TV APK
+        run: gradle :app:assembleDebug --no-daemon
+
+      - name: Prepare APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk DebridUI-TV.apk
+
+      - name: Publish APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tv-latest
+          name: DebridUI Android TV
+          body: |
+            Android TV wrapper for the hosted DebridUI web app.
+            Install DebridUI-TV.apk with Downloader on your Android TV.
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: DebridUI-TV.apk
