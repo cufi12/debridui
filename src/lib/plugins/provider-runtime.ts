@@ -2,8 +2,8 @@ import "server-only";
 
 import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
-import { isIP } from "node:net";
 import { request as httpsRequest } from "node:https";
+import { isIP } from "node:net";
 import { getQuickJS } from "quickjs-emscripten";
 import { sanitizeStreamHeaders } from "@/lib/addons/parser";
 import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
@@ -72,11 +72,7 @@ function normalizeRequestHeaders(value: unknown): Record<string, string> {
     return Object.fromEntries(Object.entries(safe).map(([key, header]) => [key, header]));
 }
 
-async function requestPinned(
-    url: URL,
-    init: ProviderFetchInit,
-    signal: AbortSignal
-): Promise<PinnedResponse> {
+async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSignal): Promise<PinnedResponse> {
     if (url.protocol !== "https:" && url.protocol !== "http:") {
         throw new Error("Only HTTP and HTTPS provider requests are supported.");
     }
@@ -105,7 +101,11 @@ async function requestPinned(
                 method,
                 headers,
                 timeout: FETCH_TIMEOUT_MS,
-                lookup: ((_hostname: string, _options: unknown, callback: (error: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
+                lookup: ((
+                    _hostname: string,
+                    _options: unknown,
+                    callback: (error: NodeJS.ErrnoException | null, address: string, family: number) => void
+                ) => {
                     callback(null, address, 4);
                 }) as never,
             },
@@ -132,7 +132,9 @@ async function requestPinned(
                     settled = true;
                     const responseHeaders = Object.fromEntries(
                         Object.entries(response.headers).flatMap(([key, value]) =>
-                            value === undefined ? [] : [[key.toLowerCase(), Array.isArray(value) ? value.join(", ") : String(value)]]
+                            value === undefined
+                                ? []
+                                : [[key.toLowerCase(), Array.isArray(value) ? value.join(", ") : String(value)]]
                         )
                     );
                     resolve({
@@ -179,10 +181,15 @@ async function safeProviderFetch(
         const nextUrl = new URL(location, url);
         if (nextUrl.origin !== url.origin) {
             headers = Object.fromEntries(
-                Object.entries(headers).filter(([name]) => !["authorization", "cookie", "proxy-authorization"].includes(name.toLowerCase()))
+                Object.entries(headers).filter(
+                    ([name]) => !["authorization", "cookie", "proxy-authorization"].includes(name.toLowerCase())
+                )
             );
         }
-        if (response.status === 303 || ((response.status === 301 || response.status === 302) && method.toUpperCase() === "POST")) {
+        if (
+            response.status === 303 ||
+            ((response.status === 301 || response.status === 302) && method.toUpperCase() === "POST")
+        ) {
             method = "GET";
             body = undefined;
         }
@@ -230,10 +237,7 @@ function createQuickJsResponse(
  * The VM receives no Node globals, filesystem, process environment, or ambient cookies.
  * All outbound requests are DNS-checked and pinned to public IPv4 addresses.
  */
-export async function executeNuvioProvider(
-    source: string,
-    invocation: ProviderInvocation
-): Promise<unknown> {
+export async function executeNuvioProvider(source: string, invocation: ProviderInvocation): Promise<unknown> {
     if (source.length > 500_000) throw new Error("Provider source exceeds 500 KB.");
     if (!quickJsPromise) quickJsPromise = getQuickJS();
     const QuickJS = await quickJsPromise;
@@ -258,35 +262,35 @@ export async function executeNuvioProvider(
         const deferred = vm.newPromise();
         deferredPromises.push(deferred);
 
-        void safeProviderFetch(rawUrl, init, controller.signal).then((response) => {
-            totalResponseBytes += Buffer.byteLength(response.body, "utf8");
-            if (totalResponseBytes > MAX_TOTAL_RESPONSE_BYTES) {
-                throw new Error("Provider exceeded the total response size limit.");
-            }
-            if (disposed) return;
-            const responseHandle = createQuickJsResponse(vm, response);
-            deferred.resolve(responseHandle);
-            responseHandle.dispose();
-            vm.runtime.executePendingJobs();
-        }).catch((error: unknown) => {
-            if (disposed) return;
-            const errorHandle = vm.newString(error instanceof Error ? error.message : "Provider fetch failed.");
-            deferred.reject(errorHandle);
-            errorHandle.dispose();
-            vm.runtime.executePendingJobs();
-        }).finally(() => controllers.delete(controller));
+        void safeProviderFetch(rawUrl, init, controller.signal)
+            .then((response) => {
+                totalResponseBytes += Buffer.byteLength(response.body, "utf8");
+                if (totalResponseBytes > MAX_TOTAL_RESPONSE_BYTES) {
+                    throw new Error("Provider exceeded the total response size limit.");
+                }
+                if (disposed) return;
+                const responseHandle = createQuickJsResponse(vm, response);
+                deferred.resolve(responseHandle);
+                responseHandle.dispose();
+                vm.runtime.executePendingJobs();
+            })
+            .catch((error: unknown) => {
+                if (disposed) return;
+                const errorHandle = vm.newString(error instanceof Error ? error.message : "Provider fetch failed.");
+                deferred.reject(errorHandle);
+                errorHandle.dispose();
+                vm.runtime.executePendingJobs();
+            })
+            .finally(() => controllers.delete(controller));
 
         return deferred.handle;
     });
     vm.setProp(vm.global, "fetch", fetchFunction);
     fetchFunction.dispose();
 
-    const args = [
-        invocation.tmdbId,
-        invocation.mediaType,
-        invocation.season,
-        invocation.episode,
-    ].map((value) => value === undefined ? "undefined" : JSON.stringify(value));
+    const args = [invocation.tmdbId, invocation.mediaType, invocation.season, invocation.episode].map((value) =>
+        value === undefined ? "undefined" : JSON.stringify(value)
+    );
 
     const code = `
         (async function () {
