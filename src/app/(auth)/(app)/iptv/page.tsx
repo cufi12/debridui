@@ -114,7 +114,12 @@ export default function IPTVPage() {
             try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
-            saveConfig(savedUrl, epgUrl || embeddedEpg || "");
+            const currentConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                ...currentConfig,
+                playlistUrl: savedUrl,
+                epgUrl: currentConfig.epgUrl || embeddedEpg || "",
+            }));
         }).catch((cause) => {
             if (!cancelled) setError(cause instanceof Error ? cause.message : "Gespeicherte Playlist konnte nicht geladen werden.");
         }).finally(() => {
