@@ -133,17 +133,19 @@ export default function IPTVPage() {
     const groupedChannels = useMemo(() => {
         const labels = [
             { name: "Albanisch", terms: ["alban", "shqip"] },
-            { name: "German", terms: ["german", "deutsch", "germany", "deu"] },
-            { name: "Schweiz", terms: ["schweiz", "swiss", "suisse", "svizzera", "swi"] },
-            { name: "Austria", terms: ["austria", "österreich", "osterreich", "aut"] },
+            { name: "German", terms: ["german", "deutsch", "germany", "deu", "deutschland"] },
+            { name: "Schweiz", terms: ["schweiz", "swiss", "suisse", "svizzera", "switzerland"] },
+            { name: "Austria", terms: ["austria", "österreich", "osterreich"] },
             { name: "Turkish", terms: ["turk", "türk", "turkiye", "türkiye"] },
         ];
         const groups = new Map<string, IPTVChannel[]>();
         for (const label of labels) groups.set(label.name, []);
         const other: IPTVChannel[] = [];
         for (const channel of visible) {
-            const sourceGroup = (channel.group || "").toLocaleLowerCase("de");
-            const match = labels.find((label) => label.terms.some((term) => sourceGroup.includes(term)));
+            const searchable = [channel.group, channel.name, channel.tvgId || ""]
+                .join(" ")
+                .toLocaleLowerCase("de");
+            const match = labels.find((label) => label.terms.some((term) => searchable.includes(term)));
             if (match) groups.get(match.name)?.push(channel);
             else other.push(channel);
         }
@@ -267,7 +269,7 @@ export default function IPTVPage() {
                         <Button size="sm" variant={filter === "Alle" ? "default" : "outline"} onClick={() => setFilter("Alle")}>Alle Sender</Button>
                         <Button size="sm" variant={filter === "Favoriten" ? "default" : "outline"} onClick={() => setFilter("Favoriten")}><Heart className="size-4" /> Favoriten</Button>
                         <Button size="sm" variant="outline" onClick={() => { setChannels([]); setSelected(null); }}><RefreshCw className="size-4" /> Playlist ändern</Button>
-                        <span className="ml-auto text-xs text-muted-foreground">{visible.length} Sender</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{visible.length} / {channels.length} Sender</span>
                     </div>
                     <Input
                         type="search"
