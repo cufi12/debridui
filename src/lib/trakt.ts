@@ -2,6 +2,7 @@
 export interface MediaIds {
     slug?: string;
     imdb?: string;
+    tmdb?: number;
 }
 
 export interface MediaImages {
