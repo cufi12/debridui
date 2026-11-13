@@ -43,37 +43,38 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
             matchesSourceQualityRange(source, range)
     );
 
-    // Separate cached and uncached
-    const cachedMatches = matchingSources.filter((s) => s.isCached);
-    const uncachedMatches = matchingSources.filter((s) => !s.isCached);
+    // Prefer audio language in this order: German, English, Italian.
+    // Addon metadata is best-effort; untagged streams remain available as fallback.
+    const getLanguagePriority = (source: AddonSource): number => {
+        const metadata = `${source.title} ${source.description || ""}`;
+        if (/(?:\\bGER(?:MAN)?\\b|\\bDEUTSCH(?:E|ER|ES)?\\b|\\bDEU\\b|\\bAUDIO\\s*[:=]?\\s*DE\\b)/i.test(metadata)) return 0;
+        if (/(?:\\bENG(?:LISH)?\\b|\\bAUDIO\\s*[:=]?\\s*EN\\b)/i.test(metadata)) return 1;
+        if (/(?:\\bITA(?:LIAN)?\\b|\\bITALIANO\\b|\\bAUDIO\\s*[:=]?\\s*IT\\b)/i.test(metadata)) return 2;
+        return 3;
+    };
 
-    // Sort function: by resolution (lower index = better), then by source quality (lower index = better)
     const sortByPriority = (a: AddonSource, b: AddonSource) => {
+        const languageDiff = getLanguagePriority(a) - getLanguagePriority(b);
+        if (languageDiff !== 0) return languageDiff;
+
+        // Within the same language, prefer cached sources, then resolution and source quality.
+        const cacheDiff = Number(Boolean(b.isCached)) - Number(Boolean(a.isCached));
+        if (cacheDiff !== 0) return cacheDiff;
+
         const resolutionDiff = getResolutionIndex(a.resolution) - getResolutionIndex(b.resolution);
         if (resolutionDiff !== 0) return resolutionDiff;
 
         return getSourceQualityIndex(a.quality) - getSourceQualityIndex(b.quality);
     };
 
-    cachedMatches.sort(sortByPriority);
-    uncachedMatches.sort(sortByPriority);
+    const sortedMatches = [...matchingSources].sort(sortByPriority);
+    const cachedMatches = sortedMatches.filter((s) => s.isCached);
+    const uncachedMatches = sortedMatches.filter((s) => !s.isCached);
 
-    // Prefer cached sources
-    if (cachedMatches.length > 0) {
+    if (sortedMatches.length > 0) {
         return {
-            source: cachedMatches[0],
-            isCached: true,
-            hasMatches: true,
-            cachedMatches,
-            uncachedMatches,
-        };
-    }
-
-    // Fallback to uncached
-    if (uncachedMatches.length > 0) {
-        return {
-            source: uncachedMatches[0],
-            isCached: false,
+            source: sortedMatches[0],
+            isCached: Boolean(sortedMatches[0].isCached),
             hasMatches: true,
             cachedMatches,
             uncachedMatches,
