@@ -32,7 +32,7 @@ export interface SelectionResult {
     uncachedMatches: AddonSource[];
 }
 
-export function selectBestSource(sources: AddonSource[], settings: StreamingSettings): SelectionResult {
+export function selectBestSource(sources: AddonSource[], settings: StreamingSettings, germanReleaseNames: string[] = []): SelectionResult {
     const range = getActiveRange(settings);
 
     // Filter sources that match preferences
@@ -54,7 +54,21 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
         return 2;
     };
 
+    const normalizedWords = (value: string) =>
+        value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter((word) => word.length > 2 && !["the", "and", "for"].includes(word));
+    const matchesXrelGermanRelease = (source: AddonSource): boolean => {
+        const sourceWords = new Set(normalizedWords(source.title));
+        return germanReleaseNames.some((releaseName) => {
+            if (!/(?:GERMAN|GER|DEUTSCH|\bDE\b|\bDL\b)/i.test(releaseName)) return false;
+            const releaseWords = normalizedWords(releaseName);
+            const shared = releaseWords.filter((word) => sourceWords.has(word));
+            return shared.length >= Math.min(3, Math.max(2, Math.ceil(releaseWords.length * 0.35)));
+        });
+    };
+
     const sortByPriority = (a: AddonSource, b: AddonSource) => {
+        const xrelDiff = Number(matchesXrelGermanRelease(b)) - Number(matchesXrelGermanRelease(a));
+        if (xrelDiff !== 0) return xrelDiff;
         const languageDiff = getLanguagePriority(a) - getLanguagePriority(b);
         if (languageDiff !== 0) return languageDiff;
 
