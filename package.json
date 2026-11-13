@@ -69,7 +69,8 @@
         "zod": "^4.4.3",
         "zustand": "^5.0.14",
         "hls.js": "^1.6.15",
-        "ffprobe-static": "^3.1.0"
+        "ffprobe-static": "^3.1.0",
+        "quickjs-emscripten": "0.32.0"
     },
     "devDependencies": {
         "@biomejs/biome": "2.4.14",
