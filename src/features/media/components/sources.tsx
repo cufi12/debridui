@@ -26,6 +26,7 @@ import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
 import { selectBestSource } from "@/features/media/utils/source-selector";
 import { getSourceQualityIndex } from "@/lib/addons/parser";
+import { AudioTrackProbe } from "./audio-track-probe";
 import type { AddonSource } from "@/lib/addons/types";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings";
@@ -354,6 +355,7 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
                         {active.addonName}
                     </p>
                     <p className="text-xs text-muted-foreground leading-snug wrap-break-word">{active.title}</p>
+                    <AudioTrackProbe source={active} />
                     {active.description && (
                         <p className="text-[11px] leading-relaxed text-muted-foreground/70 whitespace-pre-wrap wrap-break-word">
                             {active.description}
@@ -415,6 +417,8 @@ export const SourceRow = memo(function SourceRow({
                     {source.description}
                 </p>
             )}
+
+            <AudioTrackProbe source={source} />
 
             {/* Controls row — addon kicker (left) + actions (right) */}
             <div className="flex items-center justify-between gap-3 flex-wrap pt-0.5">
