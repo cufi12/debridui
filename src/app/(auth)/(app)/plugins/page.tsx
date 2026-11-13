@@ -269,9 +269,9 @@ export default function PluginsPage() {
                     Provider-JavaScript läuft isoliert in QuickJS – ohne Zugriff auf Node.js, Dateien oder
                     Umgebungsvariablen. Netzwerkzugriffe sind auf HTTP(S)-Ziele mit öffentlichen IPv4-Adressen
                     beschränkt; private Netzwerke werden blockiert. Manche Provider mit zusätzlichen Laufzeit-
-                    Abhängigkeiten können inkompatibel sein. Benötigte Stream-Header werden übernommen, aber nicht
-                    jeder externe Player unterstützt sie. Akzeptiert werden nur HTTPS-Repositories von GitHub,
-                    GitLab und Codeberg.
+                    Abhängigkeiten können inkompatibel sein. Benötigte Stream-Header werden übernommen, aber nicht jeder
+                    externe Player unterstützt sie. Akzeptiert werden nur HTTPS-Repositories von GitHub, GitLab und
+                    Codeberg.
                 </p>
             </div>
         </div>
