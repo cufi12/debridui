@@ -16,7 +16,7 @@ const EPG_CACHE_KEY = "debridui-iptv-epg";
 const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
-type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "inline" | "external"; autoplay?: boolean; startMuted?: boolean };
+type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; autoplay?: boolean; startMuted?: boolean };
 
 async function fetchIPTVText(url: string): Promise<string> {
     const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
@@ -50,7 +50,7 @@ export default function IPTVPage() {
     const [epgUrl, setEpgUrl] = useState("");
     const [playerAutoplay, setPlayerAutoplay] = useState(true);
     const [playerMuted, setPlayerMuted] = useState(false);
-    const [playerMode, setPlayerMode] = useState<"inline" | "external">("inline");
+    const [playerMode, setPlayerMode] = useState<"auto" | "native" | "external">("auto");
     const [playerError, setPlayerError] = useState("");
     const [channels, setChannels] = useState<IPTVChannel[]>([]);
     const [programs, setPrograms] = useState<XMLTVProgram[]>([]);
@@ -74,7 +74,7 @@ export default function IPTVPage() {
             setEpgUrl(config.epgUrl || "");
             setPlayerAutoplay(config.autoplay ?? true);
             setPlayerMuted(config.startMuted ?? false);
-            setPlayerMode(config.playerMode === "external" ? "external" : "inline");
+            setPlayerMode(config.playerMode === "external" || config.playerMode === "native" ? config.playerMode : "auto");
             autoLoadUrlRef.current = config.playlistUrl || "";
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
             if (localCache?.url === config.playlistUrl && Array.isArray(localCache.channels) && localCache.channels.length) {
@@ -225,7 +225,7 @@ export default function IPTVPage() {
         let hls: Hls | null = null;
         setPlayerError("");
 
-        if (isHls && Hls.isSupported()) {
+        if (isHls && playerMode !== "native" && Hls.isSupported()) {
             hls = new Hls({ enableWorker: true, lowLatencyMode: true });
             hls.loadSource(streamUrl);
             hls.attachMedia(video);
