@@ -9,7 +9,6 @@ import type { TraktMedia } from "@/lib/trakt";
 import { MediaOverview } from "./media-overview";
 import { MediaStats } from "./media-stats";
 
-
 function scrollToSelection(type: "movie" | "show") {
     const target = document.getElementById(type === "movie" ? "sources" : "seasons");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
