@@ -132,11 +132,11 @@ export default function IPTVPage() {
     }, [channels, filter, favorites, channelSearch]);
     const groupedChannels = useMemo(() => {
         const labels = [
-            { name: "Albanisch", terms: ["alban", "shqip"] },
-            { name: "German", terms: ["german", "deutsch", "germany", "deu", "deutschland"] },
-            { name: "Schweiz", terms: ["schweiz", "swiss", "suisse", "svizzera", "switzerland"] },
-            { name: "Austria", terms: ["austria", "österreich", "osterreich"] },
-            { name: "Turkish", terms: ["turk", "türk", "turkiye", "türkiye"] },
+            { name: "Albanien (AL)", terms: ["alban", "shqip", "albania"], codes: ["AL"] },
+            { name: "Deutschland (DE)", terms: ["german", "deutsch", "germany", "deu", "deutschland"], codes: ["DE"] },
+            { name: "Schweiz (CH)", terms: ["schweiz", "swiss", "suisse", "svizzera", "switzerland"], codes: ["CH"] },
+            { name: "Österreich (AT)", terms: ["austria", "österreich", "osterreich"], codes: ["AT"] },
+            { name: "Turkish", terms: ["turk", "türk", "turkiye", "türkiye"], codes: [] },
         ];
         const groups = new Map<string, IPTVChannel[]>();
         for (const label of labels) groups.set(label.name, []);
@@ -145,7 +145,12 @@ export default function IPTVPage() {
             const searchable = [channel.group, channel.name, channel.tvgId || ""]
                 .join(" ")
                 .toLocaleLowerCase("de");
-            const match = labels.find((label) => label.terms.some((term) => searchable.includes(term)));
+            const hasCountryCode = (code: string) =>
+                new RegExp(`(^|[^a-z0-9])${code.toLowerCase()}([^a-z0-9]|$)`).test(searchable);
+            const match = labels.find((label) =>
+                label.terms.some((term) => searchable.includes(term)) ||
+                (label.codes || []).some(hasCountryCode)
+            );
             if (match) groups.get(match.name)?.push(channel);
             else other.push(channel);
         }
