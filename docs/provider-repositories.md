@@ -55,7 +55,7 @@ For movies, `mediaType` is `movie`. For series, it is `tv`, with `season` and `e
 - Provider JavaScript runs in QuickJS, not in the DebridUI application context.
 - Provider code receives no Node.js APIs, filesystem access, process environment, or ambient user cookies.
 - Outbound requests are limited to HTTP(S), public IPv4 destinations, and standard ports. Private/reserved network destinations are rejected and DNS results are pinned for each request.
-- Each provider is limited to 12 requests, 1 MB per response, 3 MB total response data, 500 KB of source, 15 seconds of execution, 16 MB of VM memory, and a 512 KB stack.
+- Up to eight enabled provider modules are executed per search, in batches of four. Each provider is limited to 12 requests, 1 MB per response, 3 MB total response data, 500 KB of source, 15 seconds of execution, 16 MB of VM memory, and a 512 KB stack.
 - Redirects are revalidated and limited to three hops.
 - The runtime supports the common single-file `module.exports.getStreams` shape, `fetch`, response `text()`/`json()`, basic `URL`/`URLSearchParams`, `atob`, `btoa`, and a no-op console. Providers that require Node modules, `require()`, third-party packages such as Cheerio, or other browser/native APIs may not work.
 - Returned HTTP headers are retained on stream sources. Playback support for custom headers depends on the selected player; not every external player can apply them.
