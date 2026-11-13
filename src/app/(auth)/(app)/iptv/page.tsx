@@ -142,7 +142,7 @@ export default function IPTVPage() {
         for (const label of labels) groups.set(label.name, []);
         const other: IPTVChannel[] = [];
         for (const channel of visible) {
-            const searchable = [channel.group, channel.name, channel.tvgId || ""]
+            const searchable = [channel.group, channel.name, channel.tvgId || "", channel.countryCode || ""]
                 .join(" ")
                 .toLocaleLowerCase("de");
             const hasCountryCode = (code: string) =>
