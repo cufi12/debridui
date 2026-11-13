@@ -15,6 +15,10 @@ export interface ProviderInvocation {
     mediaType: "movie" | "tv";
     season?: number;
     episode?: number;
+    /** Selected media metadata; never an API credential. */
+    title?: string;
+    year?: number;
+    imdbId?: string;
 }
 
 export function createProviderInvocation(
@@ -27,10 +31,18 @@ export function createProviderInvocation(
 
     if (type === "show") {
         if (!tvParams || !Number.isInteger(tvParams.season) || !Number.isInteger(tvParams.episode)) return null;
-        return { tmdbId, mediaType: "tv", season: tvParams.season, episode: tvParams.episode };
+        return {
+            tmdbId,
+            mediaType: "tv",
+            season: tvParams.season,
+            episode: tvParams.episode,
+            title: media.title,
+            year: media.year,
+            imdbId: media.ids?.imdb,
+        };
     }
 
-    return { tmdbId, mediaType: "movie" };
+    return { tmdbId, mediaType: "movie", title: media.title, year: media.year, imdbId: media.ids?.imdb };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
