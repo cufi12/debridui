@@ -1,0 +1,159 @@
+"use server";
+
+import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { db, upsertUserSettings } from "@/lib/db/drizzle";
+import { userSettings } from "@/lib/db/schema";
+
+const providerSchema = z.object({
+    id: z.string().min(1).max(100),
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional().default(""),
+    version: z.string().max(40).optional().default(""),
+    author: z.string().max(100).optional().default(""),
+    filename: z.string().min(1).max(300),
+    supportedTypes: z.array(z.enum(["movie", "tv", "series"])).max(5).default(["movie", "tv"]),
+    enabled: z.boolean().optional().default(false),
+    logo: z.string().url().optional(),
+    contentLanguage: z.array(z.string().max(12)).max(30).optional().default([]),
+}).passthrough();
+
+const repositoryManifestSchema = z.object({
+    name: z.string().min(1).max(120),
+    version: z.string().max(40).optional().default(""),
+    scrapers: z.array(providerSchema).max(300),
+}).passthrough();
+
+type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
+type Repository = {
+    id: string;
+    url: string;
+    name: string;
+    version: string;
+    providers: Provider[];
+    updatedAt: string;
+};
+
+async function currentUserId() {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) redirect("/login");
+    return session.user.id;
+}
+
+function validateRepositoryUrl(value: string) {
+    const url = new URL(z.string().url().parse(value));
+    const allowed = ["raw.githubusercontent.com", "github.io", "gitlab.com", "gitlab.io", "codeberg.org"];
+    if (url.protocol !== "https:" || !allowed.some((host) => url.hostname === host || url.hostname.endsWith("." + host))) {
+        throw new Error("Erlaubt sind HTTPS-Manifest-URLs von GitHub, GitLab oder Codeberg.");
+    }
+    if (!url.pathname.toLowerCase().endsWith("manifest.json")) {
+        throw new Error("Die Repository-URL muss auf manifest.json enden.");
+    }
+    return url.toString();
+}
+
+async function loadManifest(url: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    try {
+        const response = await fetch(url, {
+            headers: { accept: "application/json" },
+            cache: "no-store",
+            redirect: "error",
+            signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Repository antwortet mit HTTP ${response.status}.`);
+        const length = Number(response.headers.get("content-length") || 0);
+        if (length > 1_000_000) throw new Error("Das Manifest ist zu groß (maximal 1 MB).");
+        const text = await response.text();
+        if (new TextEncoder().encode(text).byteLength > 1_000_000) throw new Error("Das Manifest ist zu groß (maximal 1 MB).");
+        const parsed = repositoryManifestSchema.parse(JSON.parse(text));
+        const base = new URL(".", url);
+        const providers = parsed.scrapers.map((provider) => {
+            const file = new URL(provider.filename, base);
+            if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(base.pathname.replace(/[^/]*$/, ""))) {
+                throw new Error(`Ungültiger Provider-Pfad bei ${provider.name}.`);
+            }
+            return { ...provider, enabled: false };
+        });
+        return { name: parsed.name, version: parsed.version, providers };
+    } catch (error) {
+        if (error instanceof z.ZodError) throw new Error("Das Manifest hat kein unterstütztes Nuvio-Format.");
+        if (error instanceof SyntaxError) throw new Error("Die URL liefert kein gültiges JSON.");
+        throw error;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function readRepositories(userId: string): Promise<Repository[]> {
+    const [row] = await db.select({ settings: userSettings.settings }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1);
+    const settings = row?.settings && typeof row.settings === "object" ? row.settings as Record<string, unknown> : {};
+    const parsed = z.array(z.any()).max(20).safeParse(settings.pluginRepositories);
+    return parsed.success ? parsed.data as Repository[] : [];
+}
+
+async function writeRepositories(userId: string, repositories: Repository[]) {
+    await upsertUserSettings(db, userId, { pluginRepositories: repositories });
+}
+
+export async function getPluginRepositories() {
+    return readRepositories(await currentUserId());
+}
+
+export async function addPluginRepository(rawUrl: string) {
+    const userId = await currentUserId();
+    const url = validateRepositoryUrl(rawUrl.trim());
+    const existing = await readRepositories(userId);
+    if (existing.some((repo) => repo.url === url)) throw new Error("Dieses Repository ist bereits hinzugefügt.");
+    if (existing.length >= 20) throw new Error("Maximal 20 Repositories sind möglich.");
+    const manifest = await loadManifest(url);
+    const repository: Repository = {
+        id: crypto.randomUUID(),
+        url,
+        ...manifest,
+        providers: manifest.providers.map((provider) => ({ ...provider, enabled: false })),
+        updatedAt: new Date().toISOString(),
+    };
+    await writeRepositories(userId, [...existing, repository]);
+    return repository;
+}
+
+export async function refreshPluginRepository(repositoryId: string) {
+    const userId = await currentUserId();
+    const repositories = await readRepositories(userId);
+    const current = repositories.find((repo) => repo.id === repositoryId);
+    if (!current) throw new Error("Repository nicht gefunden.");
+    const manifest = await loadManifest(current.url);
+    const providers = manifest.providers.map((provider) => ({
+        ...provider,
+        enabled: current.providers.find((old) => old.id === provider.id)?.enabled ?? false,
+    }));
+    const updated = { ...current, ...manifest, providers, updatedAt: new Date().toISOString() };
+    await writeRepositories(userId, repositories.map((repo) => repo.id === repositoryId ? updated : repo));
+    return updated;
+}
+
+export async function setRepositoryProviderEnabled(repositoryId: string, providerId: string, enabled: boolean) {
+    const userId = await currentUserId();
+    const repos = await readRepositories(userId);
+    const repo = repos.find((item) => item.id === repositoryId);
+    if (!repo) throw new Error("Repository nicht gefunden.");
+    if (!repo.providers.some((provider) => provider.id === providerId)) throw new Error("Provider nicht gefunden.");
+    const updated = repos.map((item) => item.id !== repositoryId ? item : {
+        ...item,
+        providers: item.providers.map((provider) => provider.id === providerId ? { ...provider, enabled: z.boolean().parse(enabled) } : provider),
+    });
+    await writeRepositories(userId, updated);
+    return { success: true };
+}
+
+export async function removePluginRepository(repositoryId: string) {
+    const userId = await currentUserId();
+    const repos = await readRepositories(userId);
+    await writeRepositories(userId, repos.filter((repo) => repo.id !== repositoryId));
+    return { success: true };
+}
