@@ -76,11 +76,9 @@ export default function IPTVPage() {
             setPlayerMuted(config.startMuted ?? false);
             setPlayerMode(config.playerMode === "external" ? "external" : "inline");
             autoLoadUrlRef.current = config.playlistUrl || "";
-            const playlistCache = await idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY);
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-            const cachedPlaylist = playlistCache?.url === config.playlistUrl ? playlistCache : localCache;
-            if (cachedPlaylist?.url === config.playlistUrl && Array.isArray(cachedPlaylist.channels) && cachedPlaylist.channels.length) {
-                setChannels(cachedPlaylist.channels);
+            if (localCache?.url === config.playlistUrl && Array.isArray(localCache.channels) && localCache.channels.length) {
+                setChannels(localCache.channels);
             }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
