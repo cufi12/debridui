@@ -59,4 +59,4 @@ jobs:
         run: bun run verify
 
       - name: Smoke-test QuickJS provider runtime
-        run: bun --conditions=react-server scripts/provider-runtime-smoke.ts
+        run: bun scripts/provider-runtime-smoke.ts
