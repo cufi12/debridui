@@ -6,11 +6,11 @@ import { getQuickJS } from "quickjs-emscripten";
 import { sanitizeStreamHeaders } from "@/lib/addons/parser";
 import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
-const PROVIDER_TIMEOUT_MS = 15_000;
-const FETCH_TIMEOUT_MS = 8_000;
-const MAX_REQUESTS = 12;
-const MAX_RESPONSE_BYTES = 1_000_000;
-const MAX_TOTAL_RESPONSE_BYTES = 3_000_000;
+const PROVIDER_TIMEOUT_MS = 28_000;
+const FETCH_TIMEOUT_MS = 10_000;
+const MAX_REQUESTS = 24;
+const MAX_RESPONSE_BYTES = 1_500_000;
+const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
 
 type ProviderFetchInit = {
     method?: string;
@@ -115,7 +115,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
                     total += buffer.byteLength;
                     if (total > MAX_RESPONSE_BYTES) {
-                        request.destroy(new Error("Provider response exceeds 1 MB."));
+                        request.destroy(new Error("Provider response exceeds 1.5 MB."));
                         return;
                     }
                     chunks.push(buffer);
