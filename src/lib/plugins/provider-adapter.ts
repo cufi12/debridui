@@ -95,3 +95,52 @@ export function parseRepositoryProviderStreams(
     const sourceId = `repository:${repositoryId}:${providerId}`;
     return parseStreams(streams, sourceId, providerName);
 }
+
+export interface RepositoryProviderModule {
+    repositoryId: string;
+    repositoryName: string;
+    providerId: string;
+    providerName: string;
+    source: string;
+}
+
+export type RepositoryProviderExecutor = (
+    source: string,
+    invocation: ProviderInvocation
+) => Promise<unknown>;
+
+/**
+ * Run provider modules through an injected sandbox implementation.
+ * This adapter deliberately has no eval/Function fallback: callers must
+ * supply the dedicated sandbox executor.
+ */
+export async function executeRepositoryProviderModules(
+    modules: RepositoryProviderModule[],
+    invocation: ProviderInvocation,
+    execute: RepositoryProviderExecutor
+): Promise<AddonSource[]> {
+    const selected = modules.slice(0, 20);
+    const sources: AddonSource[] = [];
+
+    for (let index = 0; index < selected.length; index += 4) {
+        const batch = await Promise.all(selected.slice(index, index + 4).map(async (module) => {
+            try {
+                const result = await execute(module.source, invocation);
+                return parseRepositoryProviderStreams(
+                    result,
+                    module.repositoryId,
+                    module.providerId,
+                    module.providerName
+                );
+            } catch {
+                // A broken provider must not prevent other repositories from
+                // returning usable streams.
+                return [];
+            }
+        }));
+        sources.push(...batch.flat());
+        if (sources.length >= 100) return sources.slice(0, 100);
+    }
+
+    return sources;
+}
