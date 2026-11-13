@@ -83,6 +83,8 @@ export interface AddonStream {
     title?: string;
     description?: string;
     url?: string;
+    /** Optional HTTP request headers required by some provider streams. */
+    headers?: Record<string, string>;
     infoHash?: string;
     fileIdx?: number;
     behaviorHints?: {
@@ -107,6 +109,8 @@ export interface AddonSource {
     peers?: string;
     magnet?: string;
     url?: string;
+    /** Preserved provider headers; playback adapters may consume these where supported. */
+    headers?: Record<string, string>;
     isCached?: boolean;
     addonId: string;
     addonName: string;
