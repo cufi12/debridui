@@ -51,29 +51,45 @@ export function normalizeProviderStreams(result: unknown, providerId: string, pr
     return candidate.slice(0, 100).flatMap((item): AddonStream[] => {
         if (!isRecord(item)) return [];
         const rawUrl = typeof item.url === "string" ? item.url : typeof item.link === "string" ? item.link : "";
-        let parsedUrl: URL;
-        try {
-            parsedUrl = new URL(rawUrl);
-        } catch {
-            return [];
+        let parsedUrl: URL | undefined;
+        if (rawUrl) {
+            try {
+                parsedUrl = new URL(rawUrl);
+            } catch {
+                return [];
+            }
+            if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") return [];
         }
-        if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") return [];
 
-        const name = typeof item.name === "string" ? item.name.slice(0, 300) : providerName;
-        const title = typeof item.title === "string" ? item.title.slice(0, 500) : undefined;
-        const description =
-            typeof item.description === "string"
-                ? item.description.slice(0, 2000)
-                : typeof item.quality === "string"
-                  ? item.quality.slice(0, 100)
+        const rawHash =
+            typeof item.infoHash === "string"
+                ? item.infoHash
+                : typeof item.magnet === "string"
+                  ? item.magnet.match(/urn:btih:([a-f0-9]{40}|[a-z2-7]{32})/i)?.[1]
                   : undefined;
+        const infoHash = rawHash && /^(?:[a-f0-9]{40}|[a-z2-7]{32})$/i.test(rawHash) ? rawHash : undefined;
+        if (!parsedUrl && !infoHash) return [];
+
+        const rawName = typeof item.name === "string" ? item.name.slice(0, 300) : providerName;
+        const resolution = typeof item.resolution === "string" ? item.resolution.slice(0, 20) : "";
+        const quality = typeof item.quality === "string" ? item.quality.slice(0, 80) : "";
+        const size = typeof item.size === "string" ? item.size.slice(0, 40) : "";
+        const name = [rawName || providerName, resolution, quality].filter(Boolean).join(" · ");
+        const title = typeof item.title === "string" ? item.title.slice(0, 500) : undefined;
+        const details = [
+            typeof item.description === "string" ? item.description.slice(0, 1500) : "",
+            size ? `Size: ${size}` : "",
+            quality && !name.includes(quality) ? quality : "",
+        ].filter(Boolean);
+        const description = [`[${providerId}]`, ...details].join(" · ").slice(0, 2000);
 
         return [
             {
-                name: name || providerName,
+                name,
                 title,
-                description: description ? `[${providerId}] ${description}` : `Provider: ${providerName}`,
-                url: parsedUrl.toString(),
+                description: description || `Provider: ${providerName}`,
+                ...(parsedUrl ? { url: parsedUrl.toString() } : {}),
+                ...(infoHash ? { infoHash } : {}),
                 headers: sanitizeStreamHeaders(item.headers),
             },
         ];
