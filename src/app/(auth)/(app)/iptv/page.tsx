@@ -18,7 +18,7 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; autoplay?: boolean; startMuted?: boolean };
 
-async function fetchIPTVText(url: string): Promise<string> {
+function getProxiedStreamUrl(url: string): string {\n    return `/api/iptv/stream?url=${encodeURIComponent(url)}`;\n}\n\nfunction isHlsStream(url: string): boolean {\n    try { return /\\.m3u8$/i.test(new URL(url).pathname); } catch { return /\\.m3u8(?:$|[?#])/i.test(url); }\n}\n\nasync function fetchIPTVText(url: string): Promise<string> {
     const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
         method: "GET",
         cache: "no-store",
@@ -216,7 +216,7 @@ export default function IPTVPage() {
     function playChannel(channel: IPTVChannel) {
         setPlayerError("");
         if (playerMode === "external") {
-            window.open(channel.url, "_blank", "noopener,noreferrer");
+            window.open(getProxiedStreamUrl(channel.url), "_blank", "noopener,noreferrer");
             return;
         }
         setSelected(channel);
@@ -242,7 +242,7 @@ export default function IPTVPage() {
 
         if (isHls && playerMode !== "native" && Hls.isSupported()) {
             hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-            hls.loadSource(streamUrl);
+            hls.loadSource(proxiedStreamUrl);
             hls.attachMedia(video);
             if (playerAutoplay) {
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -352,7 +352,7 @@ export default function IPTVPage() {
                                     {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
                                     <div className="flex flex-wrap justify-end gap-2">
                                         <Button size="sm" variant="outline" onClick={() => {
-                                            if (selected?.url) window.open(selected.url, "_blank", "noopener,noreferrer");
+                                            if (selected?.url) window.open(getProxiedStreamUrl(selected.url), "_blank", "noopener,noreferrer");
                                         }}>
                                             <Play className="size-4" /> Im Browser-Player öffnen
                                         </Button>
