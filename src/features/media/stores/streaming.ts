@@ -197,7 +197,21 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
             const allSources = results.flat();
 
             const streamingSettings = useSettingsStore.getState().get("streaming");
-            const result = selectBestSource(allSources, streamingSettings);
+            // xREL is metadata-only: use verified German release names to rank matching addon sources.
+            let germanReleaseNames: string[] = [];
+            try {
+                const xrelResponse = await fetch(`/api/media/xrel-releases?title=${encodeURIComponent(media.title || title)}&type=${type}`, {
+                    cache: "no-store",
+                    signal: AbortSignal.timeout(8000),
+                });
+                if (xrelResponse.ok) {
+                    const xrelData = (await xrelResponse.json()) as { releases?: string[] };
+                    germanReleaseNames = Array.isArray(xrelData.releases) ? xrelData.releases : [];
+                }
+            } catch {
+                // xREL is an optional ranking signal; source playback must continue if it is unavailable.
+            }
+            const result = selectBestSource(allSources, streamingSettings, germanReleaseNames);
 
             if (!result.hasMatches) {
                 set({ activeRequest: null });
