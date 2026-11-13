@@ -317,7 +317,12 @@ export default function IPTVPage() {
                                         <video ref={videoRef} key={selected.url} controls muted={playerMuted} playsInline className="h-full w-full" onError={() => setPlayerError("Stream konnte nicht geladen werden. Prüfe die Stream-Adresse, den Anbieter-Zugriff und das Stream-Format.")} />
                                     </div>
                                     {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
-                                    <div className="flex justify-end">
+                                    <div className="flex flex-wrap justify-end gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => {
+                                            if (selected?.url) window.open(selected.url, "_blank", "noopener,noreferrer");
+                                        }}>
+                                            <Play className="size-4" /> Im Browser-Player öffnen
+                                        </Button>
                                         <Button size="sm" variant="outline" onClick={() => {
                                             const container = playerContainerRef.current;
                                             if (container?.requestFullscreen) void container.requestFullscreen();
