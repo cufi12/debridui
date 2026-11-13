@@ -244,7 +244,8 @@ export default function IPTVPage() {
         const video = videoRef.current;
         if (!selected || !video || playerMode === "external") return;
         const streamUrl = selected.url;
-        const isHls = isHlsStream(streamUrl);\n        const proxiedStreamUrl = getProxiedStreamUrl(streamUrl);
+        const isHls = isHlsStream(streamUrl);
+        const proxiedStreamUrl = getProxiedStreamUrl(streamUrl);
         let hls: Hls | null = null;
         setPlayerError("");
 
@@ -260,8 +261,8 @@ export default function IPTVPage() {
             hls.on(Hls.Events.ERROR, (_event, data) => {
                 if (data.fatal) {
                     setPlayerError(data.type === Hls.ErrorTypes.NETWORK_ERROR
-                        ? "HLS-Netzwerkfehler: Stream nicht erreichbar oder vom Anbieter blockiert (CORS/Zugriff)."
-                        : "Der HLS-Stream konnte nicht decodiert werden. Bitte anderen Sender oder Stream-Format testen.");
+                        ? `HLS-Netzwerkfehler (${data.details}${data.response?.code ? `, HTTP ${data.response.code}` : ""}): Playlist oder Videosegmente sind nicht erreichbar.`
+                        : `HLS-Wiedergabefehler (${data.details}): Stream oder Codec konnte nicht verarbeitet werden.`);
                     hls?.destroy();
                     hls = null;
                 }
