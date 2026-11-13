@@ -113,8 +113,8 @@ export default function IPTVPage() {
             void idbSet(PLAYLIST_CACHE_KEY, { url: savedUrl, channels: parsed });
             try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
-            if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             const currentConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+            if (embeddedEpg && !currentConfig.epgUrl) setEpgUrl(embeddedEpg);
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 ...currentConfig,
                 playlistUrl: savedUrl,
