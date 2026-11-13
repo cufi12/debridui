@@ -11,6 +11,7 @@ import { BackupSection } from "./_components/backup-section";
 import { CacheSection } from "./_components/cache-section";
 import { DataSection } from "./_components/data-section";
 import { StreamingSection } from "./_components/streaming-section";
+import { IPTVSettingsSection } from "./_components/iptv-section";
 
 export default function SettingsPage() {
     const isSaving = useIsMutating({ mutationKey: USER_SETTINGS_KEY }) > 0;
@@ -34,6 +35,7 @@ export default function SettingsPage() {
             <AppearanceSection />
             <ApiKeysSection />
             <StreamingSection />
+            <IPTVSettingsSection />
             <CacheSection />
             <BackupSection />
             <DataSection />
