@@ -318,7 +318,11 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
                                     value={variantKey(release)}
                                     className="text-xs whitespace-nowrap">
                                     <span className="flex items-center gap-1.5">
-                                        {release.isCached && <Zap className="size-3 fill-current text-green-600" />}
+                                        {release.isCached ? (
+                                            <Zap className="size-3 fill-current text-green-600" />
+                                        ) : (
+                                            <span className="size-1.5 rounded-full bg-amber-500" />
+                                        )}
                                         <span>
                                             {release.addonName} · {release.quality ?? "Standard"}
                                         </span>
