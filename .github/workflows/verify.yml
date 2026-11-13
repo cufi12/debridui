@@ -36,5 +36,18 @@ jobs:
             git push
           fi
 
+      - name: Apply safe formatting and lint fixes
+        run: bun run check:fix
+
+      - name: Commit formatting fixes
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "style: apply Biome fixes"
+            git push
+          fi
+
       - name: Typecheck and lint
         run: bun run verify
