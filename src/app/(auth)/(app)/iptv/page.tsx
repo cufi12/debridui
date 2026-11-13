@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Hls from "hls.js";
+import { get as idbGet, set as idbSet } from "idb-keyval";
 import { Heart, Play, RefreshCw, Tv, X, CalendarDays, Maximize } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -75,10 +76,11 @@ export default function IPTVPage() {
             setPlayerMuted(config.startMuted ?? false);
             setPlayerMode(config.playerMode === "external" ? "external" : "inline");
             autoLoadUrlRef.current = config.playlistUrl || "";
-            const playlistCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-            const cachedChannels = playlistCache?.channels;
-            if (playlistCache?.url === config.playlistUrl && Array.isArray(cachedChannels) && cachedChannels.length) {
-                setChannels(cachedChannels);
+            const playlistCache = await idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY);
+            const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
+            const cachedPlaylist = playlistCache?.url === config.playlistUrl ? playlistCache : localCache;
+            if (cachedPlaylist?.url === config.playlistUrl && Array.isArray(cachedPlaylist.channels) && cachedPlaylist.channels.length) {
+                setChannels(cachedPlaylist.channels);
             }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
@@ -93,17 +95,27 @@ export default function IPTVPage() {
     useEffect(() => {
         const savedUrl = autoLoadUrlRef.current.trim();
         if (!configReady || !savedUrl) return;
-        const cached = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-        if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) return;
         let cancelled = false;
         setLoading(true);
         setError("");
-        fetchIPTVText(savedUrl).then((source) => {
+        Promise.all([
+            idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY),
+            Promise.resolve(JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null),
+        ]).then(([idbCache, localCache]) => {
+            const cached = idbCache?.url === savedUrl ? idbCache : localCache;
+            if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) {
+                if (!cancelled) setChannels(cached.channels);
+                return null;
+            }
+            return fetchIPTVText(savedUrl);
+        }).then((source) => {
+            if (!source || cancelled) return;
             if (cancelled) return;
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
-            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* Keep the playlist available for this session if storage is full. */ }
+            void idbSet(PLAYLIST_CACHE_KEY, { url: savedUrl, channels: parsed });
+            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             saveConfig(savedUrl, epgUrl || embeddedEpg || "");
@@ -154,7 +166,8 @@ export default function IPTVPage() {
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
-            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed })); } catch { /* Keep the playlist available for this session if storage is full. */ }
+            void idbSet(PLAYLIST_CACHE_KEY, { url: playlistUrl.trim(), channels: parsed });
+            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             saveConfig(playlistUrl.trim(), epgUrl || embeddedEpg || "");
