@@ -158,7 +158,7 @@ export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") 
                 filename: provider.filename,
                 supportedTypes: provider.supportedTypes,
             }))
-    );
+    ).slice(0, 100);
 }
 
 export async function addPluginRepository(rawUrl: string) {
