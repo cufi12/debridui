@@ -1,8 +1,12 @@
 name: Verify
 
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
-    branches: [main, staging]
+    branches: [main, staging, plugin-runtime-quickjs]
   pull_request:
     branches: [main, staging]
   workflow_dispatch:
@@ -33,6 +37,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add bun.lock
             git commit -m "chore: update bun lockfile"
+            git pull --rebase origin "$GITHUB_REF_NAME"
             git push
           fi
 
@@ -46,8 +51,12 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -u
             git commit -m "style: apply Biome fixes"
+            git pull --rebase origin "$GITHUB_REF_NAME"
             git push
           fi
 
       - name: Typecheck and lint
         run: bun run verify
+
+      - name: Smoke-test QuickJS provider runtime
+        run: bun scripts/provider-runtime-smoke.ts

@@ -266,10 +266,12 @@ export default function PluginsPage() {
                     <ShieldCheck className="size-4 text-muted-foreground" /> Sicherheit und Kompatibilität
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Aktuell werden Repository-Manifeste geladen und Provider verwaltet. Die Provider-JavaScript-Dateien
-                    werden noch nicht ausgeführt und liefern daher noch keine zusätzlichen Streams. Dafür bauen wir als
-                    nächsten Schritt eine isolierte Laufzeit mit begrenzten Berechtigungen. Es werden nur
-                    HTTPS-Repositories von GitHub, GitLab und Codeberg akzeptiert.
+                    Provider-JavaScript läuft isoliert in QuickJS – ohne Zugriff auf Node.js, Dateien oder
+                    Umgebungsvariablen. Netzwerkzugriffe sind auf HTTP(S)-Ziele mit öffentlichen IPv4-Adressen
+                    beschränkt; private Netzwerke werden blockiert. Manche Provider mit zusätzlichen Laufzeit-
+                    Abhängigkeiten können inkompatibel sein. Benötigte Stream-Header werden übernommen, aber nicht jeder
+                    externe Player unterstützt sie. Akzeptiert werden nur HTTPS-Repositories von GitHub, GitLab und
+                    Codeberg.
                 </p>
             </div>
         </div>
