@@ -58,10 +58,11 @@ async function resolvePublicIpv4(hostname: string): Promise<string> {
     }
 
     const records = await lookup(hostname, { all: true, verbatim: true });
-    if (!records.length || records.some((record) => !isPublicIpv4(record.address))) {
+    const ipv4Records = records.filter((record) => record.family === 4);
+    if (!ipv4Records.length || ipv4Records.some((record) => !isPublicIpv4(record.address))) {
         throw new Error("Private or reserved network addresses are blocked.");
     }
-    const ipv4 = records.find((record) => record.family === 4);
+    const ipv4 = ipv4Records[0];
     if (!ipv4) throw new Error("The destination has no public IPv4 address.");
     return ipv4.address;
 }
@@ -191,7 +192,7 @@ async function safeProviderFetch(
 }
 
 function createQuickJsResponse(
-    vm: Awaited<ReturnType<typeof getQuickJS>> extends never ? never : ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]>,
+    vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]>,
     response: PinnedResponse
 ) {
     const object = vm.newObject();
@@ -305,11 +306,13 @@ export async function executeNuvioProvider(
         const resolvedPromise = vm.resolvePromise(promiseHandle);
         vm.runtime.executePendingJobs();
 
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
         const timeout = new Promise<never>((_, reject) => {
             const remaining = Math.max(1, deadline - Date.now());
-            setTimeout(() => reject(new Error("Provider execution timed out.")), remaining);
+            timeoutId = setTimeout(() => reject(new Error("Provider execution timed out.")), remaining);
         });
         const result = await Promise.race([resolvedPromise, timeout]);
+        if (timeoutId) clearTimeout(timeoutId);
         promiseHandle.dispose();
         const value = vm.unwrapResult(result);
         const output = vm.dump(value);
