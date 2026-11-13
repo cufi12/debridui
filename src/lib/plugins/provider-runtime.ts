@@ -74,7 +74,8 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
     if (url.protocol !== "https:" && url.protocol !== "http:") {
         throw new Error("Only HTTP and HTTPS provider requests are supported.");
     }
-    if (url.username || url.password || (url.port && url.port !== "80" && url.port !== "443")) {
+    const standardPort = url.protocol === "https:" ? "443" : "80";
+    if (url.username || url.password || (url.port && url.port !== standardPort)) {
         throw new Error("Credentials and non-standard network ports are blocked.");
     }
 
