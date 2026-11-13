@@ -16,12 +16,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, type ReactNode, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAddonSources } from "@/features/addons/hooks/use-addons";
+import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
 import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
 import { selectBestSource } from "@/features/media/utils/source-selector";
@@ -191,10 +193,7 @@ function parseSize(size?: string): number {
 const sourceKey = (source: AddonSource) => `${source.addonId}-${source.url}`;
 
 /** Releases that agree on these are the same choice, whichever addon served them */
-const variantKey = (source: AddonSource) =>
-    source.quality || source.size
-        ? `${source.quality ?? ""}-${source.size ?? ""}-${Number(!!source.isCached)}`
-        : source.title;
+const variantKey = (source: AddonSource) => `${sourceKey(source)}-${source.quality ?? ""}-${source.size ?? ""}-${Number(!!source.isCached)}`;
 
 function QuickPlayFrame({ controls, action, detail }: { controls: ReactNode; action: ReactNode; detail: ReactNode }) {
     return (
@@ -319,7 +318,7 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
                                     className="text-xs whitespace-nowrap">
                                     <span className="flex items-center gap-1.5">
                                         {release.isCached && <Zap className="size-3 fill-current text-green-600" />}
-                                        <span>{release.quality ?? "Standard"}</span>
+                                        <span>{release.addonName} · {release.quality ?? "Standard"}</span>
                                         {release.size && (
                                             <span className="tabular-nums text-muted-foreground">{release.size}</span>
                                         )}
@@ -382,15 +381,11 @@ export const SourceRow = memo(function SourceRow({
         <div className="group/source flex flex-col gap-2 px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 transition-colors border-b border-border/40 last:border-0 hover:bg-muted/20">
             {/* Status line — cached · resolution · quality · size */}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs tracking-wider uppercase">
-                {source.isCached && (
-                    <>
-                        <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-500">
-                            <Zap className="size-3 fill-current -translate-y-px" />
-                            <span className="hidden sm:inline">Cached</span>
-                        </span>
-                        <span className="text-border">·</span>
-                    </>
-                )}
+                <span className={cn("inline-flex items-center gap-1", source.isCached ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500")}>
+                    {source.isCached ? <Zap className="size-3 fill-current -translate-y-px" /> : <span className="size-1.5 rounded-full bg-current" />}
+                    <span>{source.isCached ? "Cached" : "Not cached"}</span>
+                </span>
+                <span className="text-border">·</span>
                 <span className={cn("font-medium tabular-nums", resolutionTone)}>{resolutionLabel}</span>
                 {source.quality && (
                     <>
@@ -456,14 +451,37 @@ function SourceRowSkeleton() {
 
 export function Sources({ request, className }: SourcesProps) {
     const {
-        data: sources,
-        isLoading,
+        data: addonSources,
+        isLoading: isAddonSourcesLoading,
         failedAddons,
     } = useAddonSources({
         imdbId: request.imdbId,
         mediaType: request.type,
         tvParams: request.tvParams,
     });
+
+    const tmdbId = request.media.ids?.tmdb;
+    const hasTmdbId = Number.isSafeInteger(tmdbId) && (tmdbId ?? 0) > 0;
+    const {
+        data: repositorySources = [],
+        isLoading: isRepositoryLoading,
+        isError: repositoryFailed,
+    } = useQuery({
+        queryKey: ["repository-provider-sources", tmdbId, request.imdbId, request.type, request.tvParams],
+        queryFn: () => getRepositoryProviderStreams(request.media, request.type, request.tvParams),
+        enabled: hasTmdbId,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+    });
+
+    const sources = useMemo(
+        () => [...(addonSources ?? []), ...repositorySources].sort((a, b) => Number(!!b.isCached) - Number(!!a.isCached)),
+        [addonSources, repositorySources]
+    );
+    const isLoading = isAddonSourcesLoading || isRepositoryLoading;
+    const sourceFailures = repositoryFailed ? [...failedAddons, "Plugin providers"] : failedAddons;
 
     const quickPlay = useSettingsStore((s) => s.settings.quickPlay);
     const setSetting = useSettingsStore((s) => s.set);
@@ -575,12 +593,12 @@ export function Sources({ request, className }: SourcesProps) {
                     </div>
                 )}
 
-                {!isLoading && failedAddons.length > 0 && (
+                {!isLoading && sourceFailures.length > 0 && (
                     <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-destructive/4 border-t border-destructive/20">
                         <AlertTriangle className="size-3.5 text-destructive/70" />
                         <span className="text-[11px] tracking-wide text-destructive/80">
                             <span className="tracking-[0.2em] uppercase text-[10px] mr-2">Unreachable</span>
-                            {failedAddons.join(", ")}
+                            {sourceFailures.join(", ")}
                         </span>
                     </div>
                 )}
