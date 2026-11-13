@@ -350,8 +350,11 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         class URL {
             constructor(input, base) {
                 const parsed = JSON.parse(__parseUrl(String(input), base));
+                const initialSearch = parsed.search || "";
+                delete parsed.href;
+                delete parsed.search;
                 Object.assign(this, parsed);
-                this.searchParams = new URLSearchParams(parsed.search || "");
+                this.searchParams = new URLSearchParams(initialSearch);
             }
             get search() {
                 const query = this.searchParams.toString();
