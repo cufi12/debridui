@@ -60,6 +60,32 @@ function validateRepositoryUrl(value: string) {
     return url.toString();
 }
 
+async function readLimitedText(response: Response, maxBytes = 1_000_000): Promise<string> {
+    const declaredLength = Number(response.headers.get("content-length") || 0);
+    if (declaredLength > maxBytes) throw new Error("Datei ist zu groß (maximal 1 MB).");
+    if (!response.body) throw new Error("Leere Serverantwort.");
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let totalBytes = 0;
+    let result = "";
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            totalBytes += value.byteLength;
+            if (totalBytes > maxBytes) {
+                await reader.cancel();
+                throw new Error("Datei ist zu groß (maximal 1 MB).");
+            }
+            result += decoder.decode(value, { stream: true });
+        }
+        return result + decoder.decode();
+    } finally {
+        reader.releaseLock();
+    }
+}
+
 async function loadManifest(url: string) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12_000);
@@ -71,10 +97,7 @@ async function loadManifest(url: string) {
             signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Repository antwortet mit HTTP ${response.status}.`);
-        const length = Number(response.headers.get("content-length") || 0);
-        if (length > 1_000_000) throw new Error("Das Manifest ist zu groß (maximal 1 MB).");
-        const text = await response.text();
-        if (new TextEncoder().encode(text).byteLength > 1_000_000) throw new Error("Das Manifest ist zu groß (maximal 1 MB).");
+        const text = await readLimitedText(response);
         const parsed = repositoryManifestSchema.parse(JSON.parse(text));
         const base = new URL(".", url);
         const providers = (parsed.providers ?? parsed.scrapers ?? []).map((provider) => {
@@ -196,12 +219,7 @@ export async function getRepositoryProviderSource(repositoryId: string, provider
             signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Provider antwortet mit HTTP ${response.status}.`);
-        const length = Number(response.headers.get("content-length") || 0);
-        if (length > 1_000_000) throw new Error("Provider-Datei ist zu groß (maximal 1 MB).");
-        const source = await response.text();
-        if (new TextEncoder().encode(source).byteLength > 1_000_000) {
-            throw new Error("Provider-Datei ist zu groß (maximal 1 MB).");
-        }
+        const source = await readLimitedText(response);
         return { providerId: provider.id, providerName: provider.name, source };
     } finally {
         clearTimeout(timeout);
