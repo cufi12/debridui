@@ -46,6 +46,9 @@ function getNowNext(channel: IPTVChannel, programs: XMLTVProgram[]) {
 export default function IPTVPage() {
     const [playlistUrl, setPlaylistUrl] = useState("");
     const [epgUrl, setEpgUrl] = useState("");
+    const [playerAutoplay, setPlayerAutoplay] = useState(true);
+    const [playerMuted, setPlayerMuted] = useState(false);
+    const [playerError, setPlayerError] = useState("");
     const [channels, setChannels] = useState<IPTVChannel[]>([]);
     const [programs, setPrograms] = useState<XMLTVProgram[]>([]);
     const [favorites, setFavorites] = useState<string[]>([]);
@@ -65,6 +68,8 @@ export default function IPTVPage() {
             const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
             setPlaylistUrl(config.playlistUrl || "");
             setEpgUrl(config.epgUrl || "");
+            setPlayerAutoplay(config.autoplay ?? true);
+            setPlayerMuted(config.startMuted ?? false);
             autoLoadUrlRef.current = config.playlistUrl || "";
             const playlistCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
             const cachedChannels = playlistCache?.channels;
@@ -247,8 +252,9 @@ export default function IPTVPage() {
                             {selected ? (
                                 <div className="space-y-2">
                                     <div ref={playerContainerRef} className="aspect-video overflow-hidden rounded-lg bg-black">
-                                        <video key={selected.url} src={selected.url} controls autoPlay playsInline className="h-full w-full" />
+                                        <video key={selected.url} src={selected.url} controls autoPlay={playerAutoplay} muted={playerMuted} playsInline className="h-full w-full" onError={() => setPlayerError("Dieser Stream kann vom Browser nicht wiedergegeben werden. Häufige Ursachen: TS-Stream ohne passenden Demuxer, nicht unterstütztes HLS-Format, abgelaufene Stream-URL oder Anbieter-Sperre.")} />
                                     </div>
+                                    {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
                                     <div className="flex justify-end">
                                         <Button size="sm" variant="outline" onClick={() => {
                                             const container = playerContainerRef.current;
@@ -285,7 +291,7 @@ export default function IPTVPage() {
                                         {isExpanded && <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">
                                             {groupChannels.map((channel) => (
                                                 <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
-                                                    <button type="button" onClick={() => setSelected(channel)} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                    <button type="button" onClick={() => { setPlayerError(""); setSelected(channel); }} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                                         {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
                                                         <span className="truncate text-sm">{channel.name}</span>
                                                     </button>
@@ -303,7 +309,7 @@ export default function IPTVPage() {
                             <h2 className="text-sm font-medium">Senderliste</h2>
                             <div className="max-h-[65vh] space-y-1 overflow-y-auto">
                                 {visible.map((channel, index) => (
-                                    <button key={channel.id} type="button" onClick={() => setSelected(channel)} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
+                                    <button key={channel.id} type="button" onClick={() => { setPlayerError(""); setSelected(channel); }} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
                                         <span className="w-6 text-right text-xs text-muted-foreground">{index + 1}</span><span className="flex-1 truncate">{channel.name}</span><Play className="size-3 shrink-0" />
                                     </button>
                                 ))}
