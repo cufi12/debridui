@@ -201,9 +201,13 @@ function createQuickJsResponse(
     response: PinnedResponse
 ) {
     const object = vm.newObject();
-    vm.setProp(object, "status", vm.newNumber(response.status));
+    const status = vm.newNumber(response.status);
+    const url = vm.newString(response.url);
+    vm.setProp(object, "status", status);
     vm.setProp(object, "ok", response.status >= 200 && response.status < 300 ? vm.true : vm.false);
-    vm.setProp(object, "url", vm.newString(response.url));
+    vm.setProp(object, "url", url);
+    status.dispose();
+    url.dispose();
 
     const text = vm.newFunction("text", () => vm.newString(response.body));
     vm.setProp(object, "text", text);
