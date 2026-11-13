@@ -29,7 +29,7 @@ export function parseM3U(source: string): IPTVChannel[] {
         if (line.startsWith("#") || !/^https?:\/\//i.test(line)) continue;
 
         const name = metadata.match(/,(.*)$/)?.[1]?.trim() || new URL(line).hostname;
-        const attr = (key: string) => metadata.match(new RegExp("(?:^|\\s)" + key + '="([^"]*)"', "i"))?.[1];
+        const attr = (key: string) => metadata.match(new RegExp(`(?:^|\\s)${key}="([^"]*)"`, "i"))?.[1];
         const group = attr("group-title") || attr("tvg-group") || explicitGroup || "Weitere Sender";
         channels.push({
             id: attr("tvg-id") || line,
