@@ -206,7 +206,7 @@ function createQuickJsResponse(
 
     const json = vm.newFunction("json", () => {
         const parsed = JSON.parse(response.body) as unknown;
-        const result = vm.evalCode("(" + JSON.stringify(parsed) + ")");
+        const result = vm.evalCode(`(${JSON.stringify(parsed)})`);
         return vm.unwrapResult(result);
     });
     vm.setProp(object, "json", json);
@@ -235,7 +235,8 @@ export async function executeNuvioProvider(
     invocation: ProviderInvocation
 ): Promise<unknown> {
     if (source.length > 500_000) throw new Error("Provider source exceeds 500 KB.");
-    const QuickJS = await (quickJsPromise ??= getQuickJS());
+    if (!quickJsPromise) quickJsPromise = getQuickJS();
+    const QuickJS = await quickJsPromise;
     const vm = QuickJS.newContext();
     const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
     const controllers = new Set<AbortController>();
