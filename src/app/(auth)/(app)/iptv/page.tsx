@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Hls from "hls.js";
 import { Heart, Play, RefreshCw, Tv, X, CalendarDays, Maximize } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default function IPTVPage() {
     const [configReady, setConfigReady] = useState(false);
     const autoLoadUrlRef = useRef("");
     const playerContainerRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         try {
@@ -205,6 +207,49 @@ export default function IPTVPage() {
     const nowNext = selected ? getNowNext(selected, programs) : null;
 
     useEffect(() => {
+        const video = videoRef.current;
+        if (!selected || !video || playerMode === "external") return;
+        const streamUrl = selected.url;
+        const isHls = /\\.m3u8(?:$|[?#])/i.test(streamUrl);
+        let hls: Hls | null = null;
+        setPlayerError("");
+
+        if (isHls && Hls.isSupported()) {
+            hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+                if (data.fatal) {
+                    setPlayerError(data.type === Hls.ErrorTypes.NETWORK_ERROR
+                        ? "HLS-Netzwerkfehler: Stream nicht erreichbar oder vom Anbieter blockiert (CORS/Zugriff)."
+                        : "Der HLS-Stream konnte nicht decodiert werden. Bitte anderen Sender oder Stream-Format testen.");
+                    hls?.destroy();
+                    hls = null;
+                }
+            });
+        } else {
+            video.src = streamUrl;
+            if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
+                setPlayerError("Dieser Browser unterstützt HLS nicht nativ. Bitte HLS-Wiedergabe mit einem kompatiblen Browser testen.");
+            }
+        }
+
+        if (playerAutoplay) {
+            const attempt = video.play();
+            if (attempt) attempt.catch(() => {
+                setPlayerError("Der Browser hat die automatische Wiedergabe blockiert. Bitte im Player auf Play drücken.");
+            });
+        }
+        return () => {
+            if (hls) hls.destroy();
+            video.pause();
+            video.removeAttribute("src");
+            video.load();
+        };
+    }, [selected, playerMode, playerAutoplay]);
+
+
+    useEffect(() => {
         function handleRemoteKey(event: KeyboardEvent) {
             const target = event.target as HTMLElement | null;
             if (target?.closest("input, textarea, select")) return;
@@ -264,7 +309,7 @@ export default function IPTVPage() {
                             {selected ? (
                                 <div className="space-y-2">
                                     <div ref={playerContainerRef} className="aspect-video overflow-hidden rounded-lg bg-black">
-                                        <video key={selected.url} src={selected.url} controls autoPlay={playerAutoplay} muted={playerMuted} playsInline className="h-full w-full" onError={() => setPlayerError("Dieser Stream kann vom Browser nicht wiedergegeben werden. Häufige Ursachen: TS-Stream ohne passenden Demuxer, nicht unterstütztes HLS-Format, abgelaufene Stream-URL oder Anbieter-Sperre.")} />
+                                        <video ref={videoRef} key={selected.url} controls muted={playerMuted} playsInline className="h-full w-full" onError={() => setPlayerError("Stream konnte nicht geladen werden. Prüfe die Stream-Adresse, den Anbieter-Zugriff und das Stream-Format.")} />
                                     </div>
                                     {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
                                     <div className="flex justify-end">
