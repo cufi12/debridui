@@ -66,8 +66,9 @@ export default function IPTVPage() {
             setEpgUrl(config.epgUrl || "");
             autoLoadUrlRef.current = config.playlistUrl || "";
             const playlistCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-            if (playlistCache?.url === config.playlistUrl && Array.isArray(playlistCache.channels) && playlistCache.channels.length) {
-                setChannels(playlistCache.channels);
+            const cachedChannels = playlistCache?.channels;
+            if (playlistCache?.url === config.playlistUrl && Array.isArray(cachedChannels) && cachedChannels.length) {
+                setChannels(cachedChannels);
             }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
