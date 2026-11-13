@@ -57,6 +57,7 @@ export default function IPTVPage() {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selected, setSelected] = useState<IPTVChannel | null>(null);
     const [filter, setFilter] = useState("Alle");
+    const [channelSearch, setChannelSearch] = useState("");
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(false);
     const [epgLoading, setEpgLoading] = useState(false);
@@ -97,8 +98,14 @@ export default function IPTVPage() {
         setLoading(true);
         setError("");
         Promise.all([
-            idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY),
-            Promise.resolve(JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null),
+            idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY).catch(() => null),
+            Promise.resolve().then(() => {
+                try {
+                    return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
+                } catch {
+                    return null;
+                }
+            }),
         ]).then(([idbCache, localCache]) => {
             const cached = idbCache?.url === savedUrl ? idbCache : localCache;
             if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) {
@@ -125,9 +132,14 @@ export default function IPTVPage() {
         return () => { cancelled = true; };
     }, [configReady]);
 
-    const visible = useMemo(() => channels.filter((channel) =>
-        filter !== "Favoriten" || favorites.includes(channel.id)
-    ), [channels, filter, favorites]);
+    const visible = useMemo(() => {
+        const query = channelSearch.trim().toLocaleLowerCase("de");
+        return channels.filter((channel) => {
+            const matchesFavorite = filter !== "Favoriten" || favorites.includes(channel.id);
+            const searchable = [channel.name, channel.group || "", channel.tvgId || ""].join(" ").toLocaleLowerCase("de");
+            return matchesFavorite && (!query || searchable.includes(query));
+        });
+    }, [channels, filter, favorites, channelSearch]);
     const groupedChannels = useMemo(() => {
         const labels = [
             { name: "Albanisch", terms: ["alban", "shqip"] },
@@ -138,11 +150,14 @@ export default function IPTVPage() {
         ];
         const groups = new Map<string, IPTVChannel[]>();
         for (const label of labels) groups.set(label.name, []);
+        const other: IPTVChannel[] = [];
         for (const channel of visible) {
             const sourceGroup = (channel.group || "").toLocaleLowerCase("de");
             const match = labels.find((label) => label.terms.some((term) => sourceGroup.includes(term)));
             if (match) groups.get(match.name)?.push(channel);
+            else other.push(channel);
         }
+        if (other.length) groups.set("Weitere Sender", other);
         return Array.from(groups.entries()).filter(([, items]) => items.length > 0);
     }, [visible]);
 
@@ -310,6 +325,13 @@ export default function IPTVPage() {
                         <Button size="sm" variant="outline" onClick={() => { setChannels([]); setSelected(null); }}><RefreshCw className="size-4" /> Playlist ändern</Button>
                         <span className="ml-auto text-xs text-muted-foreground">{visible.length} Sender</span>
                     </div>
+                    <Input
+                        type="search"
+                        value={channelSearch}
+                        onChange={(event) => setChannelSearch(event.target.value)}
+                        placeholder="Sender, Gruppe oder TVG-ID suchen…"
+                        aria-label="Sender suchen"
+                    />
                     <section className="rounded-lg border border-border/60 p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
                             <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL" />
