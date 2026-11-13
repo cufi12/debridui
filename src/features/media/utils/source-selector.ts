@@ -43,13 +43,13 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
             matchesSourceQualityRange(source, range)
     );
 
-    // Prefer audio language in this order: German, English, Italian.
-    // Addon metadata is best-effort; untagged streams remain available as fallback.
+    // Prefer German, then English, then Italian. Recognize common release tags
+    // such as DE/DEU/GER, country flags, and full language names.
     const getLanguagePriority = (source: AddonSource): number => {
         const metadata = `${source.title} ${source.description || ""}`;
-        if (/(?:\bGER(?:MAN)?\b|\bDEUTSCH(?:E|ER|ES)?\b|\bDEU\b|\bAUDIO\s*[:=]?\s*DE\b)/i.test(metadata)) return 0;
-        if (/(?:\bENG(?:LISH)?\b|\bAUDIO\s*[:=]?\s*EN\b)/i.test(metadata)) return 1;
-        if (/(?:\bITA(?:LIAN)?\b|\bITALIANO\b|\bAUDIO\s*[:=]?\s*IT\b)/i.test(metadata)) return 2;
+        if (/(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(metadata)) return 0;
+        if (/(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata)) return 1;
+        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata)) return 2;
         return 3;
     };
 
