@@ -21,6 +21,10 @@ interface ProbeResponse {
     error?: string;
 }
 
+function isGermanTrack(track: AudioTrack): boolean {
+    return ["de", "deu", "ger"].includes((track.language || "").toLowerCase());
+}
+
 function languageName(code: string | null): string {
     if (!code) return "Sprache nicht markiert";
     const normalized = code.toLowerCase();
@@ -60,25 +64,42 @@ export function AudioTrackProbe({ source }: { source: AddonSource }) {
         }
     }
 
+    const tracks = result?.audioTracks || [];
+    const hasGerman = tracks.some(isGermanTrack);
+
     return (
         <div className="space-y-2">
             <Button type="button" size="sm" variant="outline" onClick={checkTracks} disabled={loading}>
                 {loading ? "Prüfe Tonspuren…" : "Tonspuren prüfen"}
             </Button>
             {result && (
-                <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-1.5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        Tatsächlich enthaltene Audiospuren
-                    </p>
+                <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Tatsächlich enthaltene Audiospuren
+                        </p>
+                        {hasGerman ? (
+                            <span className="text-[10px] font-semibold text-green-600">Deutsch bestätigt</span>
+                        ) : (
+                            <span className="text-[10px] font-semibold text-amber-600">Keine deutsche Tonspur erkannt</span>
+                        )}
+                    </div>
                     {result.fileName && <p className="text-xs text-muted-foreground break-all">{result.fileName}</p>}
-                    {result.audioTracks?.length ? result.audioTracks.map((track) => (
+                    {tracks.length ? tracks.map((track) => (
                         <div key={track.index} className="flex flex-wrap items-center gap-x-2 text-xs">
-                            <span className="font-medium">{languageName(track.language)}</span>
+                            <span className={isGermanTrack(track) ? "font-semibold text-green-600" : "font-medium"}>
+                                {languageName(track.language)}
+                            </span>
                             <span className="text-muted-foreground">{track.codec}</span>
                             {track.title && <span className="text-muted-foreground">· {track.title}</span>}
                         </div>
                     )) : (
                         <p className="text-xs text-muted-foreground">Keine Audiospur erkannt.</p>
+                    )}
+                    {!hasGerman && (
+                        <p className="text-xs text-amber-600">
+                            Diese Datei ist nicht als deutschsprachig bestätigt. Wähle eine andere Release-Version und prüfe sie erneut.
+                        </p>
                     )}
                 </div>
             )}
