@@ -5,6 +5,7 @@ export type IPTVChannel = {
     group: string;
     logo?: string;
     tvgId?: string;
+    countryCode?: string;
 };
 
 export function parseM3U(source: string): IPTVChannel[] {
@@ -37,6 +38,7 @@ export function parseM3U(source: string): IPTVChannel[] {
             group,
             logo: attr("tvg-logo"),
             tvgId: attr("tvg-id"),
+            countryCode: attr("tvg-country") || attr("country") || attr("tvg-country-code"),
         });
         metadata = "";
         explicitGroup = "";
