@@ -162,8 +162,19 @@ export function parseStream(stream: AddonStream, addonId: string, addonName: str
     const title = stream.title || "";
     const description = stream.description || "";
 
-    // Combine title and description
-    const combinedDescription = [title, description].filter(Boolean).join("\n");
+    // Label only languages explicitly indicated by addon metadata.
+    const metadata = [name, title, description].filter(Boolean).join(" ");
+    const audioLanguage =
+        /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\\s*[:=]?\\s*DE\\b/i.test(metadata)
+            ? "Deutsch erkannt"
+            : /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\\s*[:=]?\\s*EN\\b/i.test(metadata)
+              ? "Englisch erkannt"
+              : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\\s*[:=]?\\s*ES\\b/i.test(metadata)
+                ? "Spanisch erkannt"
+                : /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\\s*[:=]?\\s*IT\\b/i.test(metadata)
+                  ? "Italienisch erkannt"
+                  : "Sprache unbekannt";
+    const combinedDescription = [title, description, `Audio-Sprache: ${audioLanguage}`].filter(Boolean).join("\\n");
     const size = extractSize(stream);
     const resolution = extractResolution(stream);
     const quality = detectQuality(stream);
