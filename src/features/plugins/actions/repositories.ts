@@ -70,7 +70,7 @@ function validateRepositoryUrl(value: string) {
     const allowed = ["raw.githubusercontent.com", "github.io", "gitlab.com", "gitlab.io", "codeberg.org"];
     if (
         url.protocol !== "https:" ||
-        !allowed.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
+        !allowed.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))
     ) {
         throw new Error("Erlaubt sind HTTPS-Manifest-URLs von GitHub, GitLab oder Codeberg.");
     }
