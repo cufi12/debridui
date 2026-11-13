@@ -324,6 +324,27 @@ export default function IPTVPage() {
                             <div className="space-y-2">
                                 {groupedChannels.map(([groupName, groupChannels], groupIndex) => {
                                     const isExpanded = expandedGroups[groupName] ?? groupIndex === 0;
+                                    const nested = new Map<string, IPTVChannel[]>();
+                                    for (const channel of groupChannels) {
+                                        const rawGroup = (channel.group || "").trim();
+                                        const nestedName = groupName === "Deutschland (DE)"
+                                            ? rawGroup.match(/^DE\\s*(?:[|:/ >\\-–—]+)\\s*(.+)$/i)?.[1]?.trim()
+                                                || rawGroup.match(/^(.+?)\\s*(?:[|:/ >\\-–—]+)\\s*DE$/i)?.[1]?.trim()
+                                            : undefined;
+                                        const key = nestedName || "";
+                                        if (!nested.has(key)) nested.set(key, []);
+                                        nested.get(key)!.push(channel);
+                                    }
+                                    const hasNested = nested.size > 1 || (nested.size === 1 && !nested.has(""));
+                                    const renderChannel = (channel: IPTVChannel) => (
+                                        <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
+                                            <button type="button" onClick={() => playChannel(channel)} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
+                                                <span className="truncate text-sm">{channel.name}</span>
+                                            </button>
+                                            <Button size="icon" variant="ghost" className="size-8 shrink-0" onClick={() => toggleFavorite(channel.id)} aria-label="Favorit umschalten"><Heart className={favorites.includes(channel.id) ? "size-4 fill-current text-red-500" : "size-4"} /></Button>
+                                        </div>
+                                    );
                                     return (
                                     <section key={groupName} className="overflow-hidden rounded-lg border border-border/60">
                                         <button
@@ -335,16 +356,13 @@ export default function IPTVPage() {
                                             <span className="truncate">{groupName}</span>
                                             <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">{groupChannels.length} Sender <span aria-hidden="true">{isExpanded ? "−" : "+"}</span></span>
                                         </button>
-                                        {isExpanded && <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">
-                                            {groupChannels.map((channel) => (
-                                                <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
-                                                    <button type="button" onClick={() => playChannel(channel)} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                                        {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
-                                                        <span className="truncate text-sm">{channel.name}</span>
-                                                    </button>
-                                                    <Button size="icon" variant="ghost" className="size-8 shrink-0" onClick={() => toggleFavorite(channel.id)} aria-label="Favorit umschalten"><Heart className={favorites.includes(channel.id) ? "size-4 fill-current text-red-500" : "size-4"} /></Button>
+                                        {isExpanded && <div className="space-y-2 p-2">
+                                            {hasNested ? Array.from(nested.entries()).map(([subName, items]) => (
+                                                <div key={subName || "other"} className="overflow-hidden rounded-md border border-border/60">
+                                                    <div className="bg-muted/20 px-3 py-2 text-sm font-medium">{subName || "Weitere DE-Sender"} <span className="text-xs font-normal text-muted-foreground">· {items.length}</span></div>
+                                                    <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">{items.map(renderChannel)}</div>
                                                 </div>
-                                            ))}
+                                            )) : <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">{groupChannels.map(renderChannel)}</div>}
                                         </div>}
                                     </section>
                                     );
