@@ -26,7 +26,7 @@ const blockedFetchResult = await executeNuvioProvider(
     `module.exports = {
         getStreams: async () => {
             try {
-                await fetch("http://127.0.0.1/");
+                await fetch(new URL("http://127.0.0.1/"));
                 return [];
             } catch {
                 return [{ name: "Blocked private network", url: "https://example.com/blocked.mp4" }];
