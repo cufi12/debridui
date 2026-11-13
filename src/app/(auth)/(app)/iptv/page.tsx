@@ -244,7 +244,7 @@ export default function IPTVPage() {
         const video = videoRef.current;
         if (!selected || !video || playerMode === "external") return;
         const streamUrl = selected.url;
-        const isHls = /\.m3u8(?:$|[?#])/i.test(streamUrl);
+        const isHls = isHlsStream(streamUrl);\n        const proxiedStreamUrl = getProxiedStreamUrl(streamUrl);
         let hls: Hls | null = null;
         setPlayerError("");
 
@@ -267,9 +267,9 @@ export default function IPTVPage() {
                 }
             });
         } else {
-            video.src = streamUrl;
+            video.src = proxiedStreamUrl;
             if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
-                setPlayerError("Dieser Browser unterstützt HLS nicht nativ. Bitte HLS-Wiedergabe mit einem kompatiblen Browser testen.");
+                setPlayerError("HLS wird nativ nicht unterstützt. Bitte in den Einstellungen „Automatisch (HLS.js)“ wählen.");
             }
         }
 
