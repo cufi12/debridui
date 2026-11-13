@@ -243,10 +243,15 @@ function createQuickJsResponse(
 function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): PinnedResponse | null {
     const url = new URL(rawUrl);
     if (url.hostname !== "api.themoviedb.org") return null;
-    const match = url.pathname.match(/^\\/3\\/(movie|tv)\\/(\\d+)\\/?$/);
-    if (!match) throw new Error("Provider TMDB access is limited to the selected media record.");
-    const kind = match[1];
-    const id = Number(match[2]);
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    if (pathParts.length !== 3 || pathParts[0] !== "3") {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
+    const kind = pathParts[1];
+    const id = Number(pathParts[2]);
+    if ((kind !== "movie" && kind !== "tv") || !Number.isSafeInteger(id)) {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
     if (id !== invocation.tmdbId || kind !== invocation.mediaType) {
         throw new Error("Provider TMDB access is limited to the selected media record.");
     }
