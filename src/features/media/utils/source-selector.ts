@@ -47,9 +47,9 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
     // Addon metadata is best-effort; untagged streams remain available as fallback.
     const getLanguagePriority = (source: AddonSource): number => {
         const metadata = `${source.title} ${source.description || ""}`;
-        if (/(?:\\bGER(?:MAN)?\\b|\\bDEUTSCH(?:E|ER|ES)?\\b|\\bDEU\\b|\\bAUDIO\\s*[:=]?\\s*DE\\b)/i.test(metadata)) return 0;
-        if (/(?:\\bENG(?:LISH)?\\b|\\bAUDIO\\s*[:=]?\\s*EN\\b)/i.test(metadata)) return 1;
-        if (/(?:\\bITA(?:LIAN)?\\b|\\bITALIANO\\b|\\bAUDIO\\s*[:=]?\\s*IT\\b)/i.test(metadata)) return 2;
+        if (/(?:\bGER(?:MAN)?\b|\bDEUTSCH(?:E|ER|ES)?\b|\bDEU\b|\bAUDIO\s*[:=]?\s*DE\b)/i.test(metadata)) return 0;
+        if (/(?:\bENG(?:LISH)?\b|\bAUDIO\s*[:=]?\s*EN\b)/i.test(metadata)) return 1;
+        if (/(?:\bITA(?:LIAN)?\b|\bITALIANO\b|\bAUDIO\s*[:=]?\s*IT\b)/i.test(metadata)) return 2;
         return 3;
     };
 
