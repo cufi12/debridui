@@ -40,3 +40,23 @@ if (!Array.isArray(blockedFetchResult) || blockedFetchResult.length !== 1) {
     throw new Error("QuickJS provider network restriction smoke test failed.");
 }
 console.log("QuickJS provider network restriction smoke test passed.");
+
+const urlResult = await executeNuvioProvider(
+    `module.exports = {
+        getStreams: async () => {
+            const url = new URL("https://example.com/watch?tmdb=123");
+            url.searchParams.set("language", "de");
+            return [{ name: url.searchParams.get("tmdb"), url: url.toString() }];
+        }
+    };`,
+    { tmdbId: 12345, mediaType: "movie" }
+);
+
+if (!Array.isArray(urlResult) || urlResult.length !== 1) {
+    throw new Error("QuickJS URL compatibility smoke test failed.");
+}
+const urlStream = urlResult[0] as { url?: string; name?: string };
+if (urlStream.url !== "https://example.com/watch?tmdb=123&language=de" || urlStream.name !== "123") {
+    throw new Error("QuickJS URL compatibility returned invalid values.");
+}
+console.log("QuickJS URL compatibility smoke test passed.");
