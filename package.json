@@ -5,7 +5,13 @@
     "license": "GPL-3.0-or-later",
     "author": "Adnan Ahmad <viperadnan@gmail.com>",
     "description": "A modern debrid client with built-in media discovery and streaming.",
-    "keywords": ["debrid", "client", "nextjs", "tailwindcss", "typescript"],
+    "keywords": [
+        "debrid",
+        "client",
+        "nextjs",
+        "tailwindcss",
+        "typescript"
+    ],
     "homepage": "https://debridui.viperadnan.com",
     "repository": {
         "type": "git",
@@ -61,7 +67,8 @@
         "uuid": "^13.0.2",
         "vaul": "^1.1.2",
         "zod": "^4.4.3",
-        "zustand": "^5.0.14"
+        "zustand": "^5.0.14",
+        "hls.js": "^1.6.15"
     },
     "devDependencies": {
         "@biomejs/biome": "2.4.14",
