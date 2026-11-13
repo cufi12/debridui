@@ -370,7 +370,21 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
 
     const fetchFunction = vm.newFunction("fetch", (...args) => {
         if (++requestCount > MAX_REQUESTS) throw new Error("Provider exceeded the request limit.");
-        const rawUrl = vm.getString(args[0]);
+        let rawUrl: string;
+        if (vm.typeof(args[0]) === "string") {
+            rawUrl = vm.getString(args[0]);
+        } else {
+            const href = vm.getProp(args[0], "href");
+            if (vm.typeof(href) === "string") {
+                rawUrl = vm.getString(href);
+            } else {
+                const stringResult = vm.callMethod(args[0], "toString");
+                const stringHandle = vm.unwrapResult(stringResult);
+                rawUrl = vm.getString(stringHandle);
+                stringHandle.dispose();
+            }
+            href.dispose();
+        }
         const init = args[1] ? (vm.dump(args[1]) as ProviderFetchInit) : {};
         const controller = new AbortController();
         controllers.add(controller);
