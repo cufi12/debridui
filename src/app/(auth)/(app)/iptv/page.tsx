@@ -59,6 +59,7 @@ export default function IPTVPage() {
     const [error, setError] = useState("");
     const [epgMessage, setEpgMessage] = useState("");
     const [configReady, setConfigReady] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const autoLoadUrlRef = useRef("");
 
     useEffect(() => {
@@ -276,9 +277,52 @@ export default function IPTVPage() {
                     <div className="flex flex-wrap items-center gap-2">
                         <Button size="sm" variant={filter === "Alle" ? "default" : "outline"} onClick={() => setFilter("Alle")}>Alle Sender</Button>
                         <Button size="sm" variant={filter === "Favoriten" ? "default" : "outline"} onClick={() => setFilter("Favoriten")}><Heart className="size-4" /> Favoriten</Button>
+                        <Button size="sm" variant={showSettings ? "default" : "outline"} onClick={() => setShowSettings((value) => !value)}><Tv className="size-4" /> Einstellungen</Button>
                         <Button size="sm" variant="outline" onClick={() => { setChannels([]); setSelected(null); }}><RefreshCw className="size-4" /> Playlist ändern</Button>
                         <span className="ml-auto text-xs text-muted-foreground">{visible.length} / {channels.length} Sender</span>
                     </div>
+                    {showSettings && (
+                        <section className="space-y-4 rounded-lg border border-border/60 p-4">
+                            <div>
+                                <h2 className="text-lg font-semibold">IPTV-Systemeinstellungen</h2>
+                                <p className="text-sm text-muted-foreground">Verwalte Playlist, Wiedergabe und Programmführer an einem Ort.</p>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                                    <h3 className="font-medium">Allgemein</h3>
+                                    <p className="text-sm text-muted-foreground">Deine IPTV-Konfiguration wird lokal in diesem Browser gespeichert.</p>
+                                    <p className="text-xs text-muted-foreground">Geladene Sender: {channels.length.toLocaleString("de-CH")}</p>
+                                </div>
+                                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                                    <h3 className="font-medium">Wiedergabe</h3>
+                                    <p className="text-sm text-muted-foreground">Standard-Player: VLC</p>
+                                    <p className="text-xs text-muted-foreground">Sender werden direkt in der VLC-App geöffnet.</p>
+                                </div>
+                                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                                    <h3 className="font-medium">Playlist</h3>
+                                    <Input type="url" value={playlistUrl} onChange={(event) => { setPlaylistUrl(event.target.value); saveConfig(event.target.value, epgUrl); }} placeholder="M3U-Playlist-URL" aria-label="M3U-Playlist-URL in den Einstellungen" />
+                                    <Button size="sm" className="w-full" onClick={loadPlaylist} disabled={loading || !playlistUrl.trim()}>
+                                        <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} /> {loading ? "Aktualisiere…" : "Playlist aktualisieren"}
+                                    </Button>
+                                </div>
+                                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                                    <h3 className="font-medium">Programmführer (EPG)</h3>
+                                    <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL in den Einstellungen" />
+                                    <Button size="sm" variant="outline" className="w-full" onClick={loadEpg} disabled={epgLoading || !epgUrl.trim()}>
+                                        <CalendarDays className="size-4" /> {epgLoading ? "Lädt…" : "EPG aktualisieren"}
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground">{programs.length.toLocaleString("de-CH")} Programmdaten im Cache</p>
+                                </div>
+                                <div className="space-y-2 rounded-lg border border-border/60 p-3 sm:col-span-2">
+                                    <h3 className="font-medium">Erweitert / System</h3>
+                                    <p className="text-sm text-muted-foreground">Senderliste und EPG werden zwischengespeichert, damit deine Inhalte beim nächsten Öffnen schneller bereitstehen.</p>
+                                    <p className="text-xs text-muted-foreground">Playlist-Cache: {channels.length ? "geladen" : "nicht geladen"} · EPG-Cache: {programs.length ? "geladen" : "leer"}</p>
+                                </div>
+                            </div>
+                            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                            {epgMessage && <p role="status" className="text-sm text-muted-foreground">{epgMessage}</p>}
+                        </section>
+                    )}
                     <Input
                         type="search"
                         value={channelSearch}
