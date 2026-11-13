@@ -12,7 +12,7 @@ const STORAGE_KEY = "debridui-iptv-config";
 type IPTVSettings = {
     playlistUrl?: string;
     epgUrl?: string;
-    playerMode?: "auto" | "native";
+    playerMode?: "inline" | "external";
     autoplay?: boolean;
     startMuted?: boolean;
 };
@@ -54,14 +54,14 @@ export function IPTVSettingsSection() {
             </div>
             <div className="space-y-1.5">
                 <Label>Player</Label>
-                <Select value={settings.playerMode || "auto"} onValueChange={(value) => update({ playerMode: value as IPTVSettings["playerMode"] })}>
+                <Select value={settings.playerMode || "inline"} onValueChange={(value) => update({ playerMode: value as IPTVSettings["playerMode"] })}>
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="auto">Automatisch (empfohlen)</SelectItem>
-                        <SelectItem value="native">Browser-Player</SelectItem>
+                        <SelectItem value="inline">In DebridUI abspielen</SelectItem>
+                        <SelectItem value="external">Stream in neuem Tab öffnen</SelectItem>
                     </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Automatisch nutzt die native HLS-Unterstützung des Geräts, sofern verfügbar.</p>
+                <p className="text-xs text-muted-foreground">Der integrierte Player verwendet die Wiedergabefunktionen des Browsers. Extern öffnet die Stream-Adresse separat.</p>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-sm border border-border/50 p-3">
                 <div className="space-y-0.5"><Label htmlFor="iptv-autoplay">Automatisch abspielen</Label><p className="text-xs text-muted-foreground">Sender direkt nach Auswahl starten</p></div>
