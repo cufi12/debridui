@@ -135,7 +135,8 @@ export default function IPTVPage() {
     }, [visible]);
 
     function saveConfig(nextPlaylist = playlistUrl, nextEpg = epgUrl) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ playlistUrl: nextPlaylist, epgUrl: nextEpg }));
+        const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playlistUrl: nextPlaylist, epgUrl: nextEpg }));
     }
 
     async function loadPlaylist() {
