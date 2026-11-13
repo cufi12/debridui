@@ -281,19 +281,21 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const rawInput = vm.getString(input);
         const rawBase = base && vm.typeof(base) !== "undefined" ? vm.getString(base) : undefined;
         const parsed = rawBase ? new URL(rawInput, rawBase) : new URL(rawInput);
-        return vm.newString(JSON.stringify({
-            href: parsed.href,
-            origin: parsed.origin,
-            protocol: parsed.protocol,
-            username: parsed.username,
-            password: parsed.password,
-            host: parsed.host,
-            hostname: parsed.hostname,
-            port: parsed.port,
-            pathname: parsed.pathname,
-            search: parsed.search,
-            hash: parsed.hash,
-        }));
+        return vm.newString(
+            JSON.stringify({
+                href: parsed.href,
+                origin: parsed.origin,
+                protocol: parsed.protocol,
+                username: parsed.username,
+                password: parsed.password,
+                host: parsed.host,
+                hostname: parsed.hostname,
+                port: parsed.port,
+                pathname: parsed.pathname,
+                search: parsed.search,
+                hash: parsed.hash,
+            })
+        );
     });
     vm.setProp(vm.global, "__parseUrl", parseUrl);
     parseUrl.dispose();
