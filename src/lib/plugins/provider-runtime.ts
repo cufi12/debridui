@@ -235,6 +235,52 @@ function createQuickJsResponse(
     return object;
 }
 
+
+/**
+ * Return only the selected media's TMDB detail record locally. This narrow
+ * compatibility shim avoids exposing a TMDB credential in the provider VM.
+ */
+function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): PinnedResponse | null {
+    const url = new URL(rawUrl);
+    if (url.hostname !== "api.themoviedb.org") return null;
+    const match = url.pathname.match(/^\\/3\\/(movie|tv)\\/(\\d+)\\/?$/);
+    if (!match) throw new Error("Provider TMDB access is limited to the selected media record.");
+    const kind = match[1];
+    const id = Number(match[2]);
+    if (id !== invocation.tmdbId || kind !== invocation.mediaType) {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
+    const title = invocation.title || "";
+    const year = invocation.year && Number.isInteger(invocation.year) ? String(invocation.year) : "";
+    const date = year ? year + "-01-01" : "";
+    const payload = kind === "movie"
+        ? {
+              id,
+              title,
+              original_title: title,
+              release_date: date,
+              imdb_id: invocation.imdbId || null,
+              external_ids: { imdb_id: invocation.imdbId || null },
+              translations: { translations: [] },
+              alternative_titles: { titles: [] },
+          }
+        : {
+              id,
+              name: title,
+              original_name: title,
+              first_air_date: date,
+              external_ids: { imdb_id: invocation.imdbId || null },
+              translations: { translations: [] },
+              alternative_titles: { results: [] },
+          };
+    return {
+        status: 200,
+        url: url.toString(),
+        headers: { "content-type": "application/json; charset=utf-8" },
+        body: JSON.stringify(payload),
+    };
+}
+
 /**
  * Execute a single-file CommonJS-style Nuvio provider in QuickJS.
  * The VM receives no Node globals, filesystem, process environment, or ambient cookies.
@@ -371,6 +417,12 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     `);
     vm.unwrapResult(urlPolyfills).dispose();
 
+    // Nuvio's shared TMDB module interpolates this marker into the detail URL.
+    // The host intercepts that exact request and never forwards the marker.
+    const tmdbKey = vm.newString("debridui-local-media-metadata");
+    vm.setProp(vm.global, "TMDB_API_KEY", tmdbKey);
+    tmdbKey.dispose();
+
     const fetchFunction = vm.newFunction("fetch", (...args) => {
         if (++requestCount > MAX_REQUESTS) throw new Error("Provider exceeded the request limit.");
         let rawUrl: string;
@@ -394,8 +446,11 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const deferred = vm.newPromise();
         deferredPromises.push(deferred);
 
-        void safeProviderFetch(rawUrl, init, controller.signal)
-            .then((response) => {
+        const localResponse = localTmdbDetail(rawUrl, invocation);
+        const requestPromise = localResponse
+            ? Promise.resolve(localResponse)
+            : safeProviderFetch(rawUrl, init, controller.signal);
+        void requestPromise.then((response) => {
                 totalResponseBytes += Buffer.byteLength(response.body, "utf8");
                 if (totalResponseBytes > MAX_TOTAL_RESPONSE_BYTES) {
                     throw new Error("Provider exceeded the total response size limit.");
