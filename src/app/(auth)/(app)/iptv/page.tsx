@@ -18,7 +18,15 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; autoplay?: boolean; startMuted?: boolean };
 
-function getProxiedStreamUrl(url: string): string {\n    return `/api/iptv/stream?url=${encodeURIComponent(url)}`;\n}\n\nfunction isHlsStream(url: string): boolean {\n    try { return /\\.m3u8$/i.test(new URL(url).pathname); } catch { return /\\.m3u8(?:$|[?#])/i.test(url); }\n}\n\nasync function fetchIPTVText(url: string): Promise<string> {
+function getProxiedStreamUrl(url: string): string {
+    return `/api/iptv/stream?url=${encodeURIComponent(url)}`;
+}
+
+function isHlsStream(url: string): boolean {
+    try { return /\.m3u8$/i.test(new URL(url).pathname); } catch { return /\.m3u8(?:$|[?#])/i.test(url); }
+}
+
+async function fetchIPTVText(url: string): Promise<string> {
     const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
         method: "GET",
         cache: "no-store",
