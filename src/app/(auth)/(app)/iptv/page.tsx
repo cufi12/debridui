@@ -218,6 +218,11 @@ export default function IPTVPage() {
             hls = new Hls({ enableWorker: true, lowLatencyMode: true });
             hls.loadSource(streamUrl);
             hls.attachMedia(video);
+            if (playerAutoplay) {
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    void video.play().catch(() => setPlayerError("Der Browser hat die automatische Wiedergabe blockiert. Bitte im Player auf Play drücken."));
+                });
+            }
             hls.on(Hls.Events.ERROR, (_event, data) => {
                 if (data.fatal) {
                     setPlayerError(data.type === Hls.ErrorTypes.NETWORK_ERROR
@@ -234,7 +239,7 @@ export default function IPTVPage() {
             }
         }
 
-        if (playerAutoplay) {
+        if (playerAutoplay && !isHls) {
             const attempt = video.play();
             if (attempt) attempt.catch(() => {
                 setPlayerError("Der Browser hat die automatische Wiedergabe blockiert. Bitte im Player auf Play drücken.");
