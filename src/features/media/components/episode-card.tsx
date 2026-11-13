@@ -6,7 +6,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import type { TraktEpisode, TraktMedia } from "@/lib/trakt";
 import { cn, formatLocalizedDate } from "@/lib/utils";
 import { Sources } from "./sources";
-import { WatchButton } from "./watch-button";
 
 interface ThumbnailContentProps {
     screenshotUrl: string;
@@ -83,7 +82,7 @@ export const EpisodeCard = memo(function EpisodeCard({ episode, className, imdbI
                 <div className="flex flex-row items-stretch">
                     {/* Thumbnail */}
                     {imdbId && showMedia ? (
-                        <WatchButton request={{ imdbId, type: "show", media: showMedia, tvParams }}>
+                        <CollapsibleTrigger asChild>
                             <button type="button" className={cn(thumbnailClass, "cursor-pointer group/thumb")}>
                                 <ThumbnailContent
                                     screenshotUrl={screenshotUrl}
@@ -92,7 +91,7 @@ export const EpisodeCard = memo(function EpisodeCard({ episode, className, imdbI
                                     interactive
                                 />
                             </button>
-                        </WatchButton>
+                        </CollapsibleTrigger>
                     ) : (
                         <div className={thumbnailClass}>
                             <ThumbnailContent

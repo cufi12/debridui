@@ -8,7 +8,11 @@ import { getBackdropUrl, getPosterUrl } from "@/lib/media/images";
 import type { TraktMedia } from "@/lib/trakt";
 import { MediaOverview } from "./media-overview";
 import { MediaStats } from "./media-stats";
-import { WatchButton } from "./watch-button";
+
+function scrollToSelection(type: "movie" | "show") {
+    const target = document.getElementById(type === "movie" ? "sources" : "seasons");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 interface MediaHeaderProps {
     media: TraktMedia;
@@ -101,13 +105,11 @@ export const MediaHeader = memo(function MediaHeader({ media, type }: MediaHeade
 
                         {/* Desktop action buttons under poster */}
                         <div className="hidden md:flex flex-col gap-2">
-                            {type === "movie" && media.ids?.imdb && (
-                                <WatchButton request={{ imdbId: media.ids.imdb, type: "movie", media }}>
-                                    <Button size="lg" className="w-full gap-2">
-                                        <Play className="size-4 fill-current" />
-                                        Watch Now
-                                    </Button>
-                                </WatchButton>
+                            {media.ids?.imdb && (
+                                <Button size="lg" className="w-full gap-2" onClick={() => scrollToSelection(type)}>
+                                    <Play className="size-4 fill-current" />
+                                    {type === "movie" ? "Choose Source" : "Choose Episode"}
+                                </Button>
                             )}
                             {media.trailer && (
                                 <Button asChild variant="outline" size="lg" className="w-full">
@@ -129,14 +131,12 @@ export const MediaHeader = memo(function MediaHeader({ media, type }: MediaHeade
                         </div>
 
                         {/* Mobile primary action — placed right after title for thumb reach */}
-                        {type === "movie" && media.ids?.imdb && (
+                        {media.ids?.imdb && (
                             <div className="md:hidden flex gap-2">
-                                <WatchButton request={{ imdbId: media.ids.imdb, type: "movie", media }}>
-                                    <Button className="flex-1 gap-2">
-                                        <Play className="size-4 fill-current" />
-                                        Watch Now
-                                    </Button>
-                                </WatchButton>
+                                <Button className="flex-1 gap-2" onClick={() => scrollToSelection(type)}>
+                                    <Play className="size-4 fill-current" />
+                                    {type === "movie" ? "Choose Source" : "Choose Episode"}
+                                </Button>
                                 {media.trailer && (
                                     <Button asChild variant="outline" size="icon" aria-label="Trailer">
                                         <Link href={media.trailer} target="_blank" rel="noopener">
