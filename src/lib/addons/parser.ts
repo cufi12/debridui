@@ -157,6 +157,23 @@ export function constructMagnet(hash: string, title: string): string {
 /**
  * Parse a single addon stream into AddonSource format
  */
+const FORBIDDEN_HEADER_NAMES = new Set([
+    "connection", "content-length", "host", "keep-alive", "proxy-authenticate",
+    "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade",
+]);
+
+/** Keep only well-formed end-to-end request headers from provider metadata. */
+export function sanitizeStreamHeaders(headers: unknown): Record<string, string> | undefined {
+    if (!headers || typeof headers !== "object" || Array.isArray(headers)) return undefined;
+    const safe: Record<string, string> = {};
+    for (const [name, value] of Object.entries(headers)) {
+        if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || FORBIDDEN_HEADER_NAMES.has(name.toLowerCase())) continue;
+        if (typeof value !== "string" || /[\\r\\n\\0]/.test(value) || value.length > 4096) continue;
+        safe[name] = value;
+    }
+    return Object.keys(safe).length ? safe : undefined;
+}
+
 export function parseStream(stream: AddonStream, addonId: string, addonName: string): AddonSource {
     const name = stream.name || "Unknown";
     const title = stream.title || "";
@@ -192,6 +209,7 @@ export function parseStream(stream: AddonStream, addonId: string, addonName: str
         quality,
         magnet,
         url: stream.url,
+        headers: sanitizeStreamHeaders(stream.headers),
         isCached,
         addonId,
         addonName,
