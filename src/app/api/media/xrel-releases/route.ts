@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const RELEASE_API_HOSTS = ["https://api.xrel.to", "https://api-alternate.xrel.top"];
-const GERMAN_RELEASE = /(?:GERMAN|GER|DEUTSCH|\\bDE\\b|\\bDL\\b)/i;
+const GERMAN_RELEASE = /(?:GERMAN|GER|DEUTSCH|\bDE\b|\bDL\b)/i;
 
 interface XrelRelease {
     dirname?: string;
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const type = request.nextUrl.searchParams.get("type") === "show" ? "show" : "movie";
     if (title.length < 2) return NextResponse.json({ releases: [] });
 
-    const query = type === "show" ? title.replace(/\\s+S\\d{1,2}E\\d{1,2}.*$/i, "") : title;
+    const query = type === "show" ? title.replace(/\s+S\d{1,2}E\d{1,2}.*$/i, "") : title;
     const params = new URLSearchParams({ q: query, scene: "true", p2p: "true", limit: "25" });
     let lastStatus = 0;
 
