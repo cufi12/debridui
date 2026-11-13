@@ -210,7 +210,7 @@ export default function IPTVPage() {
         const video = videoRef.current;
         if (!selected || !video || playerMode === "external") return;
         const streamUrl = selected.url;
-        const isHls = /\\.m3u8(?:$|[?#])/i.test(streamUrl);
+        const isHls = /\.m3u8(?:$|[?#])/i.test(streamUrl);
         let hls: Hls | null = null;
         setPlayerError("");
 
