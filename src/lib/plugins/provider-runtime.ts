@@ -277,6 +277,94 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     atob.dispose();
     btoa.dispose();
 
+    const parseUrl = vm.newFunction("__parseUrl", (input, base) => {
+        const rawInput = vm.getString(input);
+        const rawBase = base && vm.typeof(base) !== "undefined" ? vm.getString(base) : undefined;
+        const parsed = rawBase ? new URL(rawInput, rawBase) : new URL(rawInput);
+        return vm.newString(JSON.stringify({
+            href: parsed.href,
+            origin: parsed.origin,
+            protocol: parsed.protocol,
+            username: parsed.username,
+            password: parsed.password,
+            host: parsed.host,
+            hostname: parsed.hostname,
+            port: parsed.port,
+            pathname: parsed.pathname,
+            search: parsed.search,
+            hash: parsed.hash,
+        }));
+    });
+    vm.setProp(vm.global, "__parseUrl", parseUrl);
+    parseUrl.dispose();
+
+    const urlPolyfills = vm.evalCode(`
+        class URLSearchParams {
+            constructor(init = "") {
+                this._entries = [];
+                if (typeof init === "string") {
+                    const query = init.replace(/^\\?/, "");
+                    for (const part of query.split("&")) {
+                        if (!part) continue;
+                        const index = part.indexOf("=");
+                        const key = index < 0 ? part : part.slice(0, index);
+                        const value = index < 0 ? "" : part.slice(index + 1);
+                        this._entries.push([
+                            decodeURIComponent(key.replace(/\\+/g, " ")),
+                            decodeURIComponent(value.replace(/\\+/g, " ")),
+                        ]);
+                    }
+                } else if (Array.isArray(init)) {
+                    for (const pair of init) this.append(String(pair[0]), String(pair[1]));
+                } else if (init && typeof init === "object") {
+                    for (const [key, value] of Object.entries(init)) this.append(key, String(value));
+                }
+            }
+            append(key, value) { this._entries.push([String(key), String(value)]); }
+            set(key, value) {
+                key = String(key);
+                const first = this._entries.findIndex((entry) => entry[0] === key);
+                this._entries = this._entries.filter((entry) => entry[0] !== key);
+                this._entries.splice(first < 0 ? this._entries.length : first, 0, [key, String(value)]);
+            }
+            get(key) { return this._entries.find((entry) => entry[0] === String(key))?.[1] ?? null; }
+            getAll(key) { return this._entries.filter((entry) => entry[0] === String(key)).map((entry) => entry[1]); }
+            has(key) { return this._entries.some((entry) => entry[0] === String(key)); }
+            delete(key) { this._entries = this._entries.filter((entry) => entry[0] !== String(key)); }
+            toString() {
+                return this._entries.map(([key, value]) =>
+                    encodeURIComponent(key).replace(/%20/g, "+") + "=" + encodeURIComponent(value).replace(/%20/g, "+")
+                ).join("&");
+            }
+            entries() { return this._entries[Symbol.iterator](); }
+            keys() { return this._entries.map((entry) => entry[0])[Symbol.iterator](); }
+            values() { return this._entries.map((entry) => entry[1])[Symbol.iterator](); }
+            forEach(callback, thisArg) {
+                for (const [key, value] of this._entries) callback.call(thisArg, value, key, this);
+            }
+            [Symbol.iterator]() { return this.entries(); }
+        }
+        class URL {
+            constructor(input, base) {
+                const parsed = JSON.parse(__parseUrl(String(input), base));
+                Object.assign(this, parsed);
+                this.searchParams = new URLSearchParams(parsed.search || "");
+            }
+            get search() {
+                const query = this.searchParams.toString();
+                return query ? "?" + query : "";
+            }
+            set search(value) { this.searchParams = new URLSearchParams(value); }
+            get href() { return this.toString(); }
+            toString() {
+                return this.origin + this.pathname + this.search + this.hash;
+            }
+        }
+        globalThis.URL = URL;
+        globalThis.URLSearchParams = URLSearchParams;
+    `);
+    vm.unwrapResult(urlPolyfills).dispose();
+
     const fetchFunction = vm.newFunction("fetch", (...args) => {
         if (++requestCount > MAX_REQUESTS) throw new Error("Provider exceeded the request limit.");
         const rawUrl = vm.getString(args[0]);
