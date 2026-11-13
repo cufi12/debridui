@@ -59,7 +59,7 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
     const matchesXrelGermanRelease = (source: AddonSource): boolean => {
         const sourceWords = new Set(normalizedWords(source.title));
         return germanReleaseNames.some((releaseName) => {
-            if (!/(?:GERMAN|GER|DEUTSCH|\bDE\b|\bDL\b)/i.test(releaseName)) return false;
+            if (!/(?:GERMAN|GER|DEUTSCH|\bDE\b)/i.test(releaseName)) return false;
             const releaseWords = normalizedWords(releaseName);
             const shared = releaseWords.filter((word) => sourceWords.has(word));
             return shared.length >= Math.min(3, Math.max(2, Math.ceil(releaseWords.length * 0.35)));
