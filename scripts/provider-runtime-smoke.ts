@@ -21,3 +21,22 @@ if (stream.url !== "https://example.com/test.mp4" || stream.title !== "12345:mov
 }
 
 console.log("QuickJS provider runtime smoke test passed.");
+
+const blockedFetchResult = await executeNuvioProvider(
+    `module.exports = {
+        getStreams: async () => {
+            try {
+                await fetch("http://127.0.0.1/");
+                return [];
+            } catch {
+                return [{ name: "Blocked private network", url: "https://example.com/blocked.mp4" }];
+            }
+        }
+    };`,
+    { tmdbId: 12345, mediaType: "movie" }
+);
+
+if (!Array.isArray(blockedFetchResult) || blockedFetchResult.length !== 1) {
+    throw new Error("QuickJS provider network restriction smoke test failed.");
+}
+console.log("QuickJS provider network restriction smoke test passed.");
