@@ -43,13 +43,14 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
             matchesSourceQualityRange(source, range)
     );
 
-    // Prefer German, then English, then untagged sources; Italian is last. Recognize common release tags
+    // Prefer German, then English, then untagged sources, then Spanish and Italian. Recognize common release tags
     // such as DE/DEU/GER, country flags, and full language names.
     const getLanguagePriority = (source: AddonSource): number => {
         const metadata = `${source.title} ${source.description || ""}`;
         if (/(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(metadata)) return 0;
         if (/(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata)) return 1;
-        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata)) return 3;
+        if (/(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(metadata)) return 3;
+        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata)) return 4;
         return 2;
     };
 
