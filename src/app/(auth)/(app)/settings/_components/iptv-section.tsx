@@ -13,6 +13,7 @@ type IPTVSettings = {
     playlistUrl?: string;
     epgUrl?: string;
     playerMode?: "auto" | "native" | "external";
+    externalPlayer?: "vlc" | "mx" | "just" | "kodi";
     autoplay?: boolean;
     startMuted?: boolean;
 };
@@ -59,10 +60,23 @@ export function IPTVSettingsSection() {
                     <SelectContent>
                         <SelectItem value="auto">Automatisch (HLS.js)</SelectItem>
                         <SelectItem value="native">Browser-Player (nativ)</SelectItem>
-                        <SelectItem value="external">Externer Player (neuer Tab)</SelectItem>
+                        <SelectItem value="external">Externer Android-Player</SelectItem>
                     </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">Automatisch nutzt HLS.js für HLS-Streams. Nativ überlässt die Wiedergabe dem Browser. Extern öffnet die Stream-Adresse in einem neuen Tab.</p>
+            </div>
+            <div className="space-y-1.5">
+                <Label>Android-Player für externe Wiedergabe</Label>
+                <Select value={settings.externalPlayer || "vlc"} onValueChange={(value) => update({ externalPlayer: value as IPTVSettings["externalPlayer"] })}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="vlc">VLC</SelectItem>
+                        <SelectItem value="mx">MX Player</SelectItem>
+                        <SelectItem value="just">Just (Video) Player</SelectItem>
+                        <SelectItem value="kodi">Kodi</SelectItem>
+                    </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Die gewählte App muss auf dem Android-Gerät installiert sein.</p>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-sm border border-border/50 p-3">
                 <div className="space-y-0.5"><Label htmlFor="iptv-autoplay">Automatisch abspielen</Label><p className="text-xs text-muted-foreground">Sender direkt nach Auswahl starten</p></div>
