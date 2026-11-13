@@ -51,3 +51,6 @@ jobs:
 
       - name: Typecheck and lint
         run: bun run verify
+
+      - name: Smoke-test QuickJS provider runtime
+        run: bun --conditions=react-server scripts/provider-runtime-smoke.ts
