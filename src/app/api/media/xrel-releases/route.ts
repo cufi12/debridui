@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +40,10 @@ export async function GET(request: NextRequest) {
                 .filter((item) => typeof item.dirname === "string" && GERMAN_RELEASE.test(item.dirname))
                 .map((item) => item.dirname as string)
                 .slice(0, 20);
-            return NextResponse.json({ releases }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+            return NextResponse.json(
+                { releases },
+                { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } }
+            );
         } catch {
             // Try the documented alternate API host if the primary is unavailable.
         }

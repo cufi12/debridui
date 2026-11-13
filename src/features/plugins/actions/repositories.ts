@@ -8,36 +8,46 @@ import { auth } from "@/lib/auth";
 import { db, upsertUserSettings } from "@/lib/db/drizzle";
 import { userSettings } from "@/lib/db/schema";
 
-const providerSchema = z.object({
-    id: z.string().min(1).max(100),
-    name: z.string().min(1).max(100),
-    description: z.string().max(500).optional().default(""),
-    version: z.string().max(40).optional().default(""),
-    author: z.string().max(100).optional().default(""),
-    filename: z.string().min(1).max(300),
-    supportedTypes: z.array(z.enum(["movie", "tv", "series"])).max(5).default(["movie", "tv"]),
-    enabled: z.boolean().optional().default(false),
-    logo: z.string().url().optional(),
-    contentLanguage: z.array(z.string().max(12)).max(30).optional().default([]),
-}).passthrough();
+const providerSchema = z
+    .object({
+        id: z.string().min(1).max(100),
+        name: z.string().min(1).max(100),
+        description: z.string().max(500).optional().default(""),
+        version: z.string().max(40).optional().default(""),
+        author: z.string().max(100).optional().default(""),
+        filename: z.string().min(1).max(300),
+        supportedTypes: z
+            .array(z.enum(["movie", "tv", "series"]))
+            .max(5)
+            .default(["movie", "tv"]),
+        enabled: z.boolean().optional().default(false),
+        logo: z.string().url().optional(),
+        contentLanguage: z.array(z.string().max(12)).max(30).optional().default([]),
+    })
+    .passthrough();
 
-const repositoryManifestSchema = z.object({
-    name: z.string().min(1).max(120),
-    description: z.string().max(500).optional().default(""),
-    version: z.string().max(40).optional().default(""),
-    // Nuvio repositories use either "providers" or the older "scrapers" key.
-    providers: z.array(providerSchema).max(300).optional(),
-    scrapers: z.array(providerSchema).max(300).optional(),
-}).passthrough()
+const repositoryManifestSchema = z
+    .object({
+        name: z.string().min(1).max(120),
+        description: z.string().max(500).optional().default(""),
+        version: z.string().max(40).optional().default(""),
+        // Nuvio repositories use either "providers" or the older "scrapers" key.
+        providers: z.array(providerSchema).max(300).optional(),
+        scrapers: z.array(providerSchema).max(300).optional(),
+    })
+    .passthrough()
     .refine((manifest) => manifest.providers !== undefined || manifest.scrapers !== undefined, {
         message: "Manifest must contain providers or scrapers",
     })
-    .refine((manifest) => {
-        const providers = manifest.providers ?? manifest.scrapers ?? [];
-        return new Set(providers.map((provider) => provider.id)).size === providers.length;
-    }, {
-        message: "Provider IDs must be unique within a repository",
-    });
+    .refine(
+        (manifest) => {
+            const providers = manifest.providers ?? manifest.scrapers ?? [];
+            return new Set(providers.map((provider) => provider.id)).size === providers.length;
+        },
+        {
+            message: "Provider IDs must be unique within a repository",
+        }
+    );
 
 type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
 type Repository = {
@@ -58,7 +68,10 @@ async function currentUserId() {
 function validateRepositoryUrl(value: string) {
     const url = new URL(z.string().url().parse(value));
     const allowed = ["raw.githubusercontent.com", "github.io", "gitlab.com", "gitlab.io", "codeberg.org"];
-    if (url.protocol !== "https:" || !allowed.some((host) => url.hostname === host || url.hostname.endsWith("." + host))) {
+    if (
+        url.protocol !== "https:" ||
+        !allowed.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
+    ) {
         throw new Error("Erlaubt sind HTTPS-Manifest-URLs von GitHub, GitLab oder Codeberg.");
     }
     if (!url.pathname.toLowerCase().endsWith("manifest.json")) {
@@ -109,7 +122,11 @@ async function loadManifest(url: string) {
         const base = new URL(".", url);
         const providers = (parsed.providers ?? parsed.scrapers ?? []).map((provider) => {
             const file = new URL(provider.filename, base);
-            if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(base.pathname.replace(/[^/]*$/, ""))) {
+            if (
+                file.protocol !== "https:" ||
+                file.origin !== base.origin ||
+                !file.pathname.startsWith(base.pathname.replace(/[^/]*$/, ""))
+            ) {
                 throw new Error(`Ungültiger Provider-Pfad bei ${provider.name}.`);
             }
             return { ...provider, enabled: false };
@@ -125,10 +142,14 @@ async function loadManifest(url: string) {
 }
 
 async function readRepositories(userId: string): Promise<Repository[]> {
-    const [row] = await db.select({ settings: userSettings.settings }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1);
-    const settings = row?.settings && typeof row.settings === "object" ? row.settings as Record<string, unknown> : {};
+    const [row] = await db
+        .select({ settings: userSettings.settings })
+        .from(userSettings)
+        .where(eq(userSettings.userId, userId))
+        .limit(1);
+    const settings = row?.settings && typeof row.settings === "object" ? (row.settings as Record<string, unknown>) : {};
     const parsed = z.array(z.any()).max(20).safeParse(settings.pluginRepositories);
-    return parsed.success ? parsed.data as Repository[] : [];
+    return parsed.success ? (parsed.data as Repository[]) : [];
 }
 
 async function writeRepositories(userId: string, repositories: Repository[]) {
@@ -142,23 +163,27 @@ export async function getPluginRepositories() {
 /** Return only explicitly enabled providers for stream discovery. */
 export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") {
     const repositories = await readRepositories(await currentUserId());
-    return repositories.flatMap((repository) =>
-        repository.providers
-            .filter((provider) => provider.enabled)
-            .filter((provider) => !mediaType || (
-                mediaType === "movie"
-                    ? provider.supportedTypes.includes("movie")
-                    : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series")
-            ))
-            .map((provider) => ({
-                repositoryId: repository.id,
-                repositoryName: repository.name,
-                providerId: provider.id,
-                providerName: provider.name,
-                filename: provider.filename,
-                supportedTypes: provider.supportedTypes,
-            }))
-    ).slice(0, 100);
+    return repositories
+        .flatMap((repository) =>
+            repository.providers
+                .filter((provider) => provider.enabled)
+                .filter(
+                    (provider) =>
+                        !mediaType ||
+                        (mediaType === "movie"
+                            ? provider.supportedTypes.includes("movie")
+                            : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series"))
+                )
+                .map((provider) => ({
+                    repositoryId: repository.id,
+                    repositoryName: repository.name,
+                    providerId: provider.id,
+                    providerName: provider.name,
+                    filename: provider.filename,
+                    supportedTypes: provider.supportedTypes,
+                }))
+        )
+        .slice(0, 100);
 }
 
 export async function addPluginRepository(rawUrl: string) {
@@ -190,7 +215,10 @@ export async function refreshPluginRepository(repositoryId: string) {
         enabled: current.providers.find((old) => old.id === provider.id)?.enabled ?? false,
     }));
     const updated = { ...current, ...manifest, providers, updatedAt: new Date().toISOString() };
-    await writeRepositories(userId, repositories.map((repo) => repo.id === repositoryId ? updated : repo));
+    await writeRepositories(
+        userId,
+        repositories.map((repo) => (repo.id === repositoryId ? updated : repo))
+    );
     return updated;
 }
 
@@ -200,10 +228,16 @@ export async function setRepositoryProviderEnabled(repositoryId: string, provide
     const repo = repos.find((item) => item.id === repositoryId);
     if (!repo) throw new Error("Repository nicht gefunden.");
     if (!repo.providers.some((provider) => provider.id === providerId)) throw new Error("Provider nicht gefunden.");
-    const updated = repos.map((item) => item.id !== repositoryId ? item : {
-        ...item,
-        providers: item.providers.map((provider) => provider.id === providerId ? { ...provider, enabled: z.boolean().parse(enabled) } : provider),
-    });
+    const updated = repos.map((item) =>
+        item.id !== repositoryId
+            ? item
+            : {
+                  ...item,
+                  providers: item.providers.map((provider) =>
+                      provider.id === providerId ? { ...provider, enabled: z.boolean().parse(enabled) } : provider
+                  ),
+              }
+    );
     await writeRepositories(userId, updated);
     return { success: true };
 }
@@ -211,7 +245,10 @@ export async function setRepositoryProviderEnabled(repositoryId: string, provide
 export async function removePluginRepository(repositoryId: string) {
     const userId = await currentUserId();
     const repos = await readRepositories(userId);
-    await writeRepositories(userId, repos.filter((repo) => repo.id !== repositoryId));
+    await writeRepositories(
+        userId,
+        repos.filter((repo) => repo.id !== repositoryId)
+    );
     return { success: true };
 }
 
@@ -224,14 +261,18 @@ export async function removePluginRepository(repositoryId: string) {
 export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "tv") {
     const userId = await currentUserId();
     const repositories = await readRepositories(userId);
-    const providers = repositories.flatMap((repository) =>
-        repository.providers
-            .filter((provider) => provider.enabled)
-            .filter((provider) => mediaType === "movie"
-                ? provider.supportedTypes.includes("movie")
-                : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series"))
-            .map((provider) => ({ repository, provider }))
-    ).slice(0, 20);
+    const providers = repositories
+        .flatMap((repository) =>
+            repository.providers
+                .filter((provider) => provider.enabled)
+                .filter((provider) =>
+                    mediaType === "movie"
+                        ? provider.supportedTypes.includes("movie")
+                        : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series")
+                )
+                .map((provider) => ({ repository, provider }))
+        )
+        .slice(0, 20);
 
     const output: Array<{
         repositoryId: string;
@@ -244,47 +285,53 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
     let totalBytes = 0;
 
     for (let index = 0; index < providers.length; index += 4) {
-        const batch = await Promise.all(providers.slice(index, index + 4).map(async ({ repository, provider }) => {
-            try {
-                const base = new URL(".", validateRepositoryUrl(repository.url));
-                const file = new URL(provider.filename, base);
-                const folder = base.pathname.replace(/[^/]*$/, "");
-                if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(folder)) {
-                    throw new Error("Ungültiger Provider-Pfad.");
-                }
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 12_000);
+        const batch = await Promise.all(
+            providers.slice(index, index + 4).map(async ({ repository, provider }) => {
                 try {
-                    const response = await fetch(file, {
-                        headers: { accept: "text/javascript, application/javascript, text/plain" },
-                        cache: "no-store",
-                        redirect: "error",
-                        signal: controller.signal,
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const source = await readLimitedText(response, 500_000);
+                    const base = new URL(".", validateRepositoryUrl(repository.url));
+                    const file = new URL(provider.filename, base);
+                    const folder = base.pathname.replace(/[^/]*$/, "");
+                    if (
+                        file.protocol !== "https:" ||
+                        file.origin !== base.origin ||
+                        !file.pathname.startsWith(folder)
+                    ) {
+                        throw new Error("Ungültiger Provider-Pfad.");
+                    }
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 12_000);
+                    try {
+                        const response = await fetch(file, {
+                            headers: { accept: "text/javascript, application/javascript, text/plain" },
+                            cache: "no-store",
+                            redirect: "error",
+                            signal: controller.signal,
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const source = await readLimitedText(response, 500_000);
+                        return {
+                            repositoryId: repository.id,
+                            repositoryName: repository.name,
+                            providerId: provider.id,
+                            providerName: provider.name,
+                            source,
+                            bytes: new TextEncoder().encode(source).byteLength,
+                        };
+                    } finally {
+                        clearTimeout(timeout);
+                    }
+                } catch {
                     return {
                         repositoryId: repository.id,
                         repositoryName: repository.name,
                         providerId: provider.id,
                         providerName: provider.name,
-                        source,
-                        bytes: new TextEncoder().encode(source).byteLength,
+                        error: "Provider-Quelldatei konnte nicht geladen werden.",
+                        bytes: 0,
                     };
-                } finally {
-                    clearTimeout(timeout);
                 }
-            } catch {
-                return {
-                    repositoryId: repository.id,
-                    repositoryName: repository.name,
-                    providerId: provider.id,
-                    providerName: provider.name,
-                    error: "Provider-Quelldatei konnte nicht geladen werden.",
-                    bytes: 0,
-                };
-            }
-        }));
+            })
+        );
         for (const item of batch) {
             if (item.source) {
                 if (totalBytes + item.bytes > 3_000_000) {

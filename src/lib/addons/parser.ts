@@ -158,8 +158,16 @@ export function constructMagnet(hash: string, title: string): string {
  * Parse a single addon stream into AddonSource format
  */
 const FORBIDDEN_HEADER_NAMES = new Set([
-    "connection", "content-length", "host", "keep-alive", "proxy-authenticate",
-    "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade",
+    "connection",
+    "content-length",
+    "host",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
 ]);
 
 /** Keep only well-formed end-to-end request headers from provider metadata. */
@@ -182,11 +190,15 @@ export function parseStream(stream: AddonStream, addonId: string, addonName: str
     // Label only languages explicitly indicated by addon metadata.
     const metadata = [name, title, description].filter(Boolean).join(" ");
     const audioLanguage =
-        /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\\b/i.test(metadata)
+        /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\\b/i.test(
+            metadata
+        )
             ? "Deutsch laut Quelle – nicht geprüft"
             : /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\\b/i.test(metadata)
               ? "Englisch laut Quelle – nicht geprüft"
-              : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\\b/i.test(metadata)
+              : /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\\b/i.test(
+                      metadata
+                  )
                 ? "Spanisch laut Quelle – nicht geprüft"
                 : /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\\b/i.test(metadata)
                   ? "Italienisch laut Quelle – nicht geprüft"

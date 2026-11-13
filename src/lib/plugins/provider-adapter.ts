@@ -3,10 +3,7 @@ import type { AddonSource, AddonStream, TvSearchParams } from "@/lib/addons/type
 import type { Media } from "@/lib/trakt";
 
 /** Check a repository provider's declared media compatibility. */
-export function providerSupportsMediaType(
-    supportedTypes: readonly string[],
-    mediaType: "movie" | "tv"
-): boolean {
+export function providerSupportsMediaType(supportedTypes: readonly string[], mediaType: "movie" | "tv"): boolean {
     return mediaType === "movie"
         ? supportedTypes.includes("movie")
         : supportedTypes.includes("tv") || supportedTypes.includes("series");
@@ -44,11 +41,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Convert untrusted provider output into the shared Stremio-like stream shape.
  * Execution/sandboxing is deliberately handled by a separate runtime layer.
  */
-export function normalizeProviderStreams(
-    result: unknown,
-    providerId: string,
-    providerName: string
-): AddonStream[] {
+export function normalizeProviderStreams(result: unknown, providerId: string, providerName: string): AddonStream[] {
     const candidate = Array.isArray(result)
         ? result
         : isRecord(result) && Array.isArray(result.streams)
@@ -68,17 +61,22 @@ export function normalizeProviderStreams(
 
         const name = typeof item.name === "string" ? item.name.slice(0, 300) : providerName;
         const title = typeof item.title === "string" ? item.title.slice(0, 500) : undefined;
-        const description = typeof item.description === "string"
-            ? item.description.slice(0, 2000)
-            : typeof item.quality === "string" ? item.quality.slice(0, 100) : undefined;
+        const description =
+            typeof item.description === "string"
+                ? item.description.slice(0, 2000)
+                : typeof item.quality === "string"
+                  ? item.quality.slice(0, 100)
+                  : undefined;
 
-        return [{
-            name: name || providerName,
-            title,
-            description: description ? `[${providerId}] ${description}` : `Provider: ${providerName}`,
-            url: parsedUrl.toString(),
-            headers: sanitizeStreamHeaders(item.headers),
-        }];
+        return [
+            {
+                name: name || providerName,
+                title,
+                description: description ? `[${providerId}] ${description}` : `Provider: ${providerName}`,
+                url: parsedUrl.toString(),
+                headers: sanitizeStreamHeaders(item.headers),
+            },
+        ];
     });
 }
 
@@ -104,10 +102,7 @@ export interface RepositoryProviderModule {
     source: string;
 }
 
-export type RepositoryProviderExecutor = (
-    source: string,
-    invocation: ProviderInvocation
-) => Promise<unknown>;
+export type RepositoryProviderExecutor = (source: string, invocation: ProviderInvocation) => Promise<unknown>;
 
 /**
  * Run provider modules through an injected sandbox implementation.
@@ -123,21 +118,23 @@ export async function executeRepositoryProviderModules(
     const sources: AddonSource[] = [];
 
     for (let index = 0; index < selected.length; index += 4) {
-        const batch = await Promise.all(selected.slice(index, index + 4).map(async (module) => {
-            try {
-                const result = await execute(module.source, invocation);
-                return parseRepositoryProviderStreams(
-                    result,
-                    module.repositoryId,
-                    module.providerId,
-                    module.providerName
-                );
-            } catch {
-                // A broken provider must not prevent other repositories from
-                // returning usable streams.
-                return [];
-            }
-        }));
+        const batch = await Promise.all(
+            selected.slice(index, index + 4).map(async (module) => {
+                try {
+                    const result = await execute(module.source, invocation);
+                    return parseRepositoryProviderStreams(
+                        result,
+                        module.repositoryId,
+                        module.providerId,
+                        module.providerName
+                    );
+                } catch {
+                    // A broken provider must not prevent other repositories from
+                    // returning usable streams.
+                    return [];
+                }
+            })
+        );
         sources.push(...batch.flat());
         if (sources.length >= 100) return sources.slice(0, 100);
     }

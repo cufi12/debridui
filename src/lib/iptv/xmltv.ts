@@ -19,14 +19,16 @@ function parseXmltvDate(value: string | null): number {
 export function parseXMLTV(source: string): XMLTVProgram[] {
     const document = new DOMParser().parseFromString(source, "application/xml");
     if (document.querySelector("parsererror")) throw new Error("Die XMLTV-Datei ist ungültig.");
-    return Array.from(document.querySelectorAll("programme")).map((node) => {
-        const title = node.querySelector("title")?.textContent?.trim() || "";
-        return {
-            channelId: node.getAttribute("channel") || "",
-            title,
-            description: node.querySelector("desc")?.textContent?.trim() || undefined,
-            start: parseXmltvDate(node.getAttribute("start")),
-            stop: parseXmltvDate(node.getAttribute("stop")),
-        };
-    }).filter((program) => program.channelId && program.title && program.start && program.stop);
+    return Array.from(document.querySelectorAll("programme"))
+        .map((node) => {
+            const title = node.querySelector("title")?.textContent?.trim() || "";
+            return {
+                channelId: node.getAttribute("channel") || "",
+                title,
+                description: node.querySelector("desc")?.textContent?.trim() || undefined,
+                start: parseXmltvDate(node.getAttribute("start")),
+                stop: parseXmltvDate(node.getAttribute("stop")),
+            };
+        })
+        .filter((program) => program.channelId && program.title && program.start && program.stop);
 }

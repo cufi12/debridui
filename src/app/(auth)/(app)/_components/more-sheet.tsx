@@ -1,16 +1,16 @@
 "use client";
 
 import {
-    ChevronRight,
     Blocks,
+    ChevronRight,
     HelpCircle,
     LogOut,
     type LucideIcon,
     Moon,
     Puzzle,
     SettingsIcon,
-    Tv,
     Sun,
+    Tv,
     UsersIcon,
 } from "lucide-react";
 import Link from "next/link";

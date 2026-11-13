@@ -26,10 +26,10 @@ import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
 import { selectBestSource } from "@/features/media/utils/source-selector";
 import { getSourceQualityIndex } from "@/lib/addons/parser";
-import { AudioTrackProbe } from "./audio-track-probe";
 import type { AddonSource } from "@/lib/addons/types";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings";
+import { AudioTrackProbe } from "./audio-track-probe";
 
 interface SourcesProps {
     request: StreamingRequest;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -6,7 +6,15 @@ export const dynamic = "force-dynamic";
 
 const API_BASE = "https://api.real-debrid.com/rest/1.0";
 const ALLOWED_ROOTS = new Set([
-    "user", "torrents", "downloads", "unrestrict", "hosts", "traffic", "time", "settings", "streaming",
+    "user",
+    "torrents",
+    "downloads",
+    "unrestrict",
+    "hosts",
+    "traffic",
+    "time",
+    "settings",
+    "streaming",
 ]);
 
 async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
@@ -28,7 +36,10 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
     const target = new URL(path.map((part) => encodeURIComponent(part)).join("/"), API_BASE + "/");
     target.search = request.nextUrl.search;
 
-    const headers = new Headers({ Accept: request.headers.get("accept") || "application/json", "User-Agent": "DebridUI" });
+    const headers = new Headers({
+        Accept: request.headers.get("accept") || "application/json",
+        "User-Agent": "DebridUI",
+    });
     if (token) headers.set("Authorization", token);
     const contentType = request.headers.get("content-type");
     if (contentType) headers.set("Content-Type", contentType);
@@ -53,9 +64,10 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
         responseHeaders.set("Cache-Control", "no-store");
         return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
     } catch (error) {
-        const message = error instanceof Error && error.name === "TimeoutError"
-            ? "Zeitüberschreitung bei Real-Debrid."
-            : "Real-Debrid ist momentan nicht erreichbar.";
+        const message =
+            error instanceof Error && error.name === "TimeoutError"
+                ? "Zeitüberschreitung bei Real-Debrid."
+                : "Real-Debrid ist momentan nicht erreichbar.";
         return NextResponse.json({ error: message }, { status: 502 });
     }
 }

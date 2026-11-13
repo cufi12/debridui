@@ -81,24 +81,29 @@ export function AudioTrackProbe({ source }: { source: AddonSource }) {
                         {hasGerman ? (
                             <span className="text-[10px] font-semibold text-green-600">Deutsch bestätigt</span>
                         ) : (
-                            <span className="text-[10px] font-semibold text-amber-600">Keine deutsche Tonspur erkannt</span>
+                            <span className="text-[10px] font-semibold text-amber-600">
+                                Keine deutsche Tonspur erkannt
+                            </span>
                         )}
                     </div>
                     {result.fileName && <p className="text-xs text-muted-foreground break-all">{result.fileName}</p>}
-                    {tracks.length ? tracks.map((track) => (
-                        <div key={track.index} className="flex flex-wrap items-center gap-x-2 text-xs">
-                            <span className={isGermanTrack(track) ? "font-semibold text-green-600" : "font-medium"}>
-                                {languageName(track.language)}
-                            </span>
-                            <span className="text-muted-foreground">{track.codec}</span>
-                            {track.title && <span className="text-muted-foreground">· {track.title}</span>}
-                        </div>
-                    )) : (
+                    {tracks.length ? (
+                        tracks.map((track) => (
+                            <div key={track.index} className="flex flex-wrap items-center gap-x-2 text-xs">
+                                <span className={isGermanTrack(track) ? "font-semibold text-green-600" : "font-medium"}>
+                                    {languageName(track.language)}
+                                </span>
+                                <span className="text-muted-foreground">{track.codec}</span>
+                                {track.title && <span className="text-muted-foreground">· {track.title}</span>}
+                            </div>
+                        ))
+                    ) : (
                         <p className="text-xs text-muted-foreground">Keine Audiospur erkannt.</p>
                     )}
                     {!hasGerman && (
                         <p className="text-xs text-amber-600">
-                            Diese Datei ist nicht als deutschsprachig bestätigt. Wähle eine andere Release-Version und prüfe sie erneut.
+                            Diese Datei ist nicht als deutschsprachig bestätigt. Wähle eine andere Release-Version und
+                            prüfe sie erneut.
                         </p>
                     )}
                 </div>

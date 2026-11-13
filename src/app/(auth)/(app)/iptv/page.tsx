@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { get as idbGet, set as idbSet } from "idb-keyval";
-import { Heart, Play, RefreshCw, Tv, X, CalendarDays } from "lucide-react";
+import { CalendarDays, Heart, Play, RefreshCw, Tv, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { parseM3U, type IPTVChannel } from "@/lib/iptv/m3u";
+import { type IPTVChannel, parseM3U } from "@/lib/iptv/m3u";
 import { parseXMLTV, type XMLTVProgram } from "@/lib/iptv/xmltv";
 
 const STORAGE_KEY = "debridui-iptv-config";
@@ -25,7 +25,7 @@ async function fetchIPTVText(url: string): Promise<string> {
     if (!response.ok) {
         let message = `IPTV-Abruf fehlgeschlagen (HTTP ${response.status}).`;
         try {
-            const data = await response.json() as { error?: string };
+            const data = (await response.json()) as { error?: string };
             if (data.error) message = data.error;
         } catch {
             // Keep the HTTP status message when the response is not JSON.
@@ -36,7 +36,9 @@ async function fetchIPTVText(url: string): Promise<string> {
 }
 
 function getNowNext(channel: IPTVChannel, programs: XMLTVProgram[]) {
-    const matching = programs.filter((program) => program.channelId === channel.tvgId).sort((a, b) => a.start - b.start);
+    const matching = programs
+        .filter((program) => program.channelId === channel.tvgId)
+        .sort((a, b) => a.start - b.start);
     const now = Date.now();
     return {
         current: matching.find((program) => program.start <= now && program.stop > now),
@@ -68,13 +70,21 @@ export default function IPTVPage() {
             setPlaylistUrl(config.playlistUrl || "");
             setEpgUrl(config.epgUrl || "");
             autoLoadUrlRef.current = config.playlistUrl || "";
-            const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
-            if (localCache?.url === config.playlistUrl && Array.isArray(localCache?.channels) && localCache.channels.length) {
+            const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
+                url?: string;
+                channels?: IPTVChannel[];
+            } | null;
+            if (
+                localCache?.url === config.playlistUrl &&
+                Array.isArray(localCache?.channels) &&
+                localCache.channels.length
+            ) {
                 setChannels(localCache.channels);
             }
             setFavorites(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
             const cached = JSON.parse(localStorage.getItem(EPG_CACHE_KEY) || "null");
-            if (cached?.savedAt && Date.now() - cached.savedAt < EPG_CACHE_TTL && Array.isArray(cached.programs)) setPrograms(cached.programs);
+            if (cached?.savedAt && Date.now() - cached.savedAt < EPG_CACHE_TTL && Array.isArray(cached.programs))
+                setPrograms(cached.programs);
         } catch {
             setFavorites([]);
         } finally {
@@ -92,47 +102,68 @@ export default function IPTVPage() {
             idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY).catch(() => null),
             Promise.resolve().then(() => {
                 try {
-                    return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
+                    return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
+                        url?: string;
+                        channels?: IPTVChannel[];
+                    } | null;
                 } catch {
                     return null;
                 }
             }),
-        ]).then(([idbCache, localCache]) => {
-            const cached = idbCache?.url === savedUrl ? idbCache : localCache;
-            if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) {
-                if (!cancelled) setChannels(cached.channels);
-                return null;
-            }
-            return fetchIPTVText(savedUrl);
-        }).then((source) => {
-            if (!source || cancelled) return;
-            if (cancelled) return;
-            const parsed = parseM3U(source);
-            if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
-            setChannels(parsed);
-            void idbSet(PLAYLIST_CACHE_KEY, { url: savedUrl, channels: parsed });
-            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
-            const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
-            const currentConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-            if (embeddedEpg && !currentConfig.epgUrl) setEpgUrl(embeddedEpg);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                ...currentConfig,
-                playlistUrl: savedUrl,
-                epgUrl: currentConfig.epgUrl || embeddedEpg || "",
-            }));
-        }).catch((cause) => {
-            if (!cancelled) setError(cause instanceof Error ? cause.message : "Gespeicherte Playlist konnte nicht geladen werden.");
-        }).finally(() => {
-            if (!cancelled) setLoading(false);
-        });
-        return () => { cancelled = true; };
+        ])
+            .then(([idbCache, localCache]) => {
+                const cached = idbCache?.url === savedUrl ? idbCache : localCache;
+                if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) {
+                    if (!cancelled) setChannels(cached.channels);
+                    return null;
+                }
+                return fetchIPTVText(savedUrl);
+            })
+            .then((source) => {
+                if (!source || cancelled) return;
+                if (cancelled) return;
+                const parsed = parseM3U(source);
+                if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
+                setChannels(parsed);
+                void idbSet(PLAYLIST_CACHE_KEY, { url: savedUrl, channels: parsed });
+                try {
+                    localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed }));
+                } catch {
+                    /* IndexedDB remains the durable cache. */
+                }
+                const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
+                const currentConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
+                if (embeddedEpg && !currentConfig.epgUrl) setEpgUrl(embeddedEpg);
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify({
+                        ...currentConfig,
+                        playlistUrl: savedUrl,
+                        epgUrl: currentConfig.epgUrl || embeddedEpg || "",
+                    })
+                );
+            })
+            .catch((cause) => {
+                if (!cancelled)
+                    setError(
+                        cause instanceof Error ? cause.message : "Gespeicherte Playlist konnte nicht geladen werden."
+                    );
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
     }, [configReady]);
 
     const visible = useMemo(() => {
         const query = channelSearch.trim().toLocaleLowerCase("de");
         return channels.filter((channel) => {
             const matchesFavorite = filter !== "Favoriten" || favorites.includes(channel.id);
-            const searchable = [channel.name, channel.group || "", channel.tvgId || ""].join(" ").toLocaleLowerCase("de");
+            const searchable = [channel.name, channel.group || "", channel.tvgId || ""]
+                .join(" ")
+                .toLocaleLowerCase("de");
             return matchesFavorite && (!query || searchable.includes(query));
         });
     }, [channels, filter, favorites, channelSearch]);
@@ -155,10 +186,12 @@ export default function IPTVPage() {
                 .toLocaleLowerCase("de");
             const hasCountryCode = (code: string) =>
                 new RegExp(`(^|[^a-z0-9])${code.toLowerCase()}([^a-z0-9]|$)`).test(searchable);
-            const match = (groupCode ? labels.find((label) => label.codes?.includes(groupCode)) : undefined)
-                || labels.find((label) =>
-                    label.terms.some((term) => searchable.includes(term)) ||
-                    (label.codes || []).some(hasCountryCode)
+            const match =
+                (groupCode ? labels.find((label) => label.codes?.includes(groupCode)) : undefined) ||
+                labels.find(
+                    (label) =>
+                        label.terms.some((term) => searchable.includes(term)) ||
+                        (label.codes || []).some(hasCountryCode)
                 );
             if (match) groups.get(match.name)?.push(channel);
             else other.push(channel);
@@ -186,12 +219,20 @@ export default function IPTVPage() {
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
             void idbSet(PLAYLIST_CACHE_KEY, { url: playlistUrl.trim(), channels: parsed });
-            try { localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed })); } catch { /* IndexedDB remains the durable cache. */ }
+            try {
+                localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed }));
+            } catch {
+                /* IndexedDB remains the durable cache. */
+            }
             const embeddedEpg = source.match(/(?:url-tvg|x-tvg-url)="([^"]+)"/i)?.[1];
             if (embeddedEpg && !epgUrl) setEpgUrl(embeddedEpg);
             saveConfig(playlistUrl.trim(), epgUrl || embeddedEpg || "");
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : "Playlist konnte nicht geladen werden. Möglicherweise blockiert CORS den Zugriff.");
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : "Playlist konnte nicht geladen werden. Möglicherweise blockiert CORS den Zugriff."
+            );
         } finally {
             setLoading(false);
         }
@@ -213,7 +254,11 @@ export default function IPTVPage() {
             saveConfig();
             setEpgMessage(`${parsed.length.toLocaleString("de-CH")} Sendungen geladen.`);
         } catch (cause) {
-            setEpgMessage(cause instanceof Error ? cause.message : "EPG konnte nicht geladen werden. Eventuell blockiert CORS den Zugriff.");
+            setEpgMessage(
+                cause instanceof Error
+                    ? cause.message
+                    : "EPG konnte nicht geladen werden. Eventuell blockiert CORS den Zugriff."
+            );
         } finally {
             setEpgLoading(false);
         }
@@ -250,7 +295,8 @@ export default function IPTVPage() {
                 return;
             }
             const channelKey = event.key === "ChannelUp" || event.key === "ChannelDown";
-            const fullscreenArrow = Boolean(document.fullscreenElement) && (event.key === "ArrowUp" || event.key === "ArrowDown");
+            const fullscreenArrow =
+                Boolean(document.fullscreenElement) && (event.key === "ArrowUp" || event.key === "ArrowDown");
             if (!visible.length || (!channelKey && !fullscreenArrow)) return;
             event.preventDefault();
             const currentIndex = selected ? visible.findIndex((channel) => channel.id === selected.id) : -1;
@@ -268,64 +314,166 @@ export default function IPTVPage() {
             {!channels.length && (
                 <section className="rounded-lg border border-border/60 p-4 space-y-3">
                     <h2 className="font-medium">Playlist verbinden</h2>
-                    <p className="text-sm text-muted-foreground">Playlist- und EPG-Adressen werden nur lokal in diesem Browser gespeichert.</p>
-                    <Input type="url" value={playlistUrl} onChange={(event) => { setPlaylistUrl(event.target.value); saveConfig(event.target.value, epgUrl); }} placeholder="M3U-URL" aria-label="M3U-Playlist-URL" />
-                    <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL (optional)" aria-label="XMLTV-EPG-URL" />
+                    <p className="text-sm text-muted-foreground">
+                        Playlist- und EPG-Adressen werden nur lokal in diesem Browser gespeichert.
+                    </p>
+                    <Input
+                        type="url"
+                        value={playlistUrl}
+                        onChange={(event) => {
+                            setPlaylistUrl(event.target.value);
+                            saveConfig(event.target.value, epgUrl);
+                        }}
+                        placeholder="M3U-URL"
+                        aria-label="M3U-Playlist-URL"
+                    />
+                    <Input
+                        type="url"
+                        value={epgUrl}
+                        onChange={(event) => {
+                            setEpgUrl(event.target.value);
+                            saveConfig(playlistUrl, event.target.value);
+                        }}
+                        placeholder="XMLTV-EPG-URL (optional)"
+                        aria-label="XMLTV-EPG-URL"
+                    />
                     <Button onClick={loadPlaylist} disabled={loading || !playlistUrl.trim()} className="w-full">
-                        <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} /> {loading ? "Lädt…" : "Playlist laden"}
+                        <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />{" "}
+                        {loading ? "Lädt…" : "Playlist laden"}
                     </Button>
-                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                    {error && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {error}
+                        </p>
+                    )}
                 </section>
             )}
             {channels.length > 0 && (
                 <>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" variant={filter === "Alle" ? "default" : "outline"} onClick={() => setFilter("Alle")}>Alle Sender</Button>
-                        <Button size="sm" variant={filter === "Favoriten" ? "default" : "outline"} onClick={() => setFilter("Favoriten")}><Heart className="size-4" /> Favoriten</Button>
-                        <Button size="sm" variant={showSettings ? "default" : "outline"} onClick={() => setShowSettings((value) => !value)}><Tv className="size-4" /> Einstellungen</Button>
-                        <Button size="sm" variant="outline" onClick={() => { setChannels([]); setSelected(null); }}><RefreshCw className="size-4" /> Playlist ändern</Button>
-                        <span className="ml-auto text-xs text-muted-foreground">{visible.length} / {channels.length} Sender</span>
+                        <Button
+                            size="sm"
+                            variant={filter === "Alle" ? "default" : "outline"}
+                            onClick={() => setFilter("Alle")}>
+                            Alle Sender
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={filter === "Favoriten" ? "default" : "outline"}
+                            onClick={() => setFilter("Favoriten")}>
+                            <Heart className="size-4" /> Favoriten
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={showSettings ? "default" : "outline"}
+                            onClick={() => setShowSettings((value) => !value)}>
+                            <Tv className="size-4" /> Einstellungen
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                                setChannels([]);
+                                setSelected(null);
+                            }}>
+                            <RefreshCw className="size-4" /> Playlist ändern
+                        </Button>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                            {visible.length} / {channels.length} Sender
+                        </span>
                     </div>
                     {showSettings && (
                         <section className="space-y-4 rounded-lg border border-border/60 p-4">
                             <div>
                                 <h2 className="text-lg font-semibold">IPTV-Systemeinstellungen</h2>
-                                <p className="text-sm text-muted-foreground">Verwalte Playlist, Wiedergabe und Programmführer an einem Ort.</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Verwalte Playlist, Wiedergabe und Programmführer an einem Ort.
+                                </p>
                             </div>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div className="space-y-2 rounded-lg border border-border/60 p-3">
                                     <h3 className="font-medium">Allgemein</h3>
-                                    <p className="text-sm text-muted-foreground">Deine IPTV-Konfiguration wird lokal in diesem Browser gespeichert.</p>
-                                    <p className="text-xs text-muted-foreground">Geladene Sender: {channels.length.toLocaleString("de-CH")}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Deine IPTV-Konfiguration wird lokal in diesem Browser gespeichert.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Geladene Sender: {channels.length.toLocaleString("de-CH")}
+                                    </p>
                                 </div>
                                 <div className="space-y-2 rounded-lg border border-border/60 p-3">
                                     <h3 className="font-medium">Wiedergabe</h3>
                                     <p className="text-sm text-muted-foreground">Standard-Player: VLC</p>
-                                    <p className="text-xs text-muted-foreground">Sender werden direkt in der VLC-App geöffnet.</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Sender werden direkt in der VLC-App geöffnet.
+                                    </p>
                                 </div>
                                 <div className="space-y-2 rounded-lg border border-border/60 p-3">
                                     <h3 className="font-medium">Playlist</h3>
-                                    <Input type="url" value={playlistUrl} onChange={(event) => { setPlaylistUrl(event.target.value); saveConfig(event.target.value, epgUrl); }} placeholder="M3U-Playlist-URL" aria-label="M3U-Playlist-URL in den Einstellungen" />
-                                    <Button size="sm" className="w-full" onClick={loadPlaylist} disabled={loading || !playlistUrl.trim()}>
-                                        <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} /> {loading ? "Aktualisiere…" : "Playlist aktualisieren"}
+                                    <Input
+                                        type="url"
+                                        value={playlistUrl}
+                                        onChange={(event) => {
+                                            setPlaylistUrl(event.target.value);
+                                            saveConfig(event.target.value, epgUrl);
+                                        }}
+                                        placeholder="M3U-Playlist-URL"
+                                        aria-label="M3U-Playlist-URL in den Einstellungen"
+                                    />
+                                    <Button
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={loadPlaylist}
+                                        disabled={loading || !playlistUrl.trim()}>
+                                        <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />{" "}
+                                        {loading ? "Aktualisiere…" : "Playlist aktualisieren"}
                                     </Button>
                                 </div>
                                 <div className="space-y-2 rounded-lg border border-border/60 p-3">
                                     <h3 className="font-medium">Programmführer (EPG)</h3>
-                                    <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL in den Einstellungen" />
-                                    <Button size="sm" variant="outline" className="w-full" onClick={loadEpg} disabled={epgLoading || !epgUrl.trim()}>
+                                    <Input
+                                        type="url"
+                                        value={epgUrl}
+                                        onChange={(event) => {
+                                            setEpgUrl(event.target.value);
+                                            saveConfig(playlistUrl, event.target.value);
+                                        }}
+                                        placeholder="XMLTV-EPG-URL"
+                                        aria-label="XMLTV-EPG-URL in den Einstellungen"
+                                    />
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={loadEpg}
+                                        disabled={epgLoading || !epgUrl.trim()}>
                                         <CalendarDays className="size-4" /> {epgLoading ? "Lädt…" : "EPG aktualisieren"}
                                     </Button>
-                                    <p className="text-xs text-muted-foreground">{programs.length.toLocaleString("de-CH")} Programmdaten im Cache</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {programs.length.toLocaleString("de-CH")} Programmdaten im Cache
+                                    </p>
                                 </div>
                                 <div className="space-y-2 rounded-lg border border-border/60 p-3 sm:col-span-2">
                                     <h3 className="font-medium">Erweitert / System</h3>
-                                    <p className="text-sm text-muted-foreground">Senderliste und EPG werden zwischengespeichert, damit deine Inhalte beim nächsten Öffnen schneller bereitstehen.</p>
-                                    <p className="text-xs text-muted-foreground">Playlist-Cache: {channels.length ? "geladen" : "nicht geladen"} · EPG-Cache: {programs.length ? "geladen" : "leer"}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Senderliste und EPG werden zwischengespeichert, damit deine Inhalte beim
+                                        nächsten Öffnen schneller bereitstehen.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Playlist-Cache: {channels.length ? "geladen" : "nicht geladen"} · EPG-Cache:{" "}
+                                        {programs.length ? "geladen" : "leer"}
+                                    </p>
                                 </div>
                             </div>
-                            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                            {epgMessage && <p role="status" className="text-sm text-muted-foreground">{epgMessage}</p>}
+                            {error && (
+                                <p role="alert" className="text-sm text-destructive">
+                                    {error}
+                                </p>
+                            )}
+                            {epgMessage && (
+                                <p role="status" className="text-sm text-muted-foreground">
+                                    {epgMessage}
+                                </p>
+                            )}
                         </section>
                     )}
                     <Input
@@ -337,17 +485,41 @@ export default function IPTVPage() {
                     />
                     <section className="rounded-lg border border-border/60 p-3 space-y-2">
                         <h2 className="text-sm font-medium">Wiedergabe mit VLC</h2>
-                        <p className="text-sm text-muted-foreground">Der integrierte Browser-Player ist entfernt. Tippe einen Sender an, um ihn direkt in VLC zu öffnen.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Der integrierte Browser-Player ist entfernt. Tippe einen Sender an, um ihn direkt in VLC zu
+                            öffnen.
+                        </p>
                     </section>
                     <section className="rounded-lg border border-border/60 p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="url" value={epgUrl} onChange={(event) => { setEpgUrl(event.target.value); saveConfig(playlistUrl, event.target.value); }} placeholder="XMLTV-EPG-URL" aria-label="XMLTV-EPG-URL" />
-                            <Button onClick={loadEpg} disabled={epgLoading || !epgUrl.trim()} variant="outline" className="shrink-0">
+                            <Input
+                                type="url"
+                                value={epgUrl}
+                                onChange={(event) => {
+                                    setEpgUrl(event.target.value);
+                                    saveConfig(playlistUrl, event.target.value);
+                                }}
+                                placeholder="XMLTV-EPG-URL"
+                                aria-label="XMLTV-EPG-URL"
+                            />
+                            <Button
+                                onClick={loadEpg}
+                                disabled={epgLoading || !epgUrl.trim()}
+                                variant="outline"
+                                className="shrink-0">
                                 <CalendarDays className="size-4" /> {epgLoading ? "Lädt…" : "EPG laden"}
                             </Button>
                         </div>
-                        {epgMessage && <p className="text-xs text-muted-foreground" role="status">{epgMessage}</p>}
-                        {programs.length > 0 && <p className="text-xs text-muted-foreground">EPG gespeichert · {programs.length.toLocaleString("de-CH")} Sendungen · Cache: 6 Stunden</p>}
+                        {epgMessage && (
+                            <p className="text-xs text-muted-foreground" role="status">
+                                {epgMessage}
+                            </p>
+                        )}
+                        {programs.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                EPG gespeichert · {programs.length.toLocaleString("de-CH")} Sendungen · Cache: 6 Stunden
+                            </p>
+                        )}
                     </section>
                     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] gap-4">
                         <section className="min-w-0 space-y-3">
@@ -358,17 +530,52 @@ export default function IPTVPage() {
                                             <p className="text-xs text-muted-foreground">Ausgewählter Sender</p>
                                             <h2 className="truncate font-medium">{selected.name}</h2>
                                         </div>
-                                        <Button size="icon" variant="ghost" onClick={() => setSelected(null)} aria-label="Auswahl schließen"><X className="size-4" /></Button>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => setSelected(null)}
+                                            aria-label="Auswahl schließen">
+                                            <X className="size-4" />
+                                        </Button>
                                     </div>
                                     <Button className="w-full" onClick={() => openInVlc(selected)}>
                                         <Play className="size-4" /> Erneut mit VLC öffnen
                                     </Button>
-                                    {nowNext?.current && <div className="rounded-md bg-muted/40 p-3 text-sm"><p className="text-xs text-muted-foreground">JETZT</p><p className="font-medium">{nowNext.current.title}</p>{nowNext.current.description && <p className="mt-1 text-xs text-muted-foreground">{nowNext.current.description}</p>}</div>}
-                                    {nowNext?.next && <div className="rounded-md border border-border/60 p-3 text-sm"><p className="text-xs text-muted-foreground">DANACH</p><p className="font-medium">{nowNext.next.title}</p><p className="text-xs text-muted-foreground">{new Date(nowNext.next.start).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}</p></div>}
-                                    {programs.length > 0 && !nowNext?.current && !nowNext?.next && <p className="text-xs text-muted-foreground">Für diesen Sender wurden keine passenden EPG-Daten gefunden. Prüfe die tvg-id-Zuordnung.</p>}
+                                    {nowNext?.current && (
+                                        <div className="rounded-md bg-muted/40 p-3 text-sm">
+                                            <p className="text-xs text-muted-foreground">JETZT</p>
+                                            <p className="font-medium">{nowNext.current.title}</p>
+                                            {nowNext.current.description && (
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {nowNext.current.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {nowNext?.next && (
+                                        <div className="rounded-md border border-border/60 p-3 text-sm">
+                                            <p className="text-xs text-muted-foreground">DANACH</p>
+                                            <p className="font-medium">{nowNext.next.title}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {new Date(nowNext.next.start).toLocaleTimeString("de-CH", {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {programs.length > 0 && !nowNext?.current && !nowNext?.next && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Für diesen Sender wurden keine passenden EPG-Daten gefunden. Prüfe die
+                                            tvg-id-Zuordnung.
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
-                                <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 text-muted-foreground"><Tv className="size-10" /><span className="text-sm">Sender auswählen</span></div>
+                                <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 text-muted-foreground">
+                                    <Tv className="size-10" />
+                                    <span className="text-sm">Sender auswählen</span>
+                                </div>
                             )}
                             <div className="space-y-2">
                                 {groupedChannels.map(([groupName, groupChannels], groupIndex) => {
@@ -376,64 +583,142 @@ export default function IPTVPage() {
                                     const nested = new Map<string, IPTVChannel[]>();
                                     for (const channel of groupChannels) {
                                         const rawGroup = (channel.group || "").trim();
-                                        const nestedName = groupName === "Deutschland (DE)"
-                                            ? rawGroup.match(/^DE\\s*(?:[|:/ >\\-–—]+)\\s*(.+)$/i)?.[1]?.trim()
-                                                || rawGroup.match(/^(.+?)\\s*(?:[|:/ >\\-–—]+)\\s*DE$/i)?.[1]?.trim()
-                                            : undefined;
+                                        const nestedName =
+                                            groupName === "Deutschland (DE)"
+                                                ? rawGroup.match(/^DE\\s*(?:[|:/ >\\-–—]+)\\s*(.+)$/i)?.[1]?.trim() ||
+                                                  rawGroup.match(/^(.+?)\\s*(?:[|:/ >\\-–—]+)\\s*DE$/i)?.[1]?.trim()
+                                                : undefined;
                                         const key = nestedName || "";
                                         if (!nested.has(key)) nested.set(key, []);
                                         nested.get(key)!.push(channel);
                                     }
                                     const hasNested = nested.size > 1 || (nested.size === 1 && !nested.has(""));
                                     const renderChannel = (channel: IPTVChannel) => (
-                                        <div key={channel.id} className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
-                                            <button type="button" onClick={() => playChannel(channel)} className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                                {channel.logo ? <img src={channel.logo} alt="" className="size-9 shrink-0 object-contain" loading="lazy" /> : <Tv className="size-8 shrink-0 text-muted-foreground" />}
+                                        <div
+                                            key={channel.id}
+                                            className="flex min-w-0 items-center gap-2 rounded-md border border-border/60 p-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => playChannel(channel)}
+                                                className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                {channel.logo ? (
+                                                    <img
+                                                        src={channel.logo}
+                                                        alt=""
+                                                        className="size-9 shrink-0 object-contain"
+                                                        loading="lazy"
+                                                    />
+                                                ) : (
+                                                    <Tv className="size-8 shrink-0 text-muted-foreground" />
+                                                )}
                                                 <span className="truncate text-sm">{channel.name}</span>
                                             </button>
-                                            <Button size="icon" variant="ghost" className="size-8 shrink-0" onClick={() => toggleFavorite(channel.id)} aria-label="Favorit umschalten"><Heart className={favorites.includes(channel.id) ? "size-4 fill-current text-red-500" : "size-4"} /></Button>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="size-8 shrink-0"
+                                                onClick={() => toggleFavorite(channel.id)}
+                                                aria-label="Favorit umschalten">
+                                                <Heart
+                                                    className={
+                                                        favorites.includes(channel.id)
+                                                            ? "size-4 fill-current text-red-500"
+                                                            : "size-4"
+                                                    }
+                                                />
+                                            </Button>
                                         </div>
                                     );
                                     return (
-                                    <section key={groupName} className="overflow-hidden rounded-lg border border-border/60">
-                                        <button
-                                            type="button"
-                                            aria-expanded={isExpanded}
-                                            onClick={() => setExpandedGroups((current) => ({ ...current, [groupName]: !isExpanded }))}
-                                            className="flex min-h-12 w-full touch-manipulation items-center justify-between gap-3 bg-muted/30 px-3 py-2 text-left font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        >
-                                            <span className="truncate">{groupName}</span>
-                                            <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">{groupChannels.length} Sender <span aria-hidden="true">{isExpanded ? "−" : "+"}</span></span>
-                                        </button>
-                                        {isExpanded && <div className="space-y-2 p-2">
-                                            {hasNested ? Array.from(nested.entries()).map(([subName, items]) => (
-                                                <div key={subName || "other"} className="overflow-hidden rounded-md border border-border/60">
-                                                    <div className="bg-muted/20 px-3 py-2 text-sm font-medium">{subName || "Weitere DE-Sender"} <span className="text-xs font-normal text-muted-foreground">· {items.length}</span></div>
-                                                    <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">{items.map(renderChannel)}</div>
+                                        <section
+                                            key={groupName}
+                                            className="overflow-hidden rounded-lg border border-border/60">
+                                            <button
+                                                type="button"
+                                                aria-expanded={isExpanded}
+                                                onClick={() =>
+                                                    setExpandedGroups((current) => ({
+                                                        ...current,
+                                                        [groupName]: !isExpanded,
+                                                    }))
+                                                }
+                                                className="flex min-h-12 w-full touch-manipulation items-center justify-between gap-3 bg-muted/30 px-3 py-2 text-left font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                <span className="truncate">{groupName}</span>
+                                                <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                                    {groupChannels.length} Sender{" "}
+                                                    <span aria-hidden="true">{isExpanded ? "−" : "+"}</span>
+                                                </span>
+                                            </button>
+                                            {isExpanded && (
+                                                <div className="space-y-2 p-2">
+                                                    {hasNested ? (
+                                                        Array.from(nested.entries()).map(([subName, items]) => (
+                                                            <div
+                                                                key={subName || "other"}
+                                                                className="overflow-hidden rounded-md border border-border/60">
+                                                                <div className="bg-muted/20 px-3 py-2 text-sm font-medium">
+                                                                    {subName || "Weitere DE-Sender"}{" "}
+                                                                    <span className="text-xs font-normal text-muted-foreground">
+                                                                        · {items.length}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">
+                                                                    {items.map(renderChannel)}
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                                                            {groupChannels.map(renderChannel)}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )) : <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">{groupChannels.map(renderChannel)}</div>}
-                                        </div>}
-                                    </section>
+                                            )}
+                                        </section>
                                     );
                                 })}
                             </div>
-                            {!visible.length && <p className="py-6 text-center text-sm text-muted-foreground">Keine Sender in dieser Auswahl.</p>}
+                            {!visible.length && (
+                                <p className="py-6 text-center text-sm text-muted-foreground">
+                                    Keine Sender in dieser Auswahl.
+                                </p>
+                            )}
                         </section>
                         <aside className="hidden space-y-2 rounded-lg border border-border/60 p-3 lg:block">
                             <h2 className="text-sm font-medium">Senderliste</h2>
                             <div className="max-h-[65vh] space-y-1 overflow-y-auto">
                                 {visible.map((channel, index) => (
-                                    <button key={channel.id} type="button" onClick={() => playChannel(channel)} className={"relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " + (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")}>
-                                        <span className="w-6 text-right text-xs text-muted-foreground">{index + 1}</span><span className="flex-1 truncate">{channel.name}</span><Play className="size-3 shrink-0" />
+                                    <button
+                                        key={channel.id}
+                                        type="button"
+                                        onClick={() => playChannel(channel)}
+                                        className={
+                                            "relative z-10 flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md p-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                                            (selected?.id === channel.id ? "bg-accent" : "hover:bg-muted/60")
+                                        }>
+                                        <span className="w-6 text-right text-xs text-muted-foreground">
+                                            {index + 1}
+                                        </span>
+                                        <span className="flex-1 truncate">{channel.name}</span>
+                                        <Play className="size-3 shrink-0" />
                                     </button>
                                 ))}
                             </div>
                         </aside>
                     </div>
-                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                    {error && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {error}
+                        </p>
+                    )}
                 </>
             )}
-            {!channels.length && <p className="text-xs text-muted-foreground">Sender werden direkt mit VLC geöffnet. Playlist- und EPG-Adressen bleiben lokal in diesem Browser gespeichert.</p>}
+            {!channels.length && (
+                <p className="text-xs text-muted-foreground">
+                    Sender werden direkt mit VLC geöffnet. Playlist- und EPG-Adressen bleiben lokal in diesem Browser
+                    gespeichert.
+                </p>
+            )}
         </div>
     );
 }

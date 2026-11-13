@@ -9,15 +9,21 @@ import { db, upsertUserSettings } from "@/lib/db/drizzle";
 import { userSettings } from "@/lib/db/schema";
 
 const capabilitySchema = z.enum(["subtitles", "player", "metadata", "iptv"]);
-const pluginManifestSchema = z.object({
-    id: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,63}$/),
-    name: z.string().trim().min(1).max(80),
-    version: z.string().trim().min(1).max(32),
-    description: z.string().trim().max(240).default(""),
-    author: z.string().trim().max(80).default(""),
-    homepage: z.string().url().refine((value) => value.startsWith("https://"), "Homepage must use HTTPS").optional(),
-    capabilities: z.array(capabilitySchema).max(4).default([]),
-}).strict();
+const pluginManifestSchema = z
+    .object({
+        id: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,63}$/),
+        name: z.string().trim().min(1).max(80),
+        version: z.string().trim().min(1).max(32),
+        description: z.string().trim().max(240).default(""),
+        author: z.string().trim().max(80).default(""),
+        homepage: z
+            .string()
+            .url()
+            .refine((value) => value.startsWith("https://"), "Homepage must use HTTPS")
+            .optional(),
+        capabilities: z.array(capabilitySchema).max(4).default([]),
+    })
+    .strict();
 
 const installedPluginSchema = pluginManifestSchema.extend({
     enabled: z.boolean(),
@@ -34,8 +40,12 @@ async function getCurrentUserId() {
 }
 
 async function readInstalled(userId: string): Promise<InstalledPlugin[]> {
-    const [row] = await db.select({ settings: userSettings.settings }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1);
-    const settings = row?.settings && typeof row.settings === "object" ? row.settings as Record<string, unknown> : {};
+    const [row] = await db
+        .select({ settings: userSettings.settings })
+        .from(userSettings)
+        .where(eq(userSettings.userId, userId))
+        .limit(1);
+    const settings = row?.settings && typeof row.settings === "object" ? (row.settings as Record<string, unknown>) : {};
     const parsed = pluginManagerSchema.safeParse(settings.pluginManager);
     return parsed.success ? parsed.data.installed : [];
 }
@@ -77,18 +87,30 @@ export async function installPlugin(manifestText: string) {
 
 export async function setPluginEnabled(pluginId: string, enabled: boolean) {
     const userId = await getCurrentUserId();
-    const id = z.string().regex(/^[a-z0-9][a-z0-9._-]{1,63}$/).parse(pluginId);
+    const id = z
+        .string()
+        .regex(/^[a-z0-9][a-z0-9._-]{1,63}$/)
+        .parse(pluginId);
     const isEnabled = z.boolean().parse(enabled);
     const installed = await readInstalled(userId);
     if (!installed.some((plugin) => plugin.id === id)) throw new Error("Plugin nicht gefunden.");
-    await writeInstalled(userId, installed.map((plugin) => plugin.id === id ? { ...plugin, enabled: isEnabled } : plugin));
+    await writeInstalled(
+        userId,
+        installed.map((plugin) => (plugin.id === id ? { ...plugin, enabled: isEnabled } : plugin))
+    );
     return { success: true };
 }
 
 export async function removePlugin(pluginId: string) {
     const userId = await getCurrentUserId();
-    const id = z.string().regex(/^[a-z0-9][a-z0-9._-]{1,63}$/).parse(pluginId);
+    const id = z
+        .string()
+        .regex(/^[a-z0-9][a-z0-9._-]{1,63}$/)
+        .parse(pluginId);
     const installed = await readInstalled(userId);
-    await writeInstalled(userId, installed.filter((plugin) => plugin.id !== id));
+    await writeInstalled(
+        userId,
+        installed.filter((plugin) => plugin.id !== id)
+    );
     return { success: true };
 }

@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { and, eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/drizzle";
 import { userAccounts } from "@/lib/db/schema";
@@ -53,7 +53,11 @@ async function rdRequest<T>(path: string, token: string, init: RequestInit = {})
     });
 
     if (!response.ok) {
-        throw new Error(response.status === 404 ? "Datei bei Real-Debrid nicht gefunden." : `Real-Debrid antwortete mit HTTP ${response.status}.`);
+        throw new Error(
+            response.status === 404
+                ? "Datei bei Real-Debrid nicht gefunden."
+                : `Real-Debrid antwortete mit HTTP ${response.status}.`
+        );
     }
     return response.json() as Promise<T>;
 }
@@ -85,11 +89,13 @@ export async function POST(request: NextRequest) {
     const [account] = await db
         .select({ apiKey: userAccounts.apiKey })
         .from(userAccounts)
-        .where(and(
-            eq(userAccounts.id, accountId),
-            eq(userAccounts.userId, session.user.id),
-            eq(userAccounts.type, AccountType.REALDEBRID)
-        ))
+        .where(
+            and(
+                eq(userAccounts.id, accountId),
+                eq(userAccounts.userId, session.user.id),
+                eq(userAccounts.type, AccountType.REALDEBRID)
+            )
+        )
         .limit(1);
 
     if (!account) {
@@ -104,10 +110,16 @@ export async function POST(request: NextRequest) {
             if (torrents.length < 100) break;
         }
         if (!torrent) {
-            return NextResponse.json({ error: "Dieser Torrent liegt nicht in deinem Real-Debrid-Konto." }, { status: 404 });
+            return NextResponse.json(
+                { error: "Dieser Torrent liegt nicht in deinem Real-Debrid-Konto." },
+                { status: 404 }
+            );
         }
         if (torrent.status !== "downloaded") {
-            return NextResponse.json({ error: "Die Datei ist bei Real-Debrid noch nicht vollständig verfügbar." }, { status: 409 });
+            return NextResponse.json(
+                { error: "Die Datei ist bei Real-Debrid noch nicht vollständig verfügbar." },
+                { status: 409 }
+            );
         }
 
         const info = await rdRequest<TorrentInfo>(`/torrents/info/${encodeURIComponent(torrent.id)}`, account.apiKey);
@@ -124,7 +136,10 @@ export async function POST(request: NextRequest) {
         let linkIndex = selectedIndex;
         if (info.links.length === 1) linkIndex = 0;
         if (linkIndex < 0 || linkIndex >= info.links.length) {
-            return NextResponse.json({ error: "Real-Debrid konnte die Videodatei nicht eindeutig zuordnen." }, { status: 409 });
+            return NextResponse.json(
+                { error: "Real-Debrid konnte die Videodatei nicht eindeutig zuordnen." },
+                { status: 409 }
+            );
         }
 
         const form = new URLSearchParams({ link: info.links[linkIndex] });
@@ -138,12 +153,19 @@ export async function POST(request: NextRequest) {
         const ffprobeModule = require("ffprobe-static") as string | { path?: string };
         const ffprobePath = typeof ffprobeModule === "string" ? ffprobeModule : ffprobeModule.path;
         if (!ffprobePath) throw new Error("ffprobe-static binary path is unavailable");
-        const { stdout } = await execFileAsync(ffprobePath, [
-            "-v", "error",
-            "-show_entries", "stream=index,codec_type,codec_name:stream_tags=language,title",
-            "-of", "json",
-            unrestricted.download,
-        ], { timeout: 30000, maxBuffer: 1024 * 1024 });
+        const { stdout } = await execFileAsync(
+            ffprobePath,
+            [
+                "-v",
+                "error",
+                "-show_entries",
+                "stream=index,codec_type,codec_name:stream_tags=language,title",
+                "-of",
+                "json",
+                unrestricted.download,
+            ],
+            { timeout: 30000, maxBuffer: 1024 * 1024 }
+        );
 
         const probe = JSON.parse(stdout) as ProbeResult;
         const audioTracks = (probe.streams || [])
@@ -155,17 +177,21 @@ export async function POST(request: NextRequest) {
                 title: stream.tags?.title || null,
             }));
 
-        return NextResponse.json({
-            verified: true,
-            fileName: chosenFile.path.split("/").pop() || unrestricted.filename,
-            audioTracks,
-        }, { headers: { "Cache-Control": "no-store" } });
+        return NextResponse.json(
+            {
+                verified: true,
+                fileName: chosenFile.path.split("/").pop() || unrestricted.filename,
+                audioTracks,
+            },
+            { headers: { "Cache-Control": "no-store" } }
+        );
     } catch (error) {
-        const message = error instanceof Error && error.message.includes("ffprobe-static")
-            ? "Der Medien-Analyzer ist auf dem Server nicht installiert."
-            : error instanceof Error && error.name === "TimeoutError"
-                ? "Die Tonspur-Prüfung hat zu lange gedauert."
-                : error instanceof Error
+        const message =
+            error instanceof Error && error.message.includes("ffprobe-static")
+                ? "Der Medien-Analyzer ist auf dem Server nicht installiert."
+                : error instanceof Error && error.name === "TimeoutError"
+                  ? "Die Tonspur-Prüfung hat zu lange gedauert."
+                  : error instanceof Error
                     ? error.message
                     : "Tonspur-Prüfung fehlgeschlagen.";
         return NextResponse.json({ error: message }, { status: 502 });

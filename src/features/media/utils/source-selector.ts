@@ -32,7 +32,11 @@ export interface SelectionResult {
     uncachedMatches: AddonSource[];
 }
 
-export function selectBestSource(sources: AddonSource[], settings: StreamingSettings, germanReleaseNames: string[] = []): SelectionResult {
+export function selectBestSource(
+    sources: AddonSource[],
+    settings: StreamingSettings,
+    germanReleaseNames: string[] = []
+): SelectionResult {
     const range = getActiveRange(settings);
 
     // Filter sources that match preferences
@@ -47,15 +51,30 @@ export function selectBestSource(sources: AddonSource[], settings: StreamingSett
     // such as DE/DEU/GER, country flags, and full language names.
     const getLanguagePriority = (source: AddonSource): number => {
         const metadata = `${source.title} ${source.description || ""}`;
-        if (/(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(metadata)) return 0;
+        if (
+            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(
+                metadata
+            )
+        )
+            return 0;
         if (/(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata)) return 1;
-        if (/(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(metadata)) return 3;
-        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata)) return 4;
+        if (
+            /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(
+                metadata
+            )
+        )
+            return 3;
+        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata))
+            return 4;
         return 2;
     };
 
     const normalizedWords = (value: string) =>
-        value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter((word) => word.length > 2 && !["the", "and", "for"].includes(word));
+        value
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, " ")
+            .split(/\s+/)
+            .filter((word) => word.length > 2 && !["the", "and", "for"].includes(word));
     const matchesXrelGermanRelease = (source: AddonSource): boolean => {
         const sourceWords = new Set(normalizedWords(source.title));
         return germanReleaseNames.some((releaseName) => {

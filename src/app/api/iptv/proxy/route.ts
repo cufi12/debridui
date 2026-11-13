@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,11 +9,17 @@ function isPrivateIPv4(ip: string): boolean {
     const parts = ip.split(".").map(Number);
     if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
     const [a, b] = parts;
-    return a === 0 || a === 10 || a === 127 || a >= 224 ||
+    return (
+        a === 0 ||
+        a === 10 ||
+        a === 127 ||
+        a >= 224 ||
         (a === 100 && b >= 64 && b <= 127) ||
-        (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||
+        (a === 169 && b === 254) ||
+        (a === 172 && b >= 16 && b <= 31) ||
         (a === 192 && (b === 0 || b === 168)) ||
-        (a === 198 && (b === 18 || b === 19));
+        (a === 198 && (b === 18 || b === 19))
+    );
 }
 
 function isPublicAddress(ip: string): boolean {
@@ -28,8 +34,10 @@ function isPublicAddress(ip: string): boolean {
 }
 
 async function validateTarget(url: URL): Promise<void> {
-    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Nur HTTP- und HTTPS-Adressen sind erlaubt.");
-    if (url.username || url.password) throw new Error("Zugangsdaten bitte als URL-Parameter übergeben, nicht im Hostnamen.");
+    if (url.protocol !== "http:" && url.protocol !== "https:")
+        throw new Error("Nur HTTP- und HTTPS-Adressen sind erlaubt.");
+    if (url.username || url.password)
+        throw new Error("Zugangsdaten bitte als URL-Parameter übergeben, nicht im Hostnamen.");
     const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
     if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local")) {
         throw new Error("Lokale Netzwerkadressen sind nicht erlaubt.");
@@ -46,7 +54,9 @@ async function fetchFollowingRedirects(initial: URL): Promise<Response> {
     for (let redirects = 0; redirects <= 5; redirects++) {
         await validateTarget(target);
         const response = await fetch(target, {
-            method: "GET", cache: "no-store", redirect: "manual",
+            method: "GET",
+            cache: "no-store",
+            redirect: "manual",
             signal: AbortSignal.timeout(25000),
             headers: { Accept: "*/*", "User-Agent": "Mozilla/5.0 DebridUI IPTV" },
         });
@@ -59,7 +69,9 @@ async function fetchFollowingRedirects(initial: URL): Promise<Response> {
 }
 
 function cleanAttribute(value: unknown): string {
-    return String(value ?? "").replace(/[\r\n"]/g, " ").trim();
+    return String(value ?? "")
+        .replace(/[\r\n"]/g, " ")
+        .trim();
 }
 
 async function tryXtreamFallback(original: URL): Promise<string | null> {
@@ -76,7 +88,7 @@ async function tryXtreamFallback(original: URL): Promise<string | null> {
 
     const apiResponse = await fetchFollowingRedirects(apiUrl);
     if (!apiResponse.ok) throw new Error("Xtream-API antwortet mit HTTP " + apiResponse.status + ".");
-    const account = await apiResponse.json() as {
+    const account = (await apiResponse.json()) as {
         user_info?: { auth?: number | string; status?: string };
         server_info?: { url?: string; server_protocol?: string; port?: string | number; https_port?: string | number };
     };
@@ -93,12 +105,15 @@ async function tryXtreamFallback(original: URL): Promise<string | null> {
         fetchFollowingRedirects(categoriesUrl).catch(() => null),
     ]);
     if (!streamsResponse.ok) throw new Error("Xtream-Senderliste antwortet mit HTTP " + streamsResponse.status + ".");
-    const streams = await streamsResponse.json() as Array<{
-        stream_id?: number | string; name?: string; category_id?: number | string;
-        stream_icon?: string; epg_channel_id?: string;
+    const streams = (await streamsResponse.json()) as Array<{
+        stream_id?: number | string;
+        name?: string;
+        category_id?: number | string;
+        stream_icon?: string;
+        epg_channel_id?: string;
     }>;
     const categories = categoriesResponse?.ok
-        ? await categoriesResponse.json() as Array<{ category_id?: number | string; category_name?: string }>
+        ? ((await categoriesResponse.json()) as Array<{ category_id?: number | string; category_name?: string }>)
         : [];
     if (!Array.isArray(streams) || !streams.length) throw new Error("Xtream-API hat keine Live-Sender geliefert.");
 
@@ -106,7 +121,12 @@ async function tryXtreamFallback(original: URL): Promise<string | null> {
     const server = account.server_info;
     if (server?.url) {
         const candidate = new URL(server.url.includes("://") ? server.url : original.protocol + "//" + server.url);
-        const protocol = server.server_protocol === "https" ? "https:" : server.server_protocol === "http" ? "http:" : candidate.protocol;
+        const protocol =
+            server.server_protocol === "https"
+                ? "https:"
+                : server.server_protocol === "http"
+                  ? "http:"
+                  : candidate.protocol;
         candidate.protocol = protocol;
         const port = protocol === "https:" ? server.https_port : server.port;
         if (port && /^\d{1,5}$/.test(String(port))) candidate.port = String(port);
@@ -117,19 +137,39 @@ async function tryXtreamFallback(original: URL): Promise<string | null> {
     streamBase.hash = "";
     await validateTarget(streamBase);
 
-    const categoryNames = new Map(categories.map((item) => [String(item.category_id), cleanAttribute(item.category_name)]));
+    const categoryNames = new Map(
+        categories.map((item) => [String(item.category_id), cleanAttribute(item.category_name)])
+    );
     const output = ["#EXTM3U"];
     const extension = original.searchParams.get("output")?.toLowerCase() === "m3u8" ? "m3u8" : "ts";
     for (const stream of streams) {
         if (stream.stream_id == null) continue;
-        const name = cleanAttribute(stream.name) || ("Sender " + stream.stream_id);
+        const name = cleanAttribute(stream.name) || "Sender " + stream.stream_id;
         const group = categoryNames.get(String(stream.category_id)) || "Weitere Sender";
         const logo = cleanAttribute(stream.stream_icon);
         const epgId = cleanAttribute(stream.epg_channel_id);
-        output.push("#EXTINF:-1" + (epgId ? ' tvg-id="' + epgId + '"' : "") +
-            (logo ? ' tvg-logo="' + logo + '"' : "") + ' group-title="' + group + '",' + name);
-        output.push(new URL("/live/" + encodeURIComponent(username) + "/" + encodeURIComponent(password) +
-            "/" + encodeURIComponent(String(stream.stream_id)) + "." + extension, streamBase).toString());
+        output.push(
+            "#EXTINF:-1" +
+                (epgId ? ' tvg-id="' + epgId + '"' : "") +
+                (logo ? ' tvg-logo="' + logo + '"' : "") +
+                ' group-title="' +
+                group +
+                '",' +
+                name
+        );
+        output.push(
+            new URL(
+                "/live/" +
+                    encodeURIComponent(username) +
+                    "/" +
+                    encodeURIComponent(password) +
+                    "/" +
+                    encodeURIComponent(String(stream.stream_id)) +
+                    "." +
+                    extension,
+                streamBase
+            ).toString()
+        );
     }
     return output.join("\n");
 }
@@ -143,7 +183,10 @@ export async function GET(request: NextRequest) {
         target = new URL(rawUrl);
         await validateTarget(target);
     } catch (error) {
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Ungültige Zieladresse." }, { status: 400 });
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Ungültige Zieladresse." },
+            { status: 400 }
+        );
     }
 
     try {
@@ -157,9 +200,12 @@ export async function GET(request: NextRequest) {
                 body = new TextEncoder().encode(generated).buffer as ArrayBuffer;
                 contentType = "audio/x-mpegurl; charset=utf-8";
             } else {
-                return NextResponse.json({
-                    error: "Der Anbieter blockiert den M3U-Download (HTTP 884). Automatischer Xtream-Fallback ist mit dieser URL nicht möglich. Die URL muss die Parameter username und password enthalten.",
-                }, { status: 502 });
+                return NextResponse.json(
+                    {
+                        error: "Der Anbieter blockiert den M3U-Download (HTTP 884). Automatischer Xtream-Fallback ist mit dieser URL nicht möglich. Die URL muss die Parameter username und password enthalten.",
+                    },
+                    { status: 502 }
+                );
             }
         } else {
             if (!upstream.ok) {
@@ -181,11 +227,12 @@ export async function GET(request: NextRequest) {
             headers: { "Content-Type": contentType, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
         });
     } catch (error) {
-        const message = error instanceof Error && error.name === "TimeoutError"
-            ? "Zeitüberschreitung beim IPTV-Anbieter."
-            : error instanceof Error && error.message.startsWith("Xtream-")
-                ? error.message
-                : "Der IPTV-Anbieter konnte vom Server nicht erreicht werden.";
+        const message =
+            error instanceof Error && error.name === "TimeoutError"
+                ? "Zeitüberschreitung beim IPTV-Anbieter."
+                : error instanceof Error && error.message.startsWith("Xtream-")
+                  ? error.message
+                  : "Der IPTV-Anbieter konnte vom Server nicht erreicht werden.";
         return NextResponse.json({ error: message }, { status: 502 });
     }
 }
