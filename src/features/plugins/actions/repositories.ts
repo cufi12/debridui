@@ -139,6 +139,28 @@ export async function getPluginRepositories() {
     return readRepositories(await currentUserId());
 }
 
+/** Return only explicitly enabled providers for stream discovery. */
+export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") {
+    const repositories = await readRepositories(await currentUserId());
+    return repositories.flatMap((repository) =>
+        repository.providers
+            .filter((provider) => provider.enabled)
+            .filter((provider) => !mediaType || (
+                mediaType === "movie"
+                    ? provider.supportedTypes.includes("movie")
+                    : provider.supportedTypes.includes("tv") || provider.supportedTypes.includes("series")
+            ))
+            .map((provider) => ({
+                repositoryId: repository.id,
+                repositoryName: repository.name,
+                providerId: provider.id,
+                providerName: provider.name,
+                filename: provider.filename,
+                supportedTypes: provider.supportedTypes,
+            }))
+    );
+}
+
 export async function addPluginRepository(rawUrl: string) {
     const userId = await currentUserId();
     const url = validateRepositoryUrl(rawUrl.trim());
