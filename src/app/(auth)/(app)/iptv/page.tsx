@@ -366,6 +366,14 @@ export default function IPTVPage() {
                                     {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
                                     <div className="flex flex-wrap justify-end gap-2">
                                         <Button size="sm" variant="outline" onClick={() => {
+                                            if (!selected?.url) return;
+                                            const stream = getProxiedStreamUrl(selected.url);
+                                            const intent = `intent://${window.location.host}${stream}#Intent;scheme=${window.location.protocol.slice(0, -1)};package=org.videolan.vlc;type=video/*;S.browser_fallback_url=${encodeURIComponent(window.location.origin + stream)};end`;
+                                            window.location.href = intent;
+                                        }}>
+                                            <Play className="size-4" /> Mit VLC öffnen
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => {
                                             if (selected?.url) window.open(getProxiedStreamUrl(selected.url), "_blank", "noopener,noreferrer");
                                         }}>
                                             <Play className="size-4" /> Im Browser-Player öffnen
