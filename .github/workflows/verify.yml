@@ -37,8 +37,9 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add bun.lock
             git commit -m "chore: update bun lockfile"
-            git pull --rebase origin "$GITHUB_REF_NAME"
-            git push
+            TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+            git pull --rebase origin "$TARGET_BRANCH"
+            git push origin "HEAD:$TARGET_BRANCH"
           fi
 
       - name: Apply safe formatting and lint fixes
@@ -51,8 +52,9 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -u
             git commit -m "style: apply Biome fixes"
-            git pull --rebase origin "$GITHUB_REF_NAME"
-            git push
+            TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+            git pull --rebase origin "$TARGET_BRANCH"
+            git push origin "HEAD:$TARGET_BRANCH"
           fi
 
       - name: Typecheck and lint
