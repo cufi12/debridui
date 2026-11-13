@@ -246,6 +246,8 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     let requestCount = 0;
     let totalResponseBytes = 0;
     let disposed = false;
+    let promiseHandle: ReturnType<typeof vm.newString> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     vm.runtime.setMemoryLimit(16 * 1024 * 1024);
     vm.runtime.setMaxStackSize(512 * 1024);
@@ -325,24 +327,23 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
 
     try {
         const evaluated = vm.evalCode(code, "provider.js");
-        const promiseHandle = vm.unwrapResult(evaluated);
+        promiseHandle = vm.unwrapResult(evaluated);
         const resolvedPromise = vm.resolvePromise(promiseHandle);
         vm.runtime.executePendingJobs();
 
-        let timeoutId: ReturnType<typeof setTimeout> | undefined;
         const timeout = new Promise<never>((_, reject) => {
             const remaining = Math.max(1, deadline - Date.now());
             timeoutId = setTimeout(() => reject(new Error("Provider execution timed out.")), remaining);
         });
         const result = await Promise.race([resolvedPromise, timeout]);
-        if (timeoutId) clearTimeout(timeoutId);
-        promiseHandle.dispose();
         const value = vm.unwrapResult(result);
         const output = vm.dump(value);
         value.dispose();
         return output;
     } finally {
         disposed = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        promiseHandle?.dispose();
         for (const controller of controllers) controller.abort();
         for (const deferred of deferredPromises) deferred.dispose();
         vm.dispose();
