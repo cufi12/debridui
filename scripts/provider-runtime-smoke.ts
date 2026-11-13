@@ -71,7 +71,9 @@ const tmdbMetadataResult = await executeNuvioProvider(
     };`,
     { tmdbId: 42, mediaType: "movie", title: "Beispiel Film", year: 2024, imdbId: "tt1234567" }
 );
-const metadataStream = Array.isArray(tmdbMetadataResult) ? tmdbMetadataResult[0] as { name?: string; title?: string } : undefined;
+const metadataStream = Array.isArray(tmdbMetadataResult)
+    ? (tmdbMetadataResult[0] as { name?: string; title?: string })
+    : undefined;
 if (metadataStream?.name !== "Beispiel Film" || metadataStream.title !== "42:2024-01-01:tt1234567") {
     throw new Error("QuickJS local TMDB metadata compatibility smoke test failed.");
 }

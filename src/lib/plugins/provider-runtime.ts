@@ -235,7 +235,6 @@ function createQuickJsResponse(
     return object;
 }
 
-
 /**
  * Return only the selected media's TMDB detail record locally. This narrow
  * compatibility shim avoids exposing a TMDB credential in the provider VM.
@@ -258,26 +257,27 @@ function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): Pinned
     const title = invocation.title || "";
     const year = invocation.year && Number.isInteger(invocation.year) ? String(invocation.year) : "";
     const date = year ? year + "-01-01" : "";
-    const payload = kind === "movie"
-        ? {
-              id,
-              title,
-              original_title: title,
-              release_date: date,
-              imdb_id: invocation.imdbId || null,
-              external_ids: { imdb_id: invocation.imdbId || null },
-              translations: { translations: [] },
-              alternative_titles: { titles: [] },
-          }
-        : {
-              id,
-              name: title,
-              original_name: title,
-              first_air_date: date,
-              external_ids: { imdb_id: invocation.imdbId || null },
-              translations: { translations: [] },
-              alternative_titles: { results: [] },
-          };
+    const payload =
+        kind === "movie"
+            ? {
+                  id,
+                  title,
+                  original_title: title,
+                  release_date: date,
+                  imdb_id: invocation.imdbId || null,
+                  external_ids: { imdb_id: invocation.imdbId || null },
+                  translations: { translations: [] },
+                  alternative_titles: { titles: [] },
+              }
+            : {
+                  id,
+                  name: title,
+                  original_name: title,
+                  first_air_date: date,
+                  external_ids: { imdb_id: invocation.imdbId || null },
+                  translations: { translations: [] },
+                  alternative_titles: { results: [] },
+              };
     return {
         status: 200,
         url: url.toString(),
@@ -455,7 +455,8 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const requestPromise = localResponse
             ? Promise.resolve(localResponse)
             : safeProviderFetch(rawUrl, init, controller.signal);
-        void requestPromise.then((response) => {
+        void requestPromise
+            .then((response) => {
                 totalResponseBytes += Buffer.byteLength(response.body, "utf8");
                 if (totalResponseBytes > MAX_TOTAL_RESPONSE_BYTES) {
                     throw new Error("Provider exceeded the total response size limit.");
