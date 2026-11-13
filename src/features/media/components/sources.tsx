@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
     AlertTriangle,
     CheckIcon,
@@ -16,17 +17,16 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, type ReactNode, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAddonSources } from "@/features/addons/hooks/use-addons";
-import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
 import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
 import { selectBestSource } from "@/features/media/utils/source-selector";
+import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
 import { getSourceQualityIndex } from "@/lib/addons/parser";
 import type { AddonSource } from "@/lib/addons/types";
 import { cn } from "@/lib/utils";
@@ -193,7 +193,8 @@ function parseSize(size?: string): number {
 const sourceKey = (source: AddonSource) => `${source.addonId}-${source.url}`;
 
 /** Releases that agree on these are the same choice, whichever addon served them */
-const variantKey = (source: AddonSource) => `${sourceKey(source)}-${source.quality ?? ""}-${source.size ?? ""}-${Number(!!source.isCached)}`;
+const variantKey = (source: AddonSource) =>
+    `${sourceKey(source)}-${source.quality ?? ""}-${source.size ?? ""}-${Number(!!source.isCached)}`;
 
 function QuickPlayFrame({ controls, action, detail }: { controls: ReactNode; action: ReactNode; detail: ReactNode }) {
     return (
@@ -318,7 +319,9 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
                                     className="text-xs whitespace-nowrap">
                                     <span className="flex items-center gap-1.5">
                                         {release.isCached && <Zap className="size-3 fill-current text-green-600" />}
-                                        <span>{release.addonName} · {release.quality ?? "Standard"}</span>
+                                        <span>
+                                            {release.addonName} · {release.quality ?? "Standard"}
+                                        </span>
                                         {release.size && (
                                             <span className="tabular-nums text-muted-foreground">{release.size}</span>
                                         )}
@@ -381,8 +384,16 @@ export const SourceRow = memo(function SourceRow({
         <div className="group/source flex flex-col gap-2 px-3 sm:px-4 md:px-5 py-3 sm:py-3.5 transition-colors border-b border-border/40 last:border-0 hover:bg-muted/20">
             {/* Status line — cached · resolution · quality · size */}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs tracking-wider uppercase">
-                <span className={cn("inline-flex items-center gap-1", source.isCached ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500")}>
-                    {source.isCached ? <Zap className="size-3 fill-current -translate-y-px" /> : <span className="size-1.5 rounded-full bg-current" />}
+                <span
+                    className={cn(
+                        "inline-flex items-center gap-1",
+                        source.isCached ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500"
+                    )}>
+                    {source.isCached ? (
+                        <Zap className="size-3 fill-current -translate-y-px" />
+                    ) : (
+                        <span className="size-1.5 rounded-full bg-current" />
+                    )}
                     <span>{source.isCached ? "Cached" : "Not cached"}</span>
                 </span>
                 <span className="text-border">·</span>
@@ -477,7 +488,8 @@ export function Sources({ request, className }: SourcesProps) {
     });
 
     const sources = useMemo(
-        () => [...(addonSources ?? []), ...repositorySources].sort((a, b) => Number(!!b.isCached) - Number(!!a.isCached)),
+        () =>
+            [...(addonSources ?? []), ...repositorySources].sort((a, b) => Number(!!b.isCached) - Number(!!a.isCached)),
         [addonSources, repositorySources]
     );
     const isLoading = isAddonSourcesLoading || isRepositoryLoading;
