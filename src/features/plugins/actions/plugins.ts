@@ -65,6 +65,7 @@ export async function installPlugin(manifestText: string) {
     const manifest = pluginManifestSchema.parse(raw);
     const installed = await readInstalled(userId);
     const existing = installed.find((plugin) => plugin.id === manifest.id);
+    if (!existing && installed.length >= 30) throw new Error("Maximal 30 Plugins können installiert werden.");
     const next: InstalledPlugin = {
         ...manifest,
         enabled: existing?.enabled ?? true,
