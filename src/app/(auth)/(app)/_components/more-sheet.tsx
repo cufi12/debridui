@@ -2,6 +2,7 @@
 
 import {
     ChevronRight,
+    Blocks,
     HelpCircle,
     LogOut,
     type LucideIcon,
@@ -26,6 +27,7 @@ const PRIMARY: Item[] = [
     { label: "IPTV", href: "/iptv", icon: Tv, description: "Live-TV und Senderliste" },
     { label: "Settings", href: "/settings", icon: SettingsIcon, description: "App preferences & account" },
     { label: "Addons", href: "/addons", icon: Puzzle, description: "Browse & install addons" },
+    { label: "Plugins", href: "/plugins", icon: Blocks, description: "Manage app extensions" },
     { label: "Accounts", href: "/accounts", icon: UsersIcon, description: "Manage debrid accounts" },
 ];
 
