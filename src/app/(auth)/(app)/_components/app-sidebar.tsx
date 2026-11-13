@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, HelpCircle, HomeIcon, Link2, Puzzle, SearchIcon, SettingsIcon, UsersIcon, Tv } from "lucide-react";
+import { FolderOpen, HelpCircle, HomeIcon, Link2, Puzzle, SearchIcon, SettingsIcon, UsersIcon, Tv, Blocks } from "lucide-react";
 import type * as React from "react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 import { useSearch } from "@/features/search/components/search-provider";
@@ -39,6 +39,11 @@ const data = {
             title: "Addons",
             url: "/addons",
             icon: Puzzle,
+        },
+        {
+            title: "Plugins",
+            url: "/plugins",
+            icon: Blocks,
         },
         {
             title: "Accounts",
