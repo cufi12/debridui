@@ -142,15 +142,18 @@ export default function IPTVPage() {
         for (const label of labels) groups.set(label.name, []);
         const other: IPTVChannel[] = [];
         for (const channel of visible) {
+            const groupValue = (channel.group || "").trim().toLocaleUpperCase("de");
+            const groupCode = groupValue.match(/(?:^|[^A-Z0-9])(AL|DE|CH|AT)(?=$|[^A-Z0-9])/)?.[1];
             const searchable = [channel.group, channel.name, channel.tvgId || "", channel.countryCode || ""]
                 .join(" ")
                 .toLocaleLowerCase("de");
             const hasCountryCode = (code: string) =>
                 new RegExp(`(^|[^a-z0-9])${code.toLowerCase()}([^a-z0-9]|$)`).test(searchable);
-            const match = labels.find((label) =>
-                label.terms.some((term) => searchable.includes(term)) ||
-                (label.codes || []).some(hasCountryCode)
-            );
+            const match = (groupCode ? labels.find((label) => label.codes?.includes(groupCode)) : undefined)
+                || labels.find((label) =>
+                    label.terms.some((term) => searchable.includes(term)) ||
+                    (label.codes || []).some(hasCountryCode)
+                );
             if (match) groups.get(match.name)?.push(channel);
             else other.push(channel);
         }
