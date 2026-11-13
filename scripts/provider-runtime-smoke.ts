@@ -60,3 +60,37 @@ if (urlStream.url !== "https://example.com/watch?tmdb=123&language=de" || urlStr
     throw new Error("QuickJS URL compatibility returned invalid values.");
 }
 console.log("QuickJS URL compatibility smoke test passed.");
+
+const tmdbMetadataResult = await executeNuvioProvider(
+    `module.exports = {
+        getStreams: async (tmdbId, mediaType) => {
+            const response = await fetch("https://api.themoviedb.org/3/movie/" + tmdbId + "?api_key=" + globalThis.TMDB_API_KEY + "&language=de-DE&append_to_response=external_ids,translations,alternative_titles");
+            const metadata = await response.json();
+            return [{ name: metadata.title, url: "https://example.com/metadata.mp4", title: String(metadata.id) + ":" + metadata.release_date + ":" + metadata.external_ids.imdb_id }];
+        }
+    };`,
+    { tmdbId: 42, mediaType: "movie", title: "Beispiel Film", year: 2024, imdbId: "tt1234567" }
+);
+const metadataStream = Array.isArray(tmdbMetadataResult) ? tmdbMetadataResult[0] as { name?: string; title?: string } : undefined;
+if (metadataStream?.name !== "Beispiel Film" || metadataStream.title !== "42:2024-01-01:tt1234567") {
+    throw new Error("QuickJS local TMDB metadata compatibility smoke test failed.");
+}
+console.log("QuickJS local TMDB metadata compatibility smoke test passed.");
+
+const blockedTmdbResult = await executeNuvioProvider(
+    `module.exports = {
+        getStreams: async () => {
+            try {
+                await fetch("https://api.themoviedb.org/3/movie/999?api_key=" + globalThis.TMDB_API_KEY);
+                return [];
+            } catch {
+                return [{ name: "Blocked unrelated TMDB ID", url: "https://example.com/blocked.mp4" }];
+            }
+        }
+    };`,
+    { tmdbId: 42, mediaType: "movie", title: "Beispiel Film", year: 2024 }
+);
+if (!Array.isArray(blockedTmdbResult) || blockedTmdbResult.length !== 1) {
+    throw new Error("QuickJS TMDB scope restriction smoke test failed.");
+}
+console.log("QuickJS TMDB scope restriction smoke test passed.");
