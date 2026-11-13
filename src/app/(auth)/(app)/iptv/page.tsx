@@ -227,8 +227,8 @@ export default function IPTVPage() {
         setPlayerError("");
         if (playerMode === "external") {
             const packages = { vlc: "org.videolan.vlc", mx: "com.mxtech.videoplayer.ad", just: "com.brouken.player", kodi: "org.xbmc.kodi" };
-            const stream = getProxiedStreamUrl(channel.url);
-            const intent = `intent://${window.location.host}${stream}#Intent;scheme=${window.location.protocol.slice(0, -1)};package=${packages[externalPlayer]};type=video/*;S.browser_fallback_url=${encodeURIComponent(window.location.origin + stream)};end`;
+            const target = new URL(channel.url);
+            const intent = `intent://${target.host}${target.pathname}${target.search}#Intent;scheme=${target.protocol.slice(0, -1)};package=${packages[externalPlayer]};type=video/*;S.browser_fallback_url=${encodeURIComponent(target.toString())};end`;
             window.location.href = intent;
             return;
         }
@@ -410,8 +410,8 @@ export default function IPTVPage() {
                                     <div className="flex flex-wrap justify-end gap-2">
                                         <Button size="sm" variant="outline" onClick={() => {
                                             if (!selected?.url) return;
-                                            const stream = getProxiedStreamUrl(selected.url);
-                                            const intent = `intent://${window.location.host}${stream}#Intent;scheme=${window.location.protocol.slice(0, -1)};package=org.videolan.vlc;type=video/*;S.browser_fallback_url=${encodeURIComponent(window.location.origin + stream)};end`;
+                                            const target = new URL(selected.url);
+                                            const intent = `intent://${target.host}${target.pathname}${target.search}#Intent;scheme=${target.protocol.slice(0, -1)};package=org.videolan.vlc;type=video/*;S.browser_fallback_url=${encodeURIComponent(target.toString())};end`;
                                             window.location.href = intent;
                                         }}>
                                             <Play className="size-4" /> Mit VLC öffnen
