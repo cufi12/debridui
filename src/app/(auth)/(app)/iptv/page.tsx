@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Hls from "hls.js";
 import { get as idbGet, set as idbSet } from "idb-keyval";
-import { Heart, Play, RefreshCw, Tv, X, CalendarDays, Maximize } from "lucide-react";
+import { Heart, Play, RefreshCw, Tv, X, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +15,7 @@ const EPG_CACHE_KEY = "debridui-iptv-epg";
 const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 
-type IPTVConfig = { playlistUrl?: string; epgUrl?: string; playerMode?: "auto" | "native" | "external"; externalPlayer?: "vlc" | "mx" | "just" | "kodi"; autoplay?: boolean; startMuted?: boolean };
-
-function getProxiedStreamUrl(url: string): string {
-    return `/api/iptv/stream?url=${encodeURIComponent(url)}`;
-}
-
-function isHlsStream(url: string): boolean {
-    try { return /\.m3u8$/i.test(new URL(url).pathname); } catch { return /\.m3u8(?:$|[?#])/i.test(url); }
-}
+type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
 async function fetchIPTVText(url: string): Promise<string> {
     const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
@@ -56,11 +47,6 @@ function getNowNext(channel: IPTVChannel, programs: XMLTVProgram[]) {
 export default function IPTVPage() {
     const [playlistUrl, setPlaylistUrl] = useState("");
     const [epgUrl, setEpgUrl] = useState("");
-    const [playerAutoplay, setPlayerAutoplay] = useState(true);
-    const [playerMuted, setPlayerMuted] = useState(false);
-    const [playerMode, setPlayerMode] = useState<"auto" | "native" | "external">("auto");
-    const [externalPlayer, setExternalPlayer] = useState<"vlc" | "mx" | "just" | "kodi">("vlc");
-    const [playerError, setPlayerError] = useState("");
     const [channels, setChannels] = useState<IPTVChannel[]>([]);
     const [programs, setPrograms] = useState<XMLTVProgram[]>([]);
     const [favorites, setFavorites] = useState<string[]>([]);
@@ -74,18 +60,12 @@ export default function IPTVPage() {
     const [epgMessage, setEpgMessage] = useState("");
     const [configReady, setConfigReady] = useState(false);
     const autoLoadUrlRef = useRef("");
-    const playerContainerRef = useRef<HTMLDivElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         try {
             const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
             setPlaylistUrl(config.playlistUrl || "");
             setEpgUrl(config.epgUrl || "");
-            setPlayerAutoplay(config.autoplay ?? true);
-            setPlayerMuted(config.startMuted ?? false);
-            setPlayerMode(config.playerMode === "external" || config.playerMode === "native" ? config.playerMode : "auto");
-            setExternalPlayer(config.externalPlayer || "vlc");
             autoLoadUrlRef.current = config.playlistUrl || "";
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as { url?: string; channels?: IPTVChannel[] } | null;
             if (localCache?.url === config.playlistUrl && Array.isArray(localCache?.channels) && localCache.channels.length) {
@@ -173,7 +153,7 @@ export default function IPTVPage() {
 
     function saveConfig(nextPlaylist = playlistUrl, nextEpg = epgUrl) {
         const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playlistUrl: nextPlaylist, epgUrl: nextEpg, playerMode, externalPlayer, autoplay: playerAutoplay, startMuted: playerMuted }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playlistUrl: nextPlaylist, epgUrl: nextEpg }));
     }
 
     async function loadPlaylist() {
@@ -223,16 +203,15 @@ export default function IPTVPage() {
         }
     }
 
+    function openInVlc(channel: IPTVChannel) {
+        const target = new URL(channel.url);
+        const intent = `intent://${target.host}${target.pathname}${target.search}#Intent;scheme=${target.protocol.slice(0, -1)};package=org.videolan.vlc;type=video/*;S.browser_fallback_url=${encodeURIComponent(target.toString())};end`;
+        window.location.href = intent;
+    }
+
     function playChannel(channel: IPTVChannel) {
-        setPlayerError("");
-        if (playerMode === "external") {
-            const packages = { vlc: "org.videolan.vlc", mx: "com.mxtech.videoplayer.ad", just: "com.brouken.player", kodi: "org.xbmc.kodi" };
-            const target = new URL(channel.url);
-            const intent = `intent://${target.host}${target.pathname}${target.search}#Intent;scheme=${target.protocol.slice(0, -1)};package=${packages[externalPlayer]};type=video/*;S.browser_fallback_url=${encodeURIComponent(target.toString())};end`;
-            window.location.href = intent;
-            return;
-        }
         setSelected(channel);
+        openInVlc(channel);
     }
 
     function toggleFavorite(id: string) {
@@ -244,55 +223,6 @@ export default function IPTVPage() {
     }
 
     const nowNext = selected ? getNowNext(selected, programs) : null;
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!selected || !video || playerMode === "external") return;
-        const streamUrl = selected.url;
-        const isHls = isHlsStream(streamUrl);
-        const proxiedStreamUrl = getProxiedStreamUrl(streamUrl);
-        let hls: Hls | null = null;
-        setPlayerError("");
-
-        if (isHls && playerMode !== "native" && Hls.isSupported()) {
-            hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-            hls.loadSource(proxiedStreamUrl);
-            hls.attachMedia(video);
-            if (playerAutoplay) {
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    void video.play().catch(() => setPlayerError("Der Browser hat die automatische Wiedergabe blockiert. Bitte im Player auf Play drücken."));
-                });
-            }
-            hls.on(Hls.Events.ERROR, (_event, data) => {
-                if (data.fatal) {
-                    setPlayerError(data.type === Hls.ErrorTypes.NETWORK_ERROR
-                        ? `HLS-Netzwerkfehler (${data.details}${data.response?.code ? `, HTTP ${data.response.code}` : ""}): Playlist oder Videosegmente sind nicht erreichbar.`
-                        : `HLS-Wiedergabefehler (${data.details}): Stream oder Codec konnte nicht verarbeitet werden.`);
-                    hls?.destroy();
-                    hls = null;
-                }
-            });
-        } else {
-            video.src = proxiedStreamUrl;
-            if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
-                setPlayerError("HLS wird nativ nicht unterstützt. Bitte in den Einstellungen „Automatisch (HLS.js)“ wählen.");
-            }
-        }
-
-        if (playerAutoplay && !isHls) {
-            const attempt = video.play();
-            if (attempt) attempt.catch(() => {
-                setPlayerError("Der Browser hat die automatische Wiedergabe blockiert. Bitte im Player auf Play drücken.");
-            });
-        }
-        return () => {
-            if (hls) hls.destroy();
-            video.pause();
-            video.removeAttribute("src");
-            video.load();
-        };
-    }, [selected, playerMode, playerAutoplay]);
-
 
     useEffect(() => {
         function handleRemoteKey(event: KeyboardEvent) {
@@ -346,48 +276,9 @@ export default function IPTVPage() {
                         placeholder="Sender, Gruppe oder TVG-ID suchen…"
                         aria-label="Sender suchen"
                     />
-                    <section className="rounded-lg border border-border/60 p-3 space-y-3">
-                        <h2 className="text-sm font-medium">Wiedergabe</h2>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <label className="space-y-1 text-sm">
-                                <span className="text-muted-foreground">Player auswählen</span>
-                                <select
-                                    value={playerMode}
-                                    onChange={(event) => {
-                                        const mode = event.target.value as "auto" | "native" | "external";
-                                        setPlayerMode(mode);
-                                        const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-                                        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playerMode: mode, externalPlayer, playlistUrl, epgUrl, autoplay: playerAutoplay, startMuted: playerMuted }));
-                                    }}
-                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                                >
-                                    <option value="auto">Automatisch (Browser / HLS.js)</option>
-                                    <option value="native">Browser (nativ)</option>
-                                    <option value="external">VLC (extern)</option>
-                                </select>
-                            </label>
-                            {playerMode === "external" && (
-                                <label className="space-y-1 text-sm">
-                                    <span className="text-muted-foreground">Externer Player</span>
-                                    <select
-                                        value={externalPlayer}
-                                        onChange={(event) => {
-                                            const player = event.target.value as "vlc" | "mx" | "just" | "kodi";
-                                            setExternalPlayer(player);
-                                            const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-                                            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, playerMode: "external", externalPlayer: player, playlistUrl, epgUrl, autoplay: playerAutoplay, startMuted: playerMuted }));
-                                        }}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                                    >
-                                        <option value="vlc">VLC</option>
-                                        <option value="mx">MX Player</option>
-                                        <option value="just">Just Player</option>
-                                        <option value="kodi">Kodi</option>
-                                    </select>
-                                </label>
-                            )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">Bei VLC wird der Sender direkt in der externen App geöffnet.</p>
+                    <section className="rounded-lg border border-border/60 p-3 space-y-2">
+                        <h2 className="text-sm font-medium">Wiedergabe mit VLC</h2>
+                        <p className="text-sm text-muted-foreground">Der integrierte Browser-Player ist entfernt. Tippe einen Sender an, um ihn direkt in VLC zu öffnen.</p>
                     </section>
                     <section className="rounded-lg border border-border/60 p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-2">
@@ -402,36 +293,17 @@ export default function IPTVPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] gap-4">
                         <section className="min-w-0 space-y-3">
                             {selected ? (
-                                <div className="space-y-2">
-                                    <div ref={playerContainerRef} className="aspect-video overflow-hidden rounded-lg bg-black">
-                                        <video ref={videoRef} key={selected.url} controls muted={playerMuted} playsInline className="h-full w-full" onError={() => setPlayerError("Stream konnte nicht geladen werden. Prüfe die Stream-Adresse, den Anbieter-Zugriff und das Stream-Format.")} />
-                                    </div>
-                                    {playerError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{playerError} Prüfe die Player-Einstellungen oder teste den Sender in einem kompatiblen IPTV-Player.</p>}
-                                    <div className="flex flex-wrap justify-end gap-2">
-                                        <Button size="sm" variant="outline" onClick={() => {
-                                            if (!selected?.url) return;
-                                            const target = new URL(selected.url);
-                                            const intent = `intent://${target.host}${target.pathname}${target.search}#Intent;scheme=${target.protocol.slice(0, -1)};package=org.videolan.vlc;type=video/*;S.browser_fallback_url=${encodeURIComponent(target.toString())};end`;
-                                            window.location.href = intent;
-                                        }}>
-                                            <Play className="size-4" /> Mit VLC öffnen
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={() => {
-                                            if (selected?.url) window.open(getProxiedStreamUrl(selected.url), "_blank", "noopener,noreferrer");
-                                        }}>
-                                            <Play className="size-4" /> Im Browser-Player öffnen
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={() => {
-                                            const container = playerContainerRef.current;
-                                            if (container?.requestFullscreen) void container.requestFullscreen();
-                                        }}>
-                                            <Maximize className="size-4" /> Vollbild
-                                        </Button>
-                                    </div>
+                                <div className="space-y-3 rounded-lg border border-border/60 p-4">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h2 className="truncate font-medium">{selected.name}</h2>
-                                        <Button size="icon" variant="ghost" onClick={() => setSelected(null)} aria-label="Player schließen"><X className="size-4" /></Button>
+                                        <div className="min-w-0">
+                                            <p className="text-xs text-muted-foreground">Ausgewählter Sender</p>
+                                            <h2 className="truncate font-medium">{selected.name}</h2>
+                                        </div>
+                                        <Button size="icon" variant="ghost" onClick={() => setSelected(null)} aria-label="Auswahl schließen"><X className="size-4" /></Button>
                                     </div>
+                                    <Button className="w-full" onClick={() => openInVlc(selected)}>
+                                        <Play className="size-4" /> Erneut mit VLC öffnen
+                                    </Button>
                                     {nowNext?.current && <div className="rounded-md bg-muted/40 p-3 text-sm"><p className="text-xs text-muted-foreground">JETZT</p><p className="font-medium">{nowNext.current.title}</p>{nowNext.current.description && <p className="mt-1 text-xs text-muted-foreground">{nowNext.current.description}</p>}</div>}
                                     {nowNext?.next && <div className="rounded-md border border-border/60 p-3 text-sm"><p className="text-xs text-muted-foreground">DANACH</p><p className="font-medium">{nowNext.next.title}</p><p className="text-xs text-muted-foreground">{new Date(nowNext.next.start).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}</p></div>}
                                     {programs.length > 0 && !nowNext?.current && !nowNext?.next && <p className="text-xs text-muted-foreground">Für diesen Sender wurden keine passenden EPG-Daten gefunden. Prüfe die tvg-id-Zuordnung.</p>}
@@ -484,7 +356,7 @@ export default function IPTVPage() {
                     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
                 </>
             )}
-            {!channels.length && <p className="text-xs text-muted-foreground">Hinweis: Wiedergabe hängt vom Streamformat und den Browser-Fähigkeiten ab. Mit Hoch/Runter wechselst du Sender; Escape schließt Player oder Vollbild. HLS hängt weiterhin vom TV-Browser ab.</p>}
+            {!channels.length && <p className="text-xs text-muted-foreground">Sender werden direkt mit VLC geöffnet. Playlist- und EPG-Adressen bleiben lokal in diesem Browser gespeichert.</p>}
         </div>
     );
 }
