@@ -2,7 +2,7 @@ name: Verify
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main, staging, plugin-runtime-quickjs]
   pull_request:
     branches: [main, staging]
   workflow_dispatch:
