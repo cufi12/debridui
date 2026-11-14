@@ -333,7 +333,8 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
         "__domLoad",
         vm.newFunction("__domLoad", (html) => {
             const source = vm.getString(html);
-            if (Buffer.byteLength(source, "utf8") > MAX_RESPONSE_BYTES) throw new Error("Provider HTML exceeds 1.5 MB.");
+            if (Buffer.byteLength(source, "utf8") > MAX_RESPONSE_BYTES)
+                throw new Error("Provider HTML exceeds 1.5 MB.");
             if (documents.size >= MAX_DOM_DOCUMENTS) throw new Error("Provider exceeded the DOM document limit.");
             chargeDomOperation();
             const document = loadCheerio(source);
