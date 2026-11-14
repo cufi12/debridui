@@ -262,13 +262,13 @@ function serienstreamHtmlRedirect(body: string): { url: string | null; challenge
         return { url: null, challenge: true };
     }
 
-    const metaTag = body.match(/<meta\\b[^>]*>/gi)?.find((tag) => /http-equiv\\s*=\\s*["']?refresh["']?/i.test(tag));
-    const metaContent = metaTag?.match(/content\\s*=\\s*["']([^"']+)["']/i)?.[1];
-    const metaTarget = metaContent?.match(/url\\s*=\\s*['"]?([^;'"]+)/i)?.[1]?.trim();
+    const metaTag = body.match(/<meta\b[^>]*>/gi)?.find((tag) => /http-equiv\s*=\s*["']?refresh["']?/i.test(tag));
+    const metaContent = metaTag?.match(/content\s*=\s*["']([^"']+)["']/i)?.[1];
+    const metaTarget = metaContent?.match(/url\s*=\s*['"]?([^;'"]+)/i)?.[1]?.trim();
     const scriptTarget =
-        body.match(/(?:window\\.)?location(?:\\.href)?\\s*=\\s*(['"])(.*?)\\1/i)?.[2] ??
-        body.match(/(?:window\\.)?location\\.replace\\(\\s*(['"])(.*?)\\1\\s*\\)/i)?.[2];
-    const target = (metaTarget || scriptTarget)?.replace(/\\\\\\//g, "/");
+        body.match(/(?:window\.)?location(?:\.href)?\s*=\s*(['"])(.*?)\1/i)?.[2] ??
+        body.match(/(?:window\.)?location\.replace\(\s*(['"])(.*?)\1\s*\)/i)?.[2];
+    const target = (metaTarget || scriptTarget)?.replaceAll("\\/", "/");
     if (!target) return { url: null, challenge: false };
 
     try {
