@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { executeNuvioProvider } from "../src/lib/plugins/provider-runtime";
+import { sanitizeStreamHeaders } from "../src/lib/addons/parser";
 
 const result = await executeNuvioProvider(
     `module.exports = {
@@ -22,6 +23,27 @@ if (stream.url !== "https://example.com/test.mp4" || stream.title !== "12345:mov
 }
 
 console.log("QuickJS provider runtime smoke test passed.");
+
+const sanitizedHeaders = sanitizeStreamHeaders({
+    Referer: "https://provider.example/watch/film",
+    Origin: "https://provider.example",
+    "User-Agent": "Mozilla/5.0",
+    Accept: "video/mp4",
+    "X-Unsafe": "line\\nbreak",
+});
+if (
+    sanitizedHeaders?.Referer !== "https://provider.example/watch/film" ||
+    sanitizedHeaders.Origin !== "https://provider.example" ||
+    sanitizedHeaders["User-Agent"] !== "Mozilla/5.0" ||
+    sanitizedHeaders.Accept !== "video/mp4" ||
+    Object.keys(sanitizedHeaders).length !== 4
+) {
+    throw new Error("Provider header sanitization smoke test failed.");
+}
+if (sanitizeStreamHeaders({ Referer: "https://provider.example/\\r\\nInjected: yes" }) !== undefined) {
+    throw new Error("Provider header control-character validation smoke test failed.");
+}
+console.log("Provider header sanitization smoke test passed.");
 
 const blockedFetchResult = await executeNuvioProvider(
     `module.exports = {
