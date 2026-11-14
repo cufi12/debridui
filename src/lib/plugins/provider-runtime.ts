@@ -13,6 +13,8 @@ const FETCH_TIMEOUT_MS = 10_000;
 const MAX_REQUESTS = 24;
 const MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
+const MAX_DOM_DOCUMENTS = 12;
+const MAX_DOM_OPERATIONS = 2_000;
 
 type ProviderFetchInit = {
     method?: string;
@@ -293,10 +295,15 @@ type DomSelection = ReturnType<DomApi>;
 
 function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]>) {
     let nextId = 1;
+    let domOperations = 0;
+    const chargeDomOperation = () => {
+        if (++domOperations > MAX_DOM_OPERATIONS) throw new Error("Provider exceeded the DOM operation limit.");
+    };
     const documents = new Map<number, DomApi>();
     const selections = new Map<number, DomSelection>();
     const selectionOwners = new Map<number, DomApi>();
     const saveSelection = (document: DomApi, selection: DomSelection): number => {
+        chargeDomOperation();
         const id = nextId++;
         selections.set(id, selection);
         selectionOwners.set(id, document);
@@ -365,11 +372,15 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
     );
     setFunction(
         "__domText",
-        vm.newFunction("__domText", (selectionId) => vm.newString(getSelection(vm.getNumber(selectionId)).text()))
+        vm.newFunction("__domText", (selectionId) => {
+            chargeDomOperation();
+            return vm.newString(getSelection(vm.getNumber(selectionId)).text());
+        })
     );
     setFunction(
         "__domHtml",
         vm.newFunction("__domHtml", (selectionId) => {
+            chargeDomOperation();
             const value = getSelection(vm.getNumber(selectionId)).html();
             return value == null ? vm.null : vm.newString(value);
         })
@@ -377,6 +388,7 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
     setFunction(
         "__domAttr",
         vm.newFunction("__domAttr", (selectionId, name) => {
+            chargeDomOperation();
             const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name) ?? "");
             return value == null ? vm.null : vm.newString(value);
         })
