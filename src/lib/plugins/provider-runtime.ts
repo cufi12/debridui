@@ -116,7 +116,12 @@ function normalizeRequestHeaders(value: unknown): Record<string, string> {
     return Object.fromEntries(Object.entries(safe).map(([key, header]) => [key, header]));
 }
 
-async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSignal): Promise<PinnedResponse> {
+async function requestPinned(
+    url: URL,
+    init: ProviderFetchInit,
+    signal: AbortSignal,
+    providerId?: string
+): Promise<PinnedResponse> {
     if (url.protocol !== "https:" && url.protocol !== "http:") {
         throw new Error("Only HTTP and HTTPS provider requests are supported.");
     }
@@ -190,6 +195,27 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                         )
                     );
                     const decodedBody = decodeResponseBody(Buffer.concat(chunks), responseHeaders["content-encoding"]);
+                    if (providerId === "serienstream") {
+                        const location = responseHeaders.location;
+                        let safeLocation: string | undefined;
+                        if (location) {
+                            try {
+                                const parsedLocation = new URL(location, url);
+                                safeLocation = `${parsedLocation.hostname}${parsedLocation.pathname}`;
+                            } catch {
+                                safeLocation = "[invalid location]";
+                            }
+                        }
+                        console.warn("[repository-providers] Serienstream HTTP response:", {
+                            method,
+                            url: `${url.hostname}${url.pathname}`,
+                            status: response.statusCode ?? 0,
+                            contentType: responseHeaders["content-type"] ?? "",
+                            contentEncoding: responseHeaders["content-encoding"] ?? "identity",
+                            bytes: total,
+                            location: safeLocation,
+                        });
+                    }
                     // Fetch exposes the decoded body, not the wire encoding metadata.
                     delete responseHeaders["content-encoding"];
                     delete responseHeaders["content-length"];
@@ -213,6 +239,12 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
             if (!settled) {
                 settled = true;
                 cleanup();
+                if (providerId === "serienstream") {
+                    console.warn("[repository-providers] Serienstream HTTP request failed:", {
+                        url: `${url.hostname}${url.pathname}`,
+                        error: error.message,
+                    });
+                }
                 reject(error);
             }
         });
@@ -223,7 +255,8 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
 async function safeProviderFetch(
     rawUrl: string,
     init: ProviderFetchInit,
-    signal: AbortSignal
+    signal: AbortSignal,
+    providerId?: string
 ): Promise<PinnedResponse> {
     let url = new URL(rawUrl);
     let method = init.method || "GET";
@@ -231,7 +264,7 @@ async function safeProviderFetch(
     let headers = normalizeRequestHeaders(init.headers);
 
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
-        const response = await requestPinned(url, { method, body, headers }, signal);
+        const response = await requestPinned(url, { method, body, headers }, signal, providerId);
         const location = response.headers.location;
         if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
         if (redirectCount === MAX_REDIRECTS) throw new Error("Too many provider redirects.");
@@ -708,7 +741,7 @@ export async function executeNuvioProvider(
         deferredPromises.push(deferred);
 
         const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(
-            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)
+            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId)
         );
         void requestPromise
             .then((response) => {
