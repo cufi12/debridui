@@ -243,7 +243,11 @@ function createQuickJsResponse(
  * Return only the selected media's TMDB detail record locally. This narrow
  * compatibility shim avoids exposing a TMDB credential in the provider VM.
  */
-function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): PinnedResponse | null {
+async function localTmdbDetail(
+    rawUrl: string,
+    invocation: ProviderInvocation,
+    signal: AbortSignal
+): Promise<PinnedResponse | null> {
     const url = new URL(rawUrl);
     if (url.hostname !== "api.themoviedb.org") return null;
     const pathParts = url.pathname.split("/").filter(Boolean);
@@ -258,6 +262,14 @@ function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): Pinned
     if (id !== invocation.tmdbId || kind !== invocation.mediaType) {
         throw new Error("Provider TMDB access is limited to the selected media record.");
     }
+    // Use the server-side TMDB v3 key when configured. The provider VM only
+    // sees a placeholder; the real credential is added after URL validation.
+    const tmdbApiKey = process.env.TMDB_API_KEY?.trim();
+    if (tmdbApiKey) {
+        url.searchParams.set("api_key", tmdbApiKey);
+        return await safeProviderFetch(url.toString(), {}, signal);
+    }
+
     const title = invocation.title || "";
     const year = invocation.year && Number.isInteger(invocation.year) ? String(invocation.year) : "";
     const date = year ? year + "-01-01" : "";
@@ -611,10 +623,9 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const deferred = vm.newPromise();
         deferredPromises.push(deferred);
 
-        const localResponse = localTmdbDetail(rawUrl, invocation);
-        const requestPromise = localResponse
-            ? Promise.resolve(localResponse)
-            : safeProviderFetch(rawUrl, init, controller.signal);
+        const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then((localResponse) =>
+            localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)
+        );
         void requestPromise
             .then((response) => {
                 totalResponseBytes += Buffer.byteLength(response.body, "utf8");
