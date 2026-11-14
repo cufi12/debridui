@@ -227,7 +227,7 @@ function createQuickJsResponse(
     const headers = vm.newObject();
     const getHeader = vm.newFunction("get", (name) => {
         const value = response.headers[vm.getString(name).toLowerCase()];
-        return value === undefined ? vm.null : vm.newString(value);
+        return value == null ? vm.null : vm.newString(value);
     });
     vm.setProp(headers, "get", getHeader);
     getHeader.dispose();
@@ -377,7 +377,7 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
     setFunction(
         "__domAttr",
         vm.newFunction("__domAttr", (selectionId, name) => {
-            const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name));
+            const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name) ?? "");
             return value === undefined ? vm.null : vm.newString(value);
         })
     );
