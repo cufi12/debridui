@@ -27,12 +27,16 @@ type Repository = {
 export function RepositoryProviderListSection() {
     const [repositories, setRepositories] = useState<Repository[]>([]);
     const [loading, setLoading] = useState(true);
-    const [busy, setBusy] = useState<string | null>(null);\n    const [health, setHealth] = useState<Record<string, ProviderHealth>>({});
+    const [busy, setBusy] = useState<string | null>(null);
+    const [health, setHealth] = useState<Record<string, ProviderHealth>>({});
 
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const nextRepositories = await getPluginRepositories();\n            setRepositories(nextRepositories);\n            const checks = await getRepositoryProviderFileStatuses();\n            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
+            const nextRepositories = await getPluginRepositories();
+            setRepositories(nextRepositories);
+            const checks = await getRepositoryProviderFileStatuses();
+            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
         } catch {
             toast.error("Repository-Provider konnten nicht geladen werden.");
         } finally {
@@ -66,7 +70,9 @@ export function RepositoryProviderListSection() {
                           }
                 )
             );
-            toast.success(`${provider.name} ${provider.enabled ? "deaktiviert" : "aktiviert"}`);\n            const checks = await getRepositoryProviderFileStatuses();\n            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
+            toast.success(`${provider.name} ${provider.enabled ? "deaktiviert" : "aktiviert"}`);
+            const checks = await getRepositoryProviderFileStatuses();
+            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Provider-Status konnte nicht geändert werden.");
         } finally {
