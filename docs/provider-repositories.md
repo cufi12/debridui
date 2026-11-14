@@ -56,7 +56,7 @@ For movies, `mediaType` is `movie`. For series, it is `tv`, with `season` and `e
 - Provider code receives no Node.js APIs, filesystem access, process environment, or ambient user cookies.
 - Outbound requests are limited to HTTP(S), public IPv4 destinations, and standard ports. Private/reserved network destinations are rejected and DNS results are pinned for each request.
 - Up to 20 enabled provider modules are considered per search, in batches of four. Each provider is limited to 24 requests, 1.5 MB per response, 6 MB total response data, 500 KB of source, 28 seconds of execution, 16 MB of VM memory, and a 512 KB stack. Individual HTTP requests time out after 10 seconds.
-- Redirects are revalidated and limited to three hops.
+- Redirects are revalidated and limited to five hops.
 - The runtime supports the common single-file `module.exports.getStreams` shape, `fetch`, response `text()`/`json()`, basic `URL`/`URLSearchParams`, `atob`, `btoa`, and a no-op console. Its restricted `require()` shim supports only `cheerio` and `crypto-js`: Cheerio is backed by a host-side HTML parser and exposes the provider-used subset (`load`, selector/context lookup, `find`, `first`, `eq`, `text`, `html`, `attr`, `each`, `map`, and `toArray`). The CryptoJS shim supports only AES-CBC with PKCS7 padding and UTF-8 keys/IVs, returning Latin-1 plaintext. These are compatibility subsets, not complete implementations of either package. HTML input is capped at 1.5 MB, at most 12 DOM documents and 2,000 DOM operations are allowed per provider invocation, and other CommonJS modules are rejected.
 - Returned HTTP headers are retained on stream sources. Playback support for custom headers depends on the selected player; not every external player can apply them.
 
