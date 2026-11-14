@@ -47,47 +47,23 @@ export function selectBestSource(
             matchesSourceQualityRange(source, range)
     );
 
-    // Prefer German, then English, then untagged sources, then Spanish and Italian. Recognize common release tags
-    // such as DE/DEU/GER, country flags, and full language names.
+    // Rank only a single, unambiguous language indication.
     const getLanguagePriority = (source: AddonSource): number => {
-        const metadata = `${source.title} ${source.description || ""}`;
-        if (
-            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(
-                metadata
-            )
-        )
-            return 0;
-        if (/(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata)) return 1;
-        if (
-            /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(
-                metadata
-            )
-        )
-            return 3;
-        if (/(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata))
-            return 4;
-        return 2;
-    };
-
-    const normalizedWords = (value: string) =>
-        value
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, " ")
-            .split(/\s+/)
-            .filter((word) => word.length > 2 && !["the", "and", "for"].includes(word));
-    const matchesXrelGermanRelease = (source: AddonSource): boolean => {
-        const sourceWords = new Set(normalizedWords(source.title));
-        return germanReleaseNames.some((releaseName) => {
-            if (!/(?:GERMAN|GER|DEUTSCH|\bDE\b)/i.test(releaseName)) return false;
-            const releaseWords = normalizedWords(releaseName);
-            const shared = releaseWords.filter((word) => sourceWords.has(word));
-            return shared.length >= Math.min(3, Math.max(2, Math.ceil(releaseWords.length * 0.35)));
-        });
+        const metadata = source.title + " " + (source.description || "");
+        const flags = [
+            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(metadata),
+            /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata),
+            /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(metadata),
+            /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata),
+        ];
+        if (flags.filter(Boolean).length !== 1) return 2;
+        if (flags[0]) return 0;
+        if (flags[1]) return 1;
+        if (flags[2]) return 3;
+        return 4;
     };
 
     const sortByPriority = (a: AddonSource, b: AddonSource) => {
-        const xrelDiff = Number(matchesXrelGermanRelease(b)) - Number(matchesXrelGermanRelease(a));
-        if (xrelDiff !== 0) return xrelDiff;
         const languageDiff = getLanguagePriority(a) - getLanguagePriority(b);
         if (languageDiff !== 0) return languageDiff;
 
