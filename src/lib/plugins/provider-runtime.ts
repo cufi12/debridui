@@ -1,7 +1,9 @@
+import { createDecipheriv } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
+import { load as loadCheerio } from "cheerio";
 import { getQuickJS } from "quickjs-emscripten";
 import { sanitizeStreamHeaders } from "@/lib/addons/parser";
 import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
@@ -286,6 +288,85 @@ function localTmdbDetail(rawUrl: string, invocation: ProviderInvocation): Pinned
     };
 }
 
+type DomApi = ReturnType<typeof loadCheerio>;
+type DomSelection = ReturnType<DomApi>;
+
+function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]>) {
+    let nextId = 1;
+    const documents = new Map<number, DomApi>();
+    const selections = new Map<number, DomSelection>();
+    const selectionOwners = new Map<number, DomApi>();
+    const saveSelection = (document: DomApi, selection: DomSelection): number => {
+        const id = nextId++;
+        selections.set(id, selection);
+        selectionOwners.set(id, document);
+        return id;
+    };
+    const getSelection = (id: number): DomSelection => {
+        const selection = selections.get(id);
+        if (!selection) throw new Error("Invalid provider DOM reference.");
+        return selection;
+    };
+    const getDocument = (id: number): DomApi => {
+        const document = documents.get(id);
+        if (!document) throw new Error("Invalid provider DOM document.");
+        return document;
+    };
+    const getOwner = (id: number): DomApi => {
+        const document = selectionOwners.get(id);
+        if (!document) throw new Error("Invalid provider DOM reference.");
+        return document;
+    };
+    const setFunction = (name: string, fn: ReturnType<typeof vm.newFunction>) => {
+        vm.setProp(vm.global, name, fn);
+        fn.dispose();
+    };
+
+    setFunction("__domLoad", vm.newFunction("__domLoad", (html) => {
+        const document = loadCheerio(vm.getString(html));
+        const id = nextId++;
+        documents.set(id, document);
+        return vm.newNumber(id);
+    }));
+    setFunction("__domSelect", vm.newFunction("__domSelect", (documentId, selector, contextId) => {
+        const document = getDocument(vm.getNumber(documentId));
+        const context = vm.getNumber(contextId);
+        const selection = context
+            ? document(vm.getString(selector), getSelection(context) as never)
+            : document(vm.getString(selector));
+        return vm.newNumber(saveSelection(document, selection));
+    }));
+    setFunction("__domFind", vm.newFunction("__domFind", (selectionId, selector) => {
+        const id = vm.getNumber(selectionId);
+        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).find(vm.getString(selector))));
+    }));
+    setFunction("__domFirst", vm.newFunction("__domFirst", (selectionId) => {
+        const id = vm.getNumber(selectionId);
+        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).first()));
+    }));
+    setFunction("__domEq", vm.newFunction("__domEq", (selectionId, index) => {
+        const id = vm.getNumber(selectionId);
+        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).eq(vm.getNumber(index))));
+    }));
+    setFunction("__domText", vm.newFunction("__domText", (selectionId) =>
+        vm.newString(getSelection(vm.getNumber(selectionId)).text())
+    ));
+    setFunction("__domHtml", vm.newFunction("__domHtml", (selectionId) => {
+        const value = getSelection(vm.getNumber(selectionId)).html();
+        return value === undefined ? vm.null : vm.newString(value);
+    }));
+    setFunction("__domAttr", vm.newFunction("__domAttr", (selectionId, name) => {
+        const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name));
+        return value === undefined ? vm.null : vm.newString(value);
+    }));
+    setFunction("__domNodes", vm.newFunction("__domNodes", (selectionId) => {
+        const id = vm.getNumber(selectionId);
+        const document = getOwner(id);
+        const ids = getSelection(id).toArray().map((node) => saveSelection(document, document(node as never)));
+        return vm.newString(JSON.stringify(ids));
+    }));
+
+    const moduleCode = String.raw
 /**
  * Execute a single-file CommonJS-style Nuvio provider in QuickJS.
  * The VM receives no Node globals, filesystem, process environment, or ambient cookies.
@@ -421,6 +502,8 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         globalThis.URLSearchParams = URLSearchParams;
     `);
     vm.unwrapResult(urlPolyfills).dispose();
+
+    installProviderCompatibility(vm);
 
     // Nuvio's shared TMDB module interpolates this marker into the detail URL.
     // The host intercepts that exact request and never forwards the marker.
