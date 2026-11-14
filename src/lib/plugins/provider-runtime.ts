@@ -130,12 +130,14 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                 response.on("error", (error) => {
                     if (!settled) {
                         settled = true;
+                        cleanup();
                         reject(error);
                     }
                 });
                 response.on("end", () => {
                     if (settled) return;
                     settled = true;
+                    cleanup();
                     const responseHeaders = Object.fromEntries(
                         Object.entries(response.headers).flatMap(([key, value]) =>
                             value === undefined
@@ -154,6 +156,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
         );
 
         const abort = () => request.destroy(new Error("Provider request was cancelled."));
+        const cleanup = () => signal.removeEventListener("abort", abort);
         if (signal.aborted) abort();
         else signal.addEventListener("abort", abort, { once: true });
 
@@ -161,6 +164,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
         request.on("error", (error) => {
             if (!settled) {
                 settled = true;
+                cleanup();
                 reject(error);
             }
         });
