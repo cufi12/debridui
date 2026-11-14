@@ -8,6 +8,7 @@ import { useUserAddons } from "@/features/addons/hooks/use-addons";
 import { AddAddonSection } from "./_components/add-addon-section";
 import { AddonInfoSection } from "./_components/addon-info-section";
 import { AddonListSection } from "./_components/addon-list-section";
+import { RepositoryProviderListSection } from "./_components/repository-provider-list-section";
 
 export default function AddonsPage() {
     const { isLoading, refetch } = useUserAddons();
@@ -40,6 +41,7 @@ export default function AddonsPage() {
 
             <AddAddonSection />
             <AddonListSection />
+            <RepositoryProviderListSection />
             <AddonInfoSection />
         </div>
     );
