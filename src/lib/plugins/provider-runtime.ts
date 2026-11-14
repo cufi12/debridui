@@ -623,8 +623,8 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const deferred = vm.newPromise();
         deferredPromises.push(deferred);
 
-        const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then((localResponse) =>
-            localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)
+        const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(
+            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)
         );
         void requestPromise
             .then((response) => {
