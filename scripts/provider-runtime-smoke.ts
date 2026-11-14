@@ -29,7 +29,7 @@ const sanitizedHeaders = sanitizeStreamHeaders({
     Origin: "https://provider.example",
     "User-Agent": "Mozilla/5.0",
     Accept: "video/mp4",
-    "X-Unsafe": "line\\nbreak",
+    "X-Unsafe": "line\nbreak",
 });
 if (
     sanitizedHeaders?.Referer !== "https://provider.example/watch/film" ||
@@ -40,7 +40,7 @@ if (
 ) {
     throw new Error("Provider header sanitization smoke test failed.");
 }
-if (sanitizeStreamHeaders({ Referer: "https://provider.example/\\r\\nInjected: yes" }) !== undefined) {
+if (sanitizeStreamHeaders({ Referer: "https://provider.example/\r\nInjected: yes" }) !== undefined) {
     throw new Error("Provider header control-character validation smoke test failed.");
 }
 console.log("Provider header sanitization smoke test passed.");
