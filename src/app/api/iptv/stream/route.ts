@@ -63,7 +63,7 @@ function parseProviderHeaders(raw: string | null): Record<string, string> {
             PROVIDER_HEADER_ALLOWLIST.has(name.toLowerCase()) &&
             typeof header === "string" &&
             header.length <= 4096 &&
-            /[\r\n\0]/.test(header)
+            !/[\r\n\0]/.test(header)
         ) {
             safe[name] = header;
         }
