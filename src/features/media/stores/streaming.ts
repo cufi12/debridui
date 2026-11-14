@@ -136,7 +136,7 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
                     allowedProxyHeaders.has(name.toLowerCase()) &&
                     typeof value === "string" &&
                     value.length <= 4096 &&
-                    /[\r\n\0]/.test(value)
+                    !/[\r\n\0]/.test(value)
             )
         );
         const playbackUrl =
