@@ -1,15 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { Power, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SectionDivider } from "@/components/layout/section-divider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SectionDivider } from "@/components/layout/section-divider";
-import {
-    getPluginRepositories,
-    setRepositoryProviderEnabled,
-} from "@/features/plugins/actions/repositories";
+import { getPluginRepositories, setRepositoryProviderEnabled } from "@/features/plugins/actions/repositories";
 
 type Provider = {
     id: string;
