@@ -461,7 +461,11 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
  * The VM receives no Node globals, filesystem, process environment, or ambient cookies.
  * All outbound requests are DNS-checked and pinned to public IPv4 addresses.
  */
-export async function executeNuvioProvider(source: string, invocation: ProviderInvocation, providerId?: string): Promise<unknown> {
+export async function executeNuvioProvider(
+    source: string,
+    invocation: ProviderInvocation,
+    providerId?: string
+): Promise<unknown> {
     if (source.length > 500_000) throw new Error("Provider source exceeds 500 KB.");
     if (!quickJsPromise) quickJsPromise = getQuickJS();
     const QuickJS = await quickJsPromise;
@@ -497,10 +501,12 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     for (const method of ["log", "info", "warn", "error", "debug"]) {
         const handler = vm.newFunction(method, (...args) => {
             if ((method === "warn" || method === "error") && providerMessages.length < 12) {
-                const message = args.map((arg) => {
-                    const value = vm.dump(arg) as unknown;
-                    return typeof value === "string" ? value : JSON.stringify(value);
-                }).join(" ");
+                const message = args
+                    .map((arg) => {
+                        const value = vm.dump(arg) as unknown;
+                        return typeof value === "string" ? value : JSON.stringify(value);
+                    })
+                    .join(" ");
                 providerMessages.push(redactMessage(message));
             }
             return vm.undefined;
