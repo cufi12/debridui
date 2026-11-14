@@ -461,7 +461,7 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
  * The VM receives no Node globals, filesystem, process environment, or ambient cookies.
  * All outbound requests are DNS-checked and pinned to public IPv4 addresses.
  */
-export async function executeNuvioProvider(source: string, invocation: ProviderInvocation): Promise<unknown> {
+export async function executeNuvioProvider(source: string, invocation: ProviderInvocation, providerId?: string): Promise<unknown> {
     if (source.length > 500_000) throw new Error("Provider source exceeds 500 KB.");
     if (!quickJsPromise) quickJsPromise = getQuickJS();
     const QuickJS = await quickJsPromise;
@@ -480,12 +480,35 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     vm.runtime.setInterruptHandler(() => Date.now() > deadline);
 
     const consoleObject = vm.newObject();
-    const noop = vm.newFunction("noop", () => vm.undefined);
+    const providerMessages: string[] = [];
+    const redactMessage = (value: string) =>
+        value
+            .replace(/https?:\/\/[^\s"'\x60]+/gi, (raw) => {
+                try {
+                    const url = new URL(raw.replace(/[),.;]+$/, ""));
+                    url.search = "";
+                    url.hash = "";
+                    return url.toString();
+                } catch {
+                    return "[URL]";
+                }
+            })
+            .slice(0, 500);
     for (const method of ["log", "info", "warn", "error", "debug"]) {
-        vm.setProp(consoleObject, method, noop);
+        const handler = vm.newFunction(method, (...args) => {
+            if ((method === "warn" || method === "error") && providerMessages.length < 12) {
+                const message = args.map((arg) => {
+                    const value = vm.dump(arg) as unknown;
+                    return typeof value === "string" ? value : JSON.stringify(value);
+                }).join(" ");
+                providerMessages.push(redactMessage(message));
+            }
+            return vm.undefined;
+        });
+        vm.setProp(consoleObject, method, handler);
+        handler.dispose();
     }
     vm.setProp(vm.global, "console", consoleObject);
-    noop.dispose();
     consoleObject.dispose();
 
     const atob = vm.newFunction("atob", (value) =>
@@ -687,6 +710,12 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const value = vm.unwrapResult(result);
         const output = vm.dump(value);
         value.dispose();
+        if (providerMessages.length) {
+            console.warn("[repository-providers] Provider internal warnings:", {
+                providerId: providerId ?? "unknown",
+                messages: providerMessages,
+            });
+        }
         return output;
     } finally {
         disposed = true;
