@@ -99,7 +99,7 @@ console.log("QuickJS TMDB scope restriction smoke test passed.");
 
 
 const compatibilityResult = await executeNuvioProvider(
-    \`var cheerio = require("cheerio");
+    `var cheerio = require("cheerio");
     var CryptoJS = require("crypto-js");
     module.exports = {
         getStreams: async () => {
@@ -120,7 +120,7 @@ const compatibilityResult = await executeNuvioProvider(
                 title: decoded
             }];
         }
-    };\`,
+    };`,
     { tmdbId: 12345, mediaType: "movie" }
 );
 const compatibilityStream = Array.isArray(compatibilityResult)
