@@ -3,6 +3,7 @@ import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
+import { brotliDecompressSync, gunzipSync, inflateRawSync, inflateSync } from "node:zlib";
 import { load as loadCheerio } from "cheerio";
 import { getQuickJS } from "quickjs-emscripten";
 import { sanitizeStreamHeaders } from "@/lib/addons/parser";
@@ -29,6 +30,46 @@ type PinnedResponse = {
     headers: Record<string, string>;
     body: string;
 };
+
+/** Match the automatic content decoding provided by the Fetch API. */
+function decodeResponseBody(body: Buffer, contentEncoding?: string): Buffer {
+    if (!contentEncoding || !body.length) return body;
+
+    let decoded = body;
+    const encodings = contentEncoding
+        .split(",")
+        .map((encoding) => encoding.trim().toLowerCase())
+        .filter(Boolean)
+        .reverse();
+
+    for (const encoding of encodings) {
+        switch (encoding) {
+            case "identity":
+                break;
+            case "gzip":
+            case "x-gzip":
+                decoded = gunzipSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });
+                break;
+            case "deflate":
+                try {
+                    decoded = inflateSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });
+                } catch {
+                    decoded = inflateRawSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });
+                }
+                break;
+            case "br":
+                decoded = brotliDecompressSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });
+                break;
+            default:
+                throw new Error(`Unsupported provider response encoding: ${encoding}.`);
+        }
+        if (decoded.byteLength > MAX_RESPONSE_BYTES) {
+            throw new Error("Provider response exceeds 1.5 MB after decompression.");
+        }
+    }
+
+    return decoded;
+}
 
 let quickJsPromise: ReturnType<typeof getQuickJS> | undefined;
 
@@ -95,6 +136,9 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
 
     const transport = url.protocol === "https:" ? httpsRequest : httpRequest;
     const headers = normalizeRequestHeaders(init.headers);
+    if (!Object.keys(headers).some((name) => name.toLowerCase() === "accept-encoding")) {
+        headers["Accept-Encoding"] = "gzip, deflate, br";
+    }
     const body = method === "GET" || method === "HEAD" ? undefined : init.body;
 
     return await new Promise<PinnedResponse>((resolve, reject) => {
@@ -145,11 +189,15 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                                 : [[key.toLowerCase(), Array.isArray(value) ? value.join(", ") : String(value)]]
                         )
                     );
+                    const decodedBody = decodeResponseBody(Buffer.concat(chunks), responseHeaders["content-encoding"]);
+                    // Fetch exposes the decoded body, not the wire encoding metadata.
+                    delete responseHeaders["content-encoding"];
+                    delete responseHeaders["content-length"];
                     resolve({
                         status: response.statusCode ?? 0,
                         url: url.toString(),
                         headers: responseHeaders,
-                        body: Buffer.concat(chunks).toString("utf8"),
+                        body: decodedBody.toString("utf8"),
                     });
                 });
             }
