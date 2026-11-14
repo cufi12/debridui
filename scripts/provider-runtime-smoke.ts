@@ -135,7 +135,6 @@ if (
 }
 console.log("QuickJS Cheerio/CryptoJS compatibility smoke test passed.");
 
-
 // These upstream bundles are pinned to invalidpandaa/nuvio-german-providers@1114046a836741728ab33d4bb90a2bd1833fbf99.
 // Override getStreams after module initialization so the test exercises their real top-level imports
 // without making requests to third-party streaming sites.
