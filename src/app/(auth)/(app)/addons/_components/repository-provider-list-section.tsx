@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { SectionDivider } from "@/components/layout/section-divider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPluginRepositories, setRepositoryProviderEnabled } from "@/features/plugins/actions/repositories";
+import { getPluginRepositories, getRepositoryProviderFileStatuses, setRepositoryProviderEnabled } from "@/features/plugins/actions/repositories";
 
 type Provider = {
     id: string;
@@ -17,6 +17,7 @@ type Provider = {
     contentLanguage?: string[];
     enabled: boolean;
 };
+type ProviderHealth = { status: "ok" | "empty" | "error"; bytes: number; message: string };
 type Repository = {
     id: string;
     name: string;
@@ -26,12 +27,12 @@ type Repository = {
 export function RepositoryProviderListSection() {
     const [repositories, setRepositories] = useState<Repository[]>([]);
     const [loading, setLoading] = useState(true);
-    const [busy, setBusy] = useState<string | null>(null);
+    const [busy, setBusy] = useState<string | null>(null);\n    const [health, setHealth] = useState<Record<string, ProviderHealth>>({});
 
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            setRepositories(await getPluginRepositories());
+            const nextRepositories = await getPluginRepositories();\n            setRepositories(nextRepositories);\n            const checks = await getRepositoryProviderFileStatuses();\n            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
         } catch {
             toast.error("Repository-Provider konnten nicht geladen werden.");
         } finally {
@@ -65,7 +66,7 @@ export function RepositoryProviderListSection() {
                           }
                 )
             );
-            toast.success(`${provider.name} ${provider.enabled ? "deaktiviert" : "aktiviert"}`);
+            toast.success(`${provider.name} ${provider.enabled ? "deaktiviert" : "aktiviert"}`);\n            const checks = await getRepositoryProviderFileStatuses();\n            setHealth(Object.fromEntries(checks.map((item) => [`${item.repositoryId}:${item.providerId}`, item])));
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Provider-Status konnte nicht geändert werden.");
         } finally {
@@ -130,6 +131,27 @@ export function RepositoryProviderListSection() {
                                                     ? ` · ${provider.contentLanguage.join(", ")}`
                                                     : ""}
                                             </p>
+                                            {provider.enabled && (
+                                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    {health[key] ? (
+                                                        <>
+                                                            <Badge variant={health[key].status === "ok" ? "default" : "destructive"}>
+                                                                {health[key].status === "ok"
+                                                                    ? "Datei erreichbar"
+                                                                    : health[key].status === "empty"
+                                                                      ? "Datei leer / falscher Inhalt"
+                                                                      : "Datei nicht erreichbar"}
+                                                            </Badge>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {health[key].bytes > 0 ? `${Math.ceil(health[key].bytes / 1024)} KB · ` : ""}
+                                                                {health[key].message}
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">Datei wird geprüft…</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                         <Button
                                             size="sm"
