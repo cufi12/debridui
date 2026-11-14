@@ -309,7 +309,9 @@ async function safeProviderFetch(
         ) {
             const parsed = serienstreamHtmlRedirect(response.body);
             if (parsed.challenge) {
-                console.warn("[repository-providers] Serienstream /r returned a challenge page; no redirect attempted.");
+                console.warn(
+                    "[repository-providers] Serienstream /r returned a challenge page; no redirect attempted."
+                );
             } else if (parsed.url) {
                 location = parsed.url;
                 redirectStatus = 302;
