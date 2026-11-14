@@ -131,9 +131,13 @@ export const isSupportedPlayer = (player: MediaPlayer, platform?: Platform): boo
 
 const generateVlcUrl = (url: string, fileName: string): string => {
     if (detectPlatform() === Platform.ANDROID) {
-        const encodedTitle = encodeURIComponent(fileName);
-        const cleanUrl = url.replace("https://", "");
-        return `intent://${cleanUrl}#Intent;scheme=https;type=video/*;package=org.videolan.vlc;S.title=${encodedTitle};end`;
+        const streamUrl = new URL(url);
+        const scheme = streamUrl.protocol.replace(":", "");
+        if (scheme === "http" || scheme === "https") {
+            const encodedTitle = encodeURIComponent(fileName);
+            const streamPath = `${streamUrl.host}${streamUrl.pathname}${streamUrl.search}`;
+            return `intent://${streamPath}#Intent;scheme=${scheme};type=video/*;package=org.videolan.vlc;S.title=${encodedTitle};end`;
+        }
     }
     return `vlc://${url}`;
 };
