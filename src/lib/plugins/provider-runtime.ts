@@ -647,14 +647,18 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
 
     const code = `
         (async function () {
-            const module = { exports: {} };
-            const exports = module.exports;
-            ${source}
-            const provider = module.exports && (module.exports.default || module.exports);
-            if (!provider || typeof provider.getStreams !== "function") {
+            const __debriduiModule = { exports: {} };
+            const __debriduiLoadedModule = (function (module) {
+                var exports = module.exports;
+                ${source}
+                return module.exports;
+            })(__debriduiModule);
+            const __debriduiProvider =
+                __debriduiLoadedModule && (__debriduiLoadedModule.default || __debriduiLoadedModule);
+            if (!__debriduiProvider || typeof __debriduiProvider.getStreams !== "function") {
                 throw new Error("Provider must export getStreams().");
             }
-            return await provider.getStreams(${args.join(", ")});
+            return await __debriduiProvider.getStreams(${args.join(", ")});
         })()
     `;
 
