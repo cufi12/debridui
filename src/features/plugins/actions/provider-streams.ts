@@ -39,7 +39,7 @@ export async function getRepositoryProviderStreams(
             enabled.slice(index, index + 4).map(async (module) => {
                 const providerStartedAt = Date.now();
                 try {
-                    const result = await executeNuvioProvider(module.source, invocation);
+                    const result = await executeNuvioProvider(module.source, invocation, module.providerId);
                     const parsed = parseRepositoryProviderStreams(
                         result,
                         module.repositoryId,
