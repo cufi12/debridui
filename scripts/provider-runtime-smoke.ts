@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { sanitizeStreamHeaders } from "../src/lib/addons/parser";
+import { parseStream, sanitizeStreamHeaders } from "../src/lib/addons/parser";
 import { executeNuvioProvider } from "../src/lib/plugins/provider-runtime";
 
 const result = await executeNuvioProvider(
@@ -44,6 +44,32 @@ if (sanitizeStreamHeaders({ Referer: "https://provider.example/\r\nInjected: yes
     throw new Error("Provider header control-character validation smoke test failed.");
 }
 console.log("Provider header sanitization smoke test passed.");
+
+const ambiguousAudioSource = parseStream(
+    {
+        name: "Example Film GER 1080p",
+        title: "Spanish audio ESP",
+        url: "https://example.com/film.mp4",
+    },
+    "language-smoke-test",
+    "Language smoke test"
+);
+if (!ambiguousAudioSource.description?.includes("Widersprüchliche Sprachangaben – unklar")) {
+    throw new Error("Conflicting audio language metadata was not marked as unclear.");
+}
+const germanAudioSource = parseStream(
+    {
+        name: "Example Film 1080p",
+        title: "Audio: DE",
+        url: "https://example.com/film-de.mp4",
+    },
+    "language-smoke-test",
+    "Language smoke test"
+);
+if (!germanAudioSource.description?.includes("Deutsch laut Quelle – nicht geprüft")) {
+    throw new Error("Unambiguous German source metadata was not recognized.");
+}
+console.log("Audio language ambiguity smoke tests passed.");
 
 const blockedFetchResult = await executeNuvioProvider(
     `module.exports = {
