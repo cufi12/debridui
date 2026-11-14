@@ -10,6 +10,7 @@ import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
 const PROVIDER_TIMEOUT_MS = 28_000;
 const FETCH_TIMEOUT_MS = 10_000;
+const MAX_REDIRECTS = 5;
 const MAX_REQUESTS = 24;
 const MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
@@ -177,7 +178,7 @@ async function safeProviderFetch(
     let body = init.body;
     let headers = normalizeRequestHeaders(init.headers);
 
-    for (let redirectCount = 0; redirectCount <= 3; redirectCount++) {
+    for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
         const response = await requestPinned(url, { method, body, headers }, signal);
         const location = response.headers.location;
         if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
