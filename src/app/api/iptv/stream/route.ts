@@ -43,11 +43,44 @@ async function validateTarget(url: URL): Promise<void> {
         throw new Error("Die Stream-Adresse ist nicht öffentlich erreichbar oder nicht erlaubt.");
 }
 
-async function fetchUpstream(initial: URL, range: string | null): Promise<{ response: Response; finalUrl: URL }> {
+const PROVIDER_HEADER_ALLOWLIST = new Set(["referer", "origin", "user-agent", "accept", "accept-language"]);
+
+function parseProviderHeaders(raw: string | null): Record<string, string> {
+    if (!raw) return {};
+    if (raw.length > 12_000) throw new Error("Provider-Header sind zu gross.");
+    let value: unknown;
+    try {
+        value = JSON.parse(raw);
+    } catch {
+        throw new Error("Provider-Header sind ungültig.");
+    }
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("Provider-Header sind ungültig.");
+    }
+    const safe: Record<string, string> = {};
+    for (const [name, header] of Object.entries(value)) {
+        if (
+            PROVIDER_HEADER_ALLOWLIST.has(name.toLowerCase()) &&
+            typeof header === "string" &&
+            header.length <= 4096 &&
+            !/[\\r\\n\\0]/.test(header)
+        ) {
+            safe[name] = header;
+        }
+    }
+    return safe;
+}
+
+async function fetchUpstream(
+    initial: URL,
+    range: string | null,
+    providerHeaders: Record<string, string>
+): Promise<{ response: Response; finalUrl: URL }> {
     let target = new URL(initial);
     for (let redirects = 0; redirects <= 5; redirects++) {
         await validateTarget(target);
         const headers = new Headers({ Accept: "*/*", "User-Agent": "Mozilla/5.0 DebridUI IPTV" });
+        for (const [name, value] of Object.entries(providerHeaders)) headers.set(name, value);
         if (range) headers.set("Range", range);
         const response = await fetch(target, {
             headers,
@@ -63,8 +96,10 @@ async function fetchUpstream(initial: URL, range: string | null): Promise<{ resp
     throw new Error("Zu viele Weiterleitungen des Anbieters.");
 }
 
-function proxiedUrl(target: URL): string {
-    return "/api/iptv/stream?url=" + encodeURIComponent(target.toString());
+function proxiedUrl(target: URL, providerHeaders: Record<string, string>): string {
+    const params = new URLSearchParams({ url: target.toString() });
+    if (Object.keys(providerHeaders).length > 0) params.set("headers", JSON.stringify(providerHeaders));
+    return "/api/iptv/stream?" + params.toString();
 }
 
 export async function GET(request: NextRequest) {
@@ -81,8 +116,22 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    let providerHeaders: Record<string, string>;
     try {
-        const { response, finalUrl } = await fetchUpstream(initial, request.headers.get("range"));
+        providerHeaders = parseProviderHeaders(request.nextUrl.searchParams.get("headers"));
+    } catch (error) {
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Ungültige Provider-Header." },
+            { status: 400 }
+        );
+    }
+
+    try {
+        const { response, finalUrl } = await fetchUpstream(
+            initial,
+            request.headers.get("range"),
+            providerHeaders
+        );
         if (!response.ok && response.status !== 206) {
             return new Response("IPTV-Anbieter antwortet mit HTTP " + response.status + ".", {
                 status: response.status,
@@ -112,14 +161,14 @@ export async function GET(request: NextRequest) {
                         return line.replace(/URI="([^"]+)"/gi, (_match, uri: string) => {
                             if (/^(data:|skd:)/i.test(uri)) return 'URI="' + uri + '"';
                             try {
-                                return 'URI="' + proxiedUrl(new URL(uri, finalUrl)) + '"';
+                                return 'URI="' + proxiedUrl(new URL(uri, finalUrl), providerHeaders) + '"';
                             } catch {
                                 return 'URI="' + uri + '"';
                             }
                         });
                     }
                     try {
-                        return proxiedUrl(new URL(trimmed, finalUrl));
+                        return proxiedUrl(new URL(trimmed, finalUrl), providerHeaders);
                     } catch {
                         return line;
                     }
