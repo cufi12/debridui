@@ -126,14 +126,35 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
         const metaLabel = [source.resolution, source.quality, source.size].filter(Boolean).join(" ");
         const fileName = metaLabel ? `${title} [${metaLabel}]` : title;
 
+        // Provider streams may require Referer/Origin/User-Agent headers. Route those
+        // requests through our same-origin proxy so the browser/player sends them on
+        // every media and Range request instead of silently dropping them.
+        const allowedProxyHeaders = new Set(["referer", "origin", "user-agent", "accept", "accept-language"]);
+        const proxyHeaders = Object.fromEntries(
+            Object.entries(source.headers ?? {}).filter(
+                ([name, value]) =>
+                    allowedProxyHeaders.has(name.toLowerCase()) &&
+                    typeof value === "string" &&
+                    value.length <= 4096 &&
+                    !/[\\r\\n\\0]/.test(value)
+            )
+        );
+        const playbackUrl =
+            Object.keys(proxyHeaders).length > 0
+                ? `${window.location.origin}/api/iptv/stream?${new URLSearchParams({
+                      url: source.url,
+                      headers: JSON.stringify(proxyHeaders),
+                  }).toString()}`
+                : source.url;
+
         if (mediaPlayer === MediaPlayer.BROWSER) {
             usePreviewStore.getState().openSinglePreview({
-                url: source.url,
+                url: playbackUrl,
                 title: fileName,
                 fileType: FileType.VIDEO,
             });
         } else {
-            openInPlayer({ url: source.url, fileName, player: mediaPlayer });
+            openInPlayer({ url: playbackUrl, fileName, player: mediaPlayer });
         }
     },
 
