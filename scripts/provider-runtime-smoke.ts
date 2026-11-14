@@ -96,3 +96,41 @@ if (!Array.isArray(blockedTmdbResult) || blockedTmdbResult.length !== 1) {
     throw new Error("QuickJS TMDB scope restriction smoke test failed.");
 }
 console.log("QuickJS TMDB scope restriction smoke test passed.");
+
+
+const compatibilityResult = await executeNuvioProvider(
+    \`var cheerio = require("cheerio");
+    var CryptoJS = require("crypto-js");
+    module.exports = {
+        getStreams: async () => {
+            var html = cheerio.load('<div class="result"><a class="play" href="https://cdn.example/video.mp4">Play Film</a></div>');
+            var links = html(".result").find("a.play").toArray().map((element) => html(element));
+            var key = CryptoJS.enc.Utf8.parse("kiemtienmua911ca");
+            var iv = CryptoJS.enc.Utf8.parse("0123456789abcdef");
+            var decoded = CryptoJS.AES.decrypt(
+                CryptoJS.lib.CipherParams.create({
+                    ciphertext: CryptoJS.enc.Hex.parse("7c9ecfa61621c67c3c303f993096a16fa2549279236cbeb59b67299f4b5a52c6")
+                }),
+                key,
+                { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
+            ).toString(CryptoJS.enc.Latin1);
+            return [{
+                name: links[0].text().trim(),
+                url: links[0].attr("href"),
+                title: decoded
+            }];
+        }
+    };\`,
+    { tmdbId: 12345, mediaType: "movie" }
+);
+const compatibilityStream = Array.isArray(compatibilityResult)
+    ? (compatibilityResult[0] as { name?: string; url?: string; title?: string })
+    : undefined;
+if (
+    compatibilityStream?.name !== "Play Film" ||
+    compatibilityStream.url !== "https://cdn.example/video.mp4" ||
+    compatibilityStream.title !== "decoded-provider-url"
+) {
+    throw new Error("QuickJS Cheerio/CryptoJS compatibility smoke test failed.");
+}
+console.log("QuickJS Cheerio/CryptoJS compatibility smoke test passed.");
