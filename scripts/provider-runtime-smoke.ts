@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { executeNuvioProvider } from "../src/lib/plugins/provider-runtime";
 
 const result = await executeNuvioProvider(
@@ -133,3 +134,22 @@ if (
     throw new Error("QuickJS Cheerio/CryptoJS compatibility smoke test failed.");
 }
 console.log("QuickJS Cheerio/CryptoJS compatibility smoke test passed.");
+
+
+// These upstream bundles are pinned to invalidpandaa/nuvio-german-providers@1114046a836741728ab33d4bb90a2bd1833fbf99.
+// Override getStreams after module initialization so the test exercises their real top-level imports
+// without making requests to third-party streaming sites.
+for (const providerFile of ["flixitv.js", "serienstream.js", "aniworld.js"]) {
+    const providerSource = await readFile(
+        new URL("./fixtures/nuvio-german-providers/" + providerFile, import.meta.url),
+        "utf8"
+    );
+    const loadedProvider = await executeNuvioProvider(
+        providerSource + "\nmodule.exports.getStreams = async () => [];",
+        { tmdbId: 12345, mediaType: "movie" }
+    );
+    if (!Array.isArray(loadedProvider) || loadedProvider.length !== 0) {
+        throw new Error("German Nuvio provider module-load smoke test failed: " + providerFile);
+    }
+    console.log("German Nuvio provider module-load smoke test passed: " + providerFile);
+}
