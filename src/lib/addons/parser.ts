@@ -176,7 +176,7 @@ export function sanitizeStreamHeaders(headers: unknown): Record<string, string> 
     const safe: Record<string, string> = {};
     for (const [name, value] of Object.entries(headers)) {
         if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || FORBIDDEN_HEADER_NAMES.has(name.toLowerCase())) continue;
-        if (typeof value !== "string" || /[\\r\\n\\0]/.test(value) || value.length > 4096) continue;
+        if (typeof value !== "string" || /[\r\n\0]/.test(value) || value.length > 4096) continue;
         safe[name] = value;
     }
     return Object.keys(safe).length ? safe : undefined;
