@@ -592,10 +592,10 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
 
     const requireFunction = vm.newFunction("require", (name) => {
         const moduleName = vm.getString(name);
-        if (moduleName !== "cheerio" && moduleName !== "crypto-js") {
+        if (moduleName !== "cheerio" && moduleName !== "cheerio-without-node-native" && moduleName !== "crypto-js") {
             throw new Error('Provider module "' + moduleName + '" is not supported.');
         }
-        return vm.getProp(vm.global, moduleName === "cheerio" ? "__cheerioModule" : "__cryptoJsModule");
+        return vm.getProp(vm.global, moduleName === "crypto-js" ? "__cryptoJsModule" : "__cheerioModule");
     });
     setFunction("require", requireFunction);
 }
