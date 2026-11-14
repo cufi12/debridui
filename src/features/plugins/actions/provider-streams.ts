@@ -24,7 +24,7 @@ export async function getRepositoryProviderStreams(
     const modules = await getEnabledRepositoryProviderSources(invocation.mediaType);
     const enabled = modules
         .filter((module): module is typeof module & { source: string } => Boolean(module.source))
-        .slice(0, 100);
+        .slice(0, 32);
     const loadFailures = modules.filter((module) => !module.source);
     console.info("[repository-providers] Search started:", {
         mediaType: invocation.mediaType,
@@ -72,7 +72,7 @@ export async function getRepositoryProviderStreams(
             })
         );
         sources.push(...batch.flat());
-        if (sources.length >= 100) return sources.slice(0, 100);
+        if (sources.length >= 100) return sources.slice(0, 32);
     }
 
     console.info("[repository-providers] Search finished:", {
