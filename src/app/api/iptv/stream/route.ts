@@ -127,11 +127,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const { response, finalUrl } = await fetchUpstream(
-            initial,
-            request.headers.get("range"),
-            providerHeaders
-        );
+        const { response, finalUrl } = await fetchUpstream(initial, request.headers.get("range"), providerHeaders);
         if (!response.ok && response.status !== 206) {
             return new Response("IPTV-Anbieter antwortet mit HTTP " + response.status + ".", {
                 status: response.status,
