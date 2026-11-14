@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { SectionDivider } from "@/components/layout/section-divider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPluginRepositories, getRepositoryProviderFileStatuses, setRepositoryProviderEnabled } from "@/features/plugins/actions/repositories";
+import {
+    getPluginRepositories,
+    getRepositoryProviderFileStatuses,
+    setRepositoryProviderEnabled,
+} from "@/features/plugins/actions/repositories";
 
 type Provider = {
     id: string;
@@ -141,7 +145,12 @@ export function RepositoryProviderListSection() {
                                                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                                                     {health[key] ? (
                                                         <>
-                                                            <Badge variant={health[key].status === "ok" ? "default" : "destructive"}>
+                                                            <Badge
+                                                                variant={
+                                                                    health[key].status === "ok"
+                                                                        ? "default"
+                                                                        : "destructive"
+                                                                }>
                                                                 {health[key].status === "ok"
                                                                     ? "Datei erreichbar"
                                                                     : health[key].status === "empty"
@@ -149,12 +158,16 @@ export function RepositoryProviderListSection() {
                                                                       : "Datei nicht erreichbar"}
                                                             </Badge>
                                                             <span className="text-xs text-muted-foreground">
-                                                                {health[key].bytes > 0 ? `${Math.ceil(health[key].bytes / 1024)} KB · ` : ""}
+                                                                {health[key].bytes > 0
+                                                                    ? `${Math.ceil(health[key].bytes / 1024)} KB · `
+                                                                    : ""}
                                                                 {health[key].message}
                                                             </span>
                                                         </>
                                                     ) : (
-                                                        <span className="text-xs text-muted-foreground">Datei wird geprüft…</span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Datei wird geprüft…
+                                                        </span>
                                                     )}
                                                 </div>
                                             )}
