@@ -322,51 +322,79 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
         fn.dispose();
     };
 
-    setFunction("__domLoad", vm.newFunction("__domLoad", (html) => {
-        const document = loadCheerio(vm.getString(html));
-        const id = nextId++;
-        documents.set(id, document);
-        return vm.newNumber(id);
-    }));
-    setFunction("__domSelect", vm.newFunction("__domSelect", (documentId, selector, contextId) => {
-        const document = getDocument(vm.getNumber(documentId));
-        const context = vm.getNumber(contextId);
-        const selection = context
-            ? document(vm.getString(selector), getSelection(context) as never)
-            : document(vm.getString(selector));
-        return vm.newNumber(saveSelection(document, selection));
-    }));
-    setFunction("__domFind", vm.newFunction("__domFind", (selectionId, selector) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).find(vm.getString(selector))));
-    }));
-    setFunction("__domFirst", vm.newFunction("__domFirst", (selectionId) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).first()));
-    }));
-    setFunction("__domEq", vm.newFunction("__domEq", (selectionId, index) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).eq(vm.getNumber(index))));
-    }));
-    setFunction("__domText", vm.newFunction("__domText", (selectionId) =>
-        vm.newString(getSelection(vm.getNumber(selectionId)).text())
-    ));
-    setFunction("__domHtml", vm.newFunction("__domHtml", (selectionId) => {
-        const value = getSelection(vm.getNumber(selectionId)).html();
-        return value === undefined ? vm.null : vm.newString(value);
-    }));
-    setFunction("__domAttr", vm.newFunction("__domAttr", (selectionId, name) => {
-        const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name));
-        return value === undefined ? vm.null : vm.newString(value);
-    }));
-    setFunction("__domNodes", vm.newFunction("__domNodes", (selectionId) => {
-        const id = vm.getNumber(selectionId);
-        const document = getOwner(id);
-        const ids = getSelection(id).toArray().map((node) => saveSelection(document, document(node as never)));
-        return vm.newString(JSON.stringify(ids));
-    }));
+    setFunction(
+        "__domLoad",
+        vm.newFunction("__domLoad", (html) => {
+            const document = loadCheerio(vm.getString(html));
+            const id = nextId++;
+            documents.set(id, document);
+            return vm.newNumber(id);
+        })
+    );
+    setFunction(
+        "__domSelect",
+        vm.newFunction("__domSelect", (documentId, selector, contextId) => {
+            const document = getDocument(vm.getNumber(documentId));
+            const context = vm.getNumber(contextId);
+            const selection = context
+                ? document(vm.getString(selector), getSelection(context) as never)
+                : document(vm.getString(selector));
+            return vm.newNumber(saveSelection(document, selection));
+        })
+    );
+    setFunction(
+        "__domFind",
+        vm.newFunction("__domFind", (selectionId, selector) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).find(vm.getString(selector))));
+        })
+    );
+    setFunction(
+        "__domFirst",
+        vm.newFunction("__domFirst", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).first()));
+        })
+    );
+    setFunction(
+        "__domEq",
+        vm.newFunction("__domEq", (selectionId, index) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).eq(vm.getNumber(index))));
+        })
+    );
+    setFunction(
+        "__domText",
+        vm.newFunction("__domText", (selectionId) => vm.newString(getSelection(vm.getNumber(selectionId)).text()))
+    );
+    setFunction(
+        "__domHtml",
+        vm.newFunction("__domHtml", (selectionId) => {
+            const value = getSelection(vm.getNumber(selectionId)).html();
+            return value === undefined ? vm.null : vm.newString(value);
+        })
+    );
+    setFunction(
+        "__domAttr",
+        vm.newFunction("__domAttr", (selectionId, name) => {
+            const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name));
+            return value === undefined ? vm.null : vm.newString(value);
+        })
+    );
+    setFunction(
+        "__domNodes",
+        vm.newFunction("__domNodes", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            const document = getOwner(id);
+            const ids = getSelection(id)
+                .toArray()
+                .map((node) => saveSelection(document, document(node as never)));
+            return vm.newString(JSON.stringify(ids));
+        })
+    );
 
-    const moduleCode = "class ProviderCheerioCollection {\n    constructor(ids, documentId) { this.ids = ids; this.documentId = documentId; }\n    get length() { return this.ids.length; }\n    find(selector) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFind(this.ids[0], String(selector))], this.documentId);\n    }\n    first() {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFirst(this.ids[0])], this.documentId);\n    }\n    eq(index) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domEq(this.ids[0], Number(index))], this.documentId);\n    }\n    text() { return this.ids.length ? __domText(this.ids[0]) : \"\"; }\n    html() { return this.ids.length ? __domHtml(this.ids[0]) : null; }\n    attr(name) { return this.ids.length ? __domAttr(this.ids[0], String(name)) : undefined; }\n    toArray() { return this.ids.flatMap((id) => JSON.parse(__domNodes(id))); }\n    get(index) { return index === undefined ? this.toArray() : this.toArray()[index]; }\n    each(callback) { this.toArray().forEach((id, index) => callback.call(id, index, id)); return this; }\n    map(callback) { return this.toArray().map((id, index) => callback.call(id, index, id)); }\n}\nglobalThis.__cheerioModule = {\n    load(html) {\n        const documentId = __domLoad(String(html));\n        const select = (selector, context) => {\n            if (selector instanceof ProviderCheerioCollection) return selector;\n            if (typeof selector === \"number\") return new ProviderCheerioCollection([selector], documentId);\n            const contextId = context instanceof ProviderCheerioCollection ? (context.ids[0] || 0) : 0;\n            return new ProviderCheerioCollection([__domSelect(documentId, String(selector), contextId)], documentId);\n        };\n        return select;\n    }\n};\nglobalThis.__cryptoJsModule = {\n    lib: { CipherParams: { create(value) { return value; } } },\n    enc: {\n        Utf8: { parse(value) { return { utf8: String(value) }; } },\n        Hex: { parse(value) { return { hex: String(value) }; } },\n        Latin1: \"Latin1\"\n    },\n    mode: { CBC: \"CBC\" },\n    pad: { Pkcs7: \"Pkcs7\" },\n    AES: {\n        decrypt(params, key, options) {\n            const ciphertext = params && params.ciphertext && params.ciphertext.hex;\n            const keyText = key && key.utf8;\n            const ivText = options && options.iv && options.iv.utf8;\n            if (typeof ciphertext !== \"string\" || typeof keyText !== \"string\" || typeof ivText !== \"string\") {\n                throw new Error(\"Unsupported CryptoJS AES parameters.\");\n            }\n            return { toString(encoder) {\n                if (encoder !== \"Latin1\") throw new Error(\"Only CryptoJS Latin1 output is supported.\");\n                return __cryptoAesCbcDecrypt(ciphertext, keyText, ivText);\n            }};\n        }\n    }\n};";
+    const moduleCode =
+        'class ProviderCheerioCollection {\n    constructor(ids, documentId) { this.ids = ids; this.documentId = documentId; }\n    get length() { return this.ids.length; }\n    find(selector) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFind(this.ids[0], String(selector))], this.documentId);\n    }\n    first() {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFirst(this.ids[0])], this.documentId);\n    }\n    eq(index) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domEq(this.ids[0], Number(index))], this.documentId);\n    }\n    text() { return this.ids.length ? __domText(this.ids[0]) : ""; }\n    html() { return this.ids.length ? __domHtml(this.ids[0]) : null; }\n    attr(name) { return this.ids.length ? __domAttr(this.ids[0], String(name)) : undefined; }\n    toArray() { return this.ids.flatMap((id) => JSON.parse(__domNodes(id))); }\n    get(index) { return index === undefined ? this.toArray() : this.toArray()[index]; }\n    each(callback) { this.toArray().forEach((id, index) => callback.call(id, index, id)); return this; }\n    map(callback) { return this.toArray().map((id, index) => callback.call(id, index, id)); }\n}\nglobalThis.__cheerioModule = {\n    load(html) {\n        const documentId = __domLoad(String(html));\n        const select = (selector, context) => {\n            if (selector instanceof ProviderCheerioCollection) return selector;\n            if (typeof selector === "number") return new ProviderCheerioCollection([selector], documentId);\n            const contextId = context instanceof ProviderCheerioCollection ? (context.ids[0] || 0) : 0;\n            return new ProviderCheerioCollection([__domSelect(documentId, String(selector), contextId)], documentId);\n        };\n        return select;\n    }\n};\nglobalThis.__cryptoJsModule = {\n    lib: { CipherParams: { create(value) { return value; } } },\n    enc: {\n        Utf8: { parse(value) { return { utf8: String(value) }; } },\n        Hex: { parse(value) { return { hex: String(value) }; } },\n        Latin1: "Latin1"\n    },\n    mode: { CBC: "CBC" },\n    pad: { Pkcs7: "Pkcs7" },\n    AES: {\n        decrypt(params, key, options) {\n            const ciphertext = params && params.ciphertext && params.ciphertext.hex;\n            const keyText = key && key.utf8;\n            const ivText = options && options.iv && options.iv.utf8;\n            if (typeof ciphertext !== "string" || typeof keyText !== "string" || typeof ivText !== "string") {\n                throw new Error("Unsupported CryptoJS AES parameters.");\n            }\n            return { toString(encoder) {\n                if (encoder !== "Latin1") throw new Error("Only CryptoJS Latin1 output is supported.");\n                return __cryptoAesCbcDecrypt(ciphertext, keyText, ivText);\n            }};\n        }\n    }\n};';
     const evaluated = vm.evalCode(moduleCode);
     vm.unwrapResult(evaluated).dispose();
 
@@ -376,7 +404,12 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
         const keyBytes = Buffer.from(vm.getString(key), "utf8");
         const ivBytes = Buffer.from(vm.getString(iv), "utf8");
         const encrypted = Buffer.from(hex, "hex");
-        if (![16, 24, 32].includes(keyBytes.length) || ivBytes.length !== 16 || !encrypted.length || encrypted.length % 16 !== 0) {
+        if (
+            ![16, 24, 32].includes(keyBytes.length) ||
+            ivBytes.length !== 16 ||
+            !encrypted.length ||
+            encrypted.length % 16 !== 0
+        ) {
             throw new Error("Invalid AES-CBC key, IV, or ciphertext length.");
         }
         const decipher = createDecipheriv("aes-" + keyBytes.length * 8 + "-cbc", keyBytes, ivBytes);
@@ -393,7 +426,6 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
     });
     setFunction("require", requireFunction);
 }
-
 
 /**
  * Execute a single-file CommonJS-style Nuvio provider in QuickJS.

@@ -97,7 +97,6 @@ if (!Array.isArray(blockedTmdbResult) || blockedTmdbResult.length !== 1) {
 }
 console.log("QuickJS TMDB scope restriction smoke test passed.");
 
-
 const compatibilityResult = await executeNuvioProvider(
     `var cheerio = require("cheerio");
     var CryptoJS = require("crypto-js");
