@@ -10,6 +10,7 @@ import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
 const PROVIDER_TIMEOUT_MS = 28_000;
 const FETCH_TIMEOUT_MS = 10_000;
+const MAX_REDIRECTS = 5;
 const MAX_REQUESTS = 24;
 const MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
@@ -129,12 +130,14 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                 response.on("error", (error) => {
                     if (!settled) {
                         settled = true;
+                        cleanup();
                         reject(error);
                     }
                 });
                 response.on("end", () => {
                     if (settled) return;
                     settled = true;
+                    cleanup();
                     const responseHeaders = Object.fromEntries(
                         Object.entries(response.headers).flatMap(([key, value]) =>
                             value === undefined
@@ -153,6 +156,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
         );
 
         const abort = () => request.destroy(new Error("Provider request was cancelled."));
+        const cleanup = () => signal.removeEventListener("abort", abort);
         if (signal.aborted) abort();
         else signal.addEventListener("abort", abort, { once: true });
 
@@ -160,6 +164,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
         request.on("error", (error) => {
             if (!settled) {
                 settled = true;
+                cleanup();
                 reject(error);
             }
         });
@@ -177,11 +182,11 @@ async function safeProviderFetch(
     let body = init.body;
     let headers = normalizeRequestHeaders(init.headers);
 
-    for (let redirectCount = 0; redirectCount <= 3; redirectCount++) {
+    for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
         const response = await requestPinned(url, { method, body, headers }, signal);
         const location = response.headers.location;
         if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
-        if (redirectCount === 3) throw new Error("Too many provider redirects.");
+        if (redirectCount === MAX_REDIRECTS) throw new Error("Too many provider redirects.");
 
         const nextUrl = new URL(location, url);
         if (nextUrl.origin !== url.origin) {
