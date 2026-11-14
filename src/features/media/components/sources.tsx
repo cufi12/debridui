@@ -27,6 +27,7 @@ import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
 import { selectBestSource } from "@/features/media/utils/source-selector";
 import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
+import { getEnabledRepositoryProviders } from "@/features/plugins/actions/repositories";
 import { getSourceQualityIndex } from "@/lib/addons/parser";
 import type { AddonSource } from "@/lib/addons/types";
 import { cn } from "@/lib/utils";
@@ -496,6 +497,13 @@ export function Sources({ request, className }: SourcesProps) {
             [...(addonSources ?? []), ...repositorySources].sort((a, b) => Number(!!b.isCached) - Number(!!a.isCached)),
         [addonSources, repositorySources]
     );
+
+    const { data: configuredProviders = [] } = useQuery({
+        queryKey: ["enabled-repository-providers", request.type],
+        queryFn: () => getEnabledRepositoryProviders(request.type === "movie" ? "movie" : "tv"),
+        staleTime: 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
     const isLoading = isAddonSourcesLoading || isRepositoryLoading;
     const sourceFailures = repositoryFailed ? [...failedAddons, "Plugin providers"] : failedAddons;
 
@@ -505,13 +513,16 @@ export function Sources({ request, className }: SourcesProps) {
     const [addonFilter, setAddonFilter] = useState("all");
 
     const addonNames = useMemo(() => {
-        if (!sources?.length) return [];
         const seen = new Map<string, string>();
-        for (const s of sources) {
-            if (!seen.has(s.addonId)) seen.set(s.addonId, s.addonName);
+        for (const source of sources) {
+            if (!seen.has(source.addonId)) seen.set(source.addonId, source.addonName);
+        }
+        for (const provider of configuredProviders) {
+            const id = "repository:" + provider.repositoryId + ":" + provider.providerId;
+            if (!seen.has(id)) seen.set(id, provider.providerName);
         }
         return Array.from(seen, ([id, name]) => ({ id, name }));
-    }, [sources]);
+    }, [sources, configuredProviders]);
 
     const filtered = useMemo(
         () => (quickPlay || addonFilter === "all" ? sources : sources?.filter((s) => s.addonId === addonFilter)),
