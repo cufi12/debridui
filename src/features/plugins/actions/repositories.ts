@@ -183,7 +183,7 @@ export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") 
                     supportedTypes: provider.supportedTypes,
                 }))
         )
-        .slice(0, 100);
+        .slice(0, 32);
 }
 
 export async function addPluginRepository(rawUrl: string) {
@@ -272,7 +272,7 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
                 )
                 .map((provider) => ({ repository, provider }))
         )
-        .slice(0, 20);
+        .slice(0, 32);
 
     const output: Array<{
         repositoryId: string;
@@ -381,7 +381,7 @@ export async function getRepositoryProviderFileStatuses() {
         .flatMap((repository) =>
             repository.providers.filter((provider) => provider.enabled).map((provider) => ({ repository, provider }))
         )
-        .slice(0, 100);
+        .slice(0, 32);
 
     const statuses: Array<{
         repositoryId: string;
