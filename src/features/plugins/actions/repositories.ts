@@ -283,6 +283,10 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
         error?: string;
     }> = [];
     let totalBytes = 0;
+    console.info("[repository-providers] Loading enabled provider files:", {
+        mediaType,
+        enabledProviders: providers.length,
+    });
 
     for (let index = 0; index < providers.length; index += 4) {
         const batch = await Promise.all(
@@ -309,18 +313,28 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
                         });
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
                         const source = await readLimitedText(response, 500_000);
+                        const bytes = new TextEncoder().encode(source).byteLength;
+                        console.info("[repository-providers] Provider file loaded:", {
+                            providerId: provider.id,
+                            httpStatus: response.status,
+                            bytes,
+                        });
                         return {
                             repositoryId: repository.id,
                             repositoryName: repository.name,
                             providerId: provider.id,
                             providerName: provider.name,
                             source,
-                            bytes: new TextEncoder().encode(source).byteLength,
+                            bytes,
                         };
                     } finally {
                         clearTimeout(timeout);
                     }
-                } catch {
+                } catch (error) {
+                    console.warn("[repository-providers] Provider file load failed:", {
+                        providerId: provider.id,
+                        error: error instanceof Error ? error.message : String(error),
+                    });
                     return {
                         repositoryId: repository.id,
                         repositoryName: repository.name,
@@ -350,6 +364,12 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
             output.push(publicItem);
         }
     }
+    console.info("[repository-providers] Provider file loading finished:", {
+        returnedProviders: output.length,
+        loadedProviders: output.filter((item) => Boolean(item.source)).length,
+        failedProviders: output.filter((item) => Boolean(item.error)).length,
+        totalBytes,
+    });
     return output;
 }
 
