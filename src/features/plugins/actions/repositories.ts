@@ -272,7 +272,7 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
                 )
                 .map((provider) => ({ repository, provider }))
         )
-        .slice(0, 20);
+        .slice(0, 100);
 
     const output: Array<{
         repositoryId: string;
