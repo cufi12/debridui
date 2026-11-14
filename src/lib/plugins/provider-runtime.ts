@@ -371,14 +371,14 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
         "__domHtml",
         vm.newFunction("__domHtml", (selectionId) => {
             const value = getSelection(vm.getNumber(selectionId)).html();
-            return value === undefined ? vm.null : vm.newString(value);
+            return value == null ? vm.null : vm.newString(value);
         })
     );
     setFunction(
         "__domAttr",
         vm.newFunction("__domAttr", (selectionId, name) => {
             const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name) ?? "");
-            return value === undefined ? vm.null : vm.newString(value);
+            return value == null ? vm.null : vm.newString(value);
         })
     );
     setFunction(
