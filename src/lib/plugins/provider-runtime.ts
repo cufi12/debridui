@@ -252,6 +252,34 @@ async function requestPinned(
     });
 }
 
+/**
+ * Serienstream's /r endpoint can return a small HTML page that navigates to
+ * the actual hoster without an HTTP Location header. Parse only explicit,
+ * static redirect declarations; never execute provider HTML or JavaScript.
+ */
+function serienstreamHtmlRedirect(body: string): { url: string | null; challenge: boolean } {
+    if (/captcha|verify (?:that )?you are human|cf-chl-|cloudflare ray id|challenge-platform/i.test(body)) {
+        return { url: null, challenge: true };
+    }
+
+    const metaTag = body.match(/<meta\\b[^>]*>/gi)?.find((tag) => /http-equiv\\s*=\\s*["']?refresh["']?/i.test(tag));
+    const metaContent = metaTag?.match(/content\\s*=\\s*["']([^"']+)["']/i)?.[1];
+    const metaTarget = metaContent?.match(/url\\s*=\\s*['"]?([^;'"]+)/i)?.[1]?.trim();
+    const scriptTarget =
+        body.match(/(?:window\\.)?location(?:\\.href)?\\s*=\\s*(['"])(.*?)\\1/i)?.[2] ??
+        body.match(/(?:window\\.)?location\\.replace\\(\\s*(['"])(.*?)\\1\\s*\\)/i)?.[2];
+    const target = (metaTarget || scriptTarget)?.replace(/\\\\\\//g, "/");
+    if (!target) return { url: null, challenge: false };
+
+    try {
+        const parsed = new URL(target, "https://serienstream.to/");
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return { url: null, challenge: false };
+        return { url: parsed.toString(), challenge: false };
+    } catch {
+        return { url: null, challenge: false };
+    }
+}
+
 async function safeProviderFetch(
     rawUrl: string,
     init: ProviderFetchInit,
@@ -265,8 +293,34 @@ async function safeProviderFetch(
 
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
         const response = await requestPinned(url, { method, body, headers }, signal, providerId);
-        const location = response.headers.location;
-        if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
+        let location = response.headers.location;
+        let redirectStatus = response.status;
+
+        // Limit HTML redirect handling to Serienstream's own /r endpoint.
+        // CAPTCHA/challenge pages are reported, never solved or bypassed.
+        if (
+            !location &&
+            providerId === "serienstream" &&
+            url.hostname === "serienstream.to" &&
+            url.pathname === "/r" &&
+            response.status >= 200 &&
+            response.status < 300 &&
+            /html/i.test(response.headers["content-type"] ?? "")
+        ) {
+            const parsed = serienstreamHtmlRedirect(response.body);
+            if (parsed.challenge) {
+                console.warn("[repository-providers] Serienstream /r returned a challenge page; no redirect attempted.");
+            } else if (parsed.url) {
+                location = parsed.url;
+                redirectStatus = 302;
+                console.info("[repository-providers] Serienstream /r HTML redirect detected.");
+            } else {
+                console.warn("[repository-providers] Serienstream /r returned HTML without an explicit redirect.");
+            }
+        }
+
+        const isHttpRedirect = [301, 302, 303, 307, 308].includes(redirectStatus) && Boolean(location);
+        if (!isHttpRedirect || !location) return response;
         if (redirectCount === MAX_REDIRECTS) throw new Error("Too many provider redirects.");
 
         const nextUrl = new URL(location, url);
@@ -278,8 +332,8 @@ async function safeProviderFetch(
             );
         }
         if (
-            response.status === 303 ||
-            ((response.status === 301 || response.status === 302) && method.toUpperCase() === "POST")
+            redirectStatus === 303 ||
+            ((redirectStatus === 301 || redirectStatus === 302) && method.toUpperCase() === "POST")
         ) {
             method = "GET";
             body = undefined;
