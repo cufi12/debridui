@@ -182,7 +182,7 @@ async function safeProviderFetch(
         const response = await requestPinned(url, { method, body, headers }, signal);
         const location = response.headers.location;
         if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
-        if (redirectCount === 3) throw new Error("Too many provider redirects.");
+        if (redirectCount === MAX_REDIRECTS) throw new Error("Too many provider redirects.");
 
         const nextUrl = new URL(location, url);
         if (nextUrl.origin !== url.origin) {
