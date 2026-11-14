@@ -669,7 +669,11 @@ export async function executeNuvioProvider(
             })
             .catch((error: unknown) => {
                 if (disposed) return;
-                const errorHandle = vm.newString(error instanceof Error ? error.message : "Provider fetch failed.");
+                const message = error instanceof Error ? error.message : "Provider fetch failed.";
+                // Providers expect fetch rejections to be Error objects so catch
+                // handlers can reliably inspect error.message.
+                const errorResult = vm.evalCode(`new Error(${JSON.stringify(message)})`);
+                const errorHandle = vm.unwrapResult(errorResult);
                 deferred.reject(errorHandle);
                 errorHandle.dispose();
                 vm.runtime.executePendingJobs();
