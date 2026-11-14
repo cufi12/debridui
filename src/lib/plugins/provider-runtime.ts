@@ -104,12 +104,14 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                 method,
                 headers,
                 timeout: FETCH_TIMEOUT_MS,
-                lookup: ((
-                    _hostname: string,
-                    _options: unknown,
-                    callback: (error: NodeJS.ErrnoException | null, address: string, family: number) => void
-                ) => {
-                    callback(null, address, 4);
+                lookup: ((_hostname: string, options: unknown, callback: (...args: unknown[]) => void) => {
+                    // Node's lookup callback has a different shape when the
+                    // HTTP agent requests all addresses: callback(null, records).
+                    if (typeof options === "object" && options !== null && "all" in options && options.all) {
+                        callback(null, [{ address, family: 4 }]);
+                    } else {
+                        callback(null, address, 4);
+                    }
                 }) as never,
             },
             (response) => {
