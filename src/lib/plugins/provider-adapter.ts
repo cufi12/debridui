@@ -156,9 +156,10 @@ export async function executeRepositoryProviderModules(
                         module.providerId,
                         module.providerName
                     );
-                } catch {
+                } catch (error) {
                     // A broken provider must not prevent other repositories from
-                    // returning usable streams.
+                    // returning usable streams, but keep its failure diagnosable.
+                    console.warn(`Repository provider ${module.providerName} (${module.providerId}) failed:`, error);
                     return [];
                 }
             })
