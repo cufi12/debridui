@@ -103,8 +103,12 @@ const compatibilityResult = await executeNuvioProvider(
     var CryptoJS = require("crypto-js");
     module.exports = {
         getStreams: async () => {
-            var html = cheerio.load('<div class="result"><a class="play" href="https://cdn.example/video.mp4">Play Film</a></div>');
+            var html = cheerio.load('<div class="result"><a class="play" href="https://cdn.example/video.mp4">Play Film</a><a href="https://cdn.example/second.mp4">Second</a></div>');
             var links = html(".result").find("a.play").toArray().map((element) => html(element));
+            var first = html(".result a").first();
+            var second = html(".result a").eq(1);
+            var visited = [];
+            html(".result a").each((index, element) => visited.push(html(element).text().trim()));
             var key = CryptoJS.enc.Utf8.parse("kiemtienmua911ca");
             var iv = CryptoJS.enc.Utf8.parse("0123456789abcdef");
             var decoded = CryptoJS.AES.decrypt(
@@ -115,7 +119,7 @@ const compatibilityResult = await executeNuvioProvider(
                 { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
             ).toString(CryptoJS.enc.Latin1);
             return [{
-                name: links[0].text().trim(),
+                name: links[0].text().trim() + "|" + first.text().trim() + "|" + second.attr("href") + "|" + visited.join(","),
                 url: links[0].attr("href"),
                 title: decoded
             }];
@@ -127,7 +131,7 @@ const compatibilityStream = Array.isArray(compatibilityResult)
     ? (compatibilityResult[0] as { name?: string; url?: string; title?: string })
     : undefined;
 if (
-    compatibilityStream?.name !== "Play Film" ||
+    compatibilityStream?.name !== "Play Film|Play Film|https://cdn.example/second.mp4|Play Film,Second" ||
     compatibilityStream.url !== "https://cdn.example/video.mp4" ||
     compatibilityStream.title !== "decoded-provider-url"
 ) {
@@ -152,3 +156,16 @@ for (const providerFile of ["flixitv.fixture", "serienstream.fixture", "aniworld
     }
     console.log("German Nuvio provider module-load smoke test passed: " + providerFile);
 }
+
+
+let unsupportedModuleBlocked = false;
+try {
+    await executeNuvioProvider(
+        'var fs = require("fs"); module.exports = { getStreams: async () => [] };',
+        { tmdbId: 12345, mediaType: "movie" }
+    );
+} catch (error) {
+    unsupportedModuleBlocked = error instanceof Error && error.message.includes('Provider module "fs" is not supported.');
+}
+if (!unsupportedModuleBlocked) throw new Error("QuickJS unsupported CommonJS module restriction smoke test failed.");
+console.log("QuickJS unsupported CommonJS module restriction smoke test passed.");
