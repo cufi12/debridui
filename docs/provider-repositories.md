@@ -61,3 +61,8 @@ For movies, `mediaType` is `movie`. For series, it is `tv`, with `season` and `e
 - Returned HTTP headers are retained on stream sources. Playback support for custom headers depends on the selected player; not every external player can apply them.
 
 Providers are disabled by default when a repository is added. Enable only repositories and providers you trust.
+
+
+## Compatibility regression fixtures
+
+The QuickJS smoke suite includes the FlixiTV, Serienstream, and Aniworld provider bundles from `invalidpandaa/nuvio-german-providers` commit `1114046a836741728ab33d4bb90a2bd1833fbf99`. Their `getStreams()` methods are replaced in the smoke test after module initialization, so tests verify top-level module loading without making requests to third-party streaming sites.
