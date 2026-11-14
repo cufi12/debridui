@@ -1,16 +1,20 @@
+import { createDecipheriv } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
+import { load as loadCheerio } from "cheerio";
 import { getQuickJS } from "quickjs-emscripten";
 import { sanitizeStreamHeaders } from "@/lib/addons/parser";
 import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
-const PROVIDER_TIMEOUT_MS = 15_000;
-const FETCH_TIMEOUT_MS = 8_000;
-const MAX_REQUESTS = 12;
-const MAX_RESPONSE_BYTES = 1_000_000;
-const MAX_TOTAL_RESPONSE_BYTES = 3_000_000;
+const PROVIDER_TIMEOUT_MS = 28_000;
+const FETCH_TIMEOUT_MS = 10_000;
+const MAX_REQUESTS = 24;
+const MAX_RESPONSE_BYTES = 1_500_000;
+const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
+const MAX_DOM_DOCUMENTS = 12;
+const MAX_DOM_OPERATIONS = 2_000;
 
 type ProviderFetchInit = {
     method?: string;
@@ -115,7 +119,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
                     total += buffer.byteLength;
                     if (total > MAX_RESPONSE_BYTES) {
-                        request.destroy(new Error("Provider response exceeds 1 MB."));
+                        request.destroy(new Error("Provider response exceeds 1.5 MB."));
                         return;
                     }
                     chunks.push(buffer);
@@ -225,7 +229,7 @@ function createQuickJsResponse(
     const headers = vm.newObject();
     const getHeader = vm.newFunction("get", (name) => {
         const value = response.headers[vm.getString(name).toLowerCase()];
-        return value === undefined ? vm.null : vm.newString(value);
+        return value == null ? vm.null : vm.newString(value);
     });
     vm.setProp(headers, "get", getHeader);
     getHeader.dispose();
@@ -233,6 +237,223 @@ function createQuickJsResponse(
     headers.dispose();
 
     return object;
+}
+
+/**
+ * Return only the selected media's TMDB detail record locally. This narrow
+ * compatibility shim avoids exposing a TMDB credential in the provider VM.
+ */
+async function localTmdbDetail(
+    rawUrl: string,
+    invocation: ProviderInvocation,
+    signal: AbortSignal
+): Promise<PinnedResponse | null> {
+    const url = new URL(rawUrl);
+    if (url.hostname !== "api.themoviedb.org") return null;
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    if (pathParts.length !== 3 || pathParts[0] !== "3") {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
+    const kind = pathParts[1];
+    const id = Number(pathParts[2]);
+    if ((kind !== "movie" && kind !== "tv") || !Number.isSafeInteger(id)) {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
+    if (id !== invocation.tmdbId || kind !== invocation.mediaType) {
+        throw new Error("Provider TMDB access is limited to the selected media record.");
+    }
+    // Use the server-side TMDB v3 key when configured. The provider VM only
+    // sees a placeholder; the real credential is added after URL validation.
+    const tmdbApiKey = process.env.TMDB_API_KEY?.trim();
+    if (tmdbApiKey) {
+        url.searchParams.set("api_key", tmdbApiKey);
+        return await safeProviderFetch(url.toString(), {}, signal);
+    }
+
+    const title = invocation.title || "";
+    const year = invocation.year && Number.isInteger(invocation.year) ? String(invocation.year) : "";
+    const date = year ? year + "-01-01" : "";
+    const payload =
+        kind === "movie"
+            ? {
+                  id,
+                  title,
+                  original_title: title,
+                  release_date: date,
+                  imdb_id: invocation.imdbId || null,
+                  external_ids: { imdb_id: invocation.imdbId || null },
+                  translations: { translations: [] },
+                  alternative_titles: { titles: [] },
+              }
+            : {
+                  id,
+                  name: title,
+                  original_name: title,
+                  first_air_date: date,
+                  external_ids: { imdb_id: invocation.imdbId || null },
+                  translations: { translations: [] },
+                  alternative_titles: { results: [] },
+              };
+    return {
+        status: 200,
+        url: url.toString(),
+        headers: { "content-type": "application/json; charset=utf-8" },
+        body: JSON.stringify(payload),
+    };
+}
+
+type DomApi = ReturnType<typeof loadCheerio>;
+type DomSelection = ReturnType<DomApi>;
+
+function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]>) {
+    let nextId = 1;
+    let domOperations = 0;
+    const chargeDomOperation = () => {
+        if (++domOperations > MAX_DOM_OPERATIONS) throw new Error("Provider exceeded the DOM operation limit.");
+    };
+    const documents = new Map<number, DomApi>();
+    const selections = new Map<number, DomSelection>();
+    const selectionOwners = new Map<number, DomApi>();
+    const saveSelection = (document: DomApi, selection: DomSelection): number => {
+        chargeDomOperation();
+        const id = nextId++;
+        selections.set(id, selection);
+        selectionOwners.set(id, document);
+        return id;
+    };
+    const getSelection = (id: number): DomSelection => {
+        const selection = selections.get(id);
+        if (!selection) throw new Error("Invalid provider DOM reference.");
+        return selection;
+    };
+    const getDocument = (id: number): DomApi => {
+        const document = documents.get(id);
+        if (!document) throw new Error("Invalid provider DOM document.");
+        return document;
+    };
+    const getOwner = (id: number): DomApi => {
+        const document = selectionOwners.get(id);
+        if (!document) throw new Error("Invalid provider DOM reference.");
+        return document;
+    };
+    const setFunction = (name: string, fn: ReturnType<typeof vm.newFunction>) => {
+        vm.setProp(vm.global, name, fn);
+        fn.dispose();
+    };
+
+    setFunction(
+        "__domLoad",
+        vm.newFunction("__domLoad", (html) => {
+            const source = vm.getString(html);
+            if (Buffer.byteLength(source, "utf8") > MAX_RESPONSE_BYTES)
+                throw new Error("Provider HTML exceeds 1.5 MB.");
+            if (documents.size >= MAX_DOM_DOCUMENTS) throw new Error("Provider exceeded the DOM document limit.");
+            chargeDomOperation();
+            const document = loadCheerio(source);
+            const id = nextId++;
+            documents.set(id, document);
+            return vm.newNumber(id);
+        })
+    );
+    setFunction(
+        "__domSelect",
+        vm.newFunction("__domSelect", (documentId, selector, contextId) => {
+            const document = getDocument(vm.getNumber(documentId));
+            const context = vm.getNumber(contextId);
+            const selection = context
+                ? document(vm.getString(selector), getSelection(context) as never)
+                : document(vm.getString(selector));
+            return vm.newNumber(saveSelection(document, selection));
+        })
+    );
+    setFunction(
+        "__domFind",
+        vm.newFunction("__domFind", (selectionId, selector) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).find(vm.getString(selector))));
+        })
+    );
+    setFunction(
+        "__domFirst",
+        vm.newFunction("__domFirst", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).first()));
+        })
+    );
+    setFunction(
+        "__domEq",
+        vm.newFunction("__domEq", (selectionId, index) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).eq(vm.getNumber(index))));
+        })
+    );
+    setFunction(
+        "__domText",
+        vm.newFunction("__domText", (selectionId) => {
+            chargeDomOperation();
+            return vm.newString(getSelection(vm.getNumber(selectionId)).text());
+        })
+    );
+    setFunction(
+        "__domHtml",
+        vm.newFunction("__domHtml", (selectionId) => {
+            chargeDomOperation();
+            const value = getSelection(vm.getNumber(selectionId)).html();
+            return value == null ? vm.null : vm.newString(value);
+        })
+    );
+    setFunction(
+        "__domAttr",
+        vm.newFunction("__domAttr", (selectionId, name) => {
+            chargeDomOperation();
+            const value = getSelection(vm.getNumber(selectionId)).attr(vm.getString(name) ?? "");
+            return value == null ? vm.null : vm.newString(value);
+        })
+    );
+    setFunction(
+        "__domNodes",
+        vm.newFunction("__domNodes", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            const document = getOwner(id);
+            const ids = getSelection(id)
+                .toArray()
+                .map((node) => saveSelection(document, document(node as never)));
+            return vm.newString(JSON.stringify(ids));
+        })
+    );
+
+    const moduleCode =
+        'class ProviderCheerioCollection {\n    constructor(ids, documentId) { this.ids = ids; this.documentId = documentId; }\n    get length() { return this.ids.length; }\n    find(selector) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFind(this.ids[0], String(selector))], this.documentId);\n    }\n    first() {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domFirst(this.ids[0])], this.documentId);\n    }\n    eq(index) {\n        if (!this.ids.length) return new ProviderCheerioCollection([], this.documentId);\n        return new ProviderCheerioCollection([__domEq(this.ids[0], Number(index))], this.documentId);\n    }\n    text() { return this.ids.length ? __domText(this.ids[0]) : ""; }\n    html() { return this.ids.length ? __domHtml(this.ids[0]) : null; }\n    attr(name) { return this.ids.length ? __domAttr(this.ids[0], String(name)) : undefined; }\n    toArray() { return this.ids.flatMap((id) => JSON.parse(__domNodes(id))); }\n    get(index) { return index === undefined ? this.toArray() : this.toArray()[index]; }\n    each(callback) { this.toArray().forEach((id, index) => callback.call(id, index, id)); return this; }\n    map(callback) { return this.toArray().map((id, index) => callback.call(id, index, id)); }\n}\nglobalThis.__cheerioModule = {\n    load(html) {\n        const documentId = __domLoad(String(html));\n        const select = (selector, context) => {\n            if (selector instanceof ProviderCheerioCollection) return selector;\n            if (typeof selector === "number") return new ProviderCheerioCollection([selector], documentId);\n            const contextId = context instanceof ProviderCheerioCollection ? (context.ids[0] || 0) : 0;\n            return new ProviderCheerioCollection([__domSelect(documentId, String(selector), contextId)], documentId);\n        };\n        return select;\n    }\n};\nglobalThis.__cryptoJsModule = {\n    lib: { CipherParams: { create(value) { return value; } } },\n    enc: {\n        Utf8: { parse(value) { return { utf8: String(value) }; } },\n        Hex: { parse(value) { return { hex: String(value) }; } },\n        Latin1: "Latin1"\n    },\n    mode: { CBC: "CBC" },\n    pad: { Pkcs7: "Pkcs7" },\n    AES: {\n        decrypt(params, key, options) {\n            const ciphertext = params && params.ciphertext && params.ciphertext.hex;\n            const keyText = key && key.utf8;\n            const ivText = options && options.iv && options.iv.utf8;\n            if (typeof ciphertext !== "string" || typeof keyText !== "string" || typeof ivText !== "string") {\n                throw new Error("Unsupported CryptoJS AES parameters.");\n            }\n            return { toString(encoder) {\n                if (encoder !== "Latin1") throw new Error("Only CryptoJS Latin1 output is supported.");\n                return __cryptoAesCbcDecrypt(ciphertext, keyText, ivText);\n            }};\n        }\n    }\n};';
+    const evaluated = vm.evalCode(moduleCode);
+    vm.unwrapResult(evaluated).dispose();
+
+    const aesDecrypt = vm.newFunction("__cryptoAesCbcDecrypt", (ciphertext, key, iv) => {
+        const hex = vm.getString(ciphertext);
+        if (!/^(?:[0-9a-f]{2})+$/i.test(hex)) throw new Error("Invalid AES ciphertext.");
+        const keyBytes = Buffer.from(vm.getString(key), "utf8");
+        const ivBytes = Buffer.from(vm.getString(iv), "utf8");
+        const encrypted = Buffer.from(hex, "hex");
+        if (
+            ![16, 24, 32].includes(keyBytes.length) ||
+            ivBytes.length !== 16 ||
+            !encrypted.length ||
+            encrypted.length % 16 !== 0
+        ) {
+            throw new Error("Invalid AES-CBC key, IV, or ciphertext length.");
+        }
+        const decipher = createDecipheriv("aes-" + keyBytes.length * 8 + "-cbc", keyBytes, ivBytes);
+        return vm.newString(Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("latin1"));
+    });
+    setFunction("__cryptoAesCbcDecrypt", aesDecrypt);
+
+    const requireFunction = vm.newFunction("require", (name) => {
+        const moduleName = vm.getString(name);
+        if (moduleName !== "cheerio" && moduleName !== "crypto-js") {
+            throw new Error('Provider module "' + moduleName + '" is not supported.');
+        }
+        return vm.getProp(vm.global, moduleName === "cheerio" ? "__cheerioModule" : "__cryptoJsModule");
+    });
+    setFunction("require", requireFunction);
 }
 
 /**
@@ -371,6 +592,14 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
     `);
     vm.unwrapResult(urlPolyfills).dispose();
 
+    installProviderCompatibility(vm);
+
+    // Nuvio's shared TMDB module interpolates this marker into the detail URL.
+    // The host intercepts that exact request and never forwards the marker.
+    const tmdbKey = vm.newString("debridui-local-media-metadata");
+    vm.setProp(vm.global, "TMDB_API_KEY", tmdbKey);
+    tmdbKey.dispose();
+
     const fetchFunction = vm.newFunction("fetch", (...args) => {
         if (++requestCount > MAX_REQUESTS) throw new Error("Provider exceeded the request limit.");
         let rawUrl: string;
@@ -394,7 +623,10 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
         const deferred = vm.newPromise();
         deferredPromises.push(deferred);
 
-        void safeProviderFetch(rawUrl, init, controller.signal)
+        const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(
+            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)
+        );
+        void requestPromise
             .then((response) => {
                 totalResponseBytes += Buffer.byteLength(response.body, "utf8");
                 if (totalResponseBytes > MAX_TOTAL_RESPONSE_BYTES) {
@@ -426,14 +658,18 @@ export async function executeNuvioProvider(source: string, invocation: ProviderI
 
     const code = `
         (async function () {
-            const module = { exports: {} };
-            const exports = module.exports;
-            ${source}
-            const provider = module.exports && (module.exports.default || module.exports);
-            if (!provider || typeof provider.getStreams !== "function") {
+            const __debriduiModule = { exports: {} };
+            const __debriduiLoadedModule = (function (module) {
+                var exports = module.exports;
+                ${source}
+                return module.exports;
+            })(__debriduiModule);
+            const __debriduiProvider =
+                __debriduiLoadedModule && (__debriduiLoadedModule.default || __debriduiLoadedModule);
+            if (!__debriduiProvider || typeof __debriduiProvider.getStreams !== "function") {
                 throw new Error("Provider must export getStreams().");
             }
-            return await provider.getStreams(${args.join(", ")});
+            return await __debriduiProvider.getStreams(${args.join(", ")});
         })()
     `;
 

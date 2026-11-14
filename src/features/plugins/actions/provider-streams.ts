@@ -18,7 +18,7 @@ export async function getRepositoryProviderStreams(
     const modules = await getEnabledRepositoryProviderSources(invocation.mediaType);
     const enabled = modules
         .filter((module): module is typeof module & { source: string } => Boolean(module.source))
-        .slice(0, 8);
+        .slice(0, 20);
     const sources: AddonSource[] = [];
 
     for (let index = 0; index < enabled.length; index += 4) {
