@@ -14,7 +14,9 @@ export async function getRepositoryProviderStreams(
 ): Promise<AddonSource[]> {
     const invocation = createProviderInvocation(media, type, tvParams);
     if (!invocation) {
-        console.warn("[repository-providers] Search skipped: media metadata is missing a valid TMDB ID or episode parameters.");
+        console.warn(
+            "[repository-providers] Search skipped: media metadata is missing a valid TMDB ID or episode parameters."
+        );
         return [];
     }
 
@@ -50,7 +52,10 @@ export async function getRepositoryProviderStreams(
                         rawResultType: Array.isArray(result) ? "array" : typeof result,
                         rawResultCount: Array.isArray(result)
                             ? result.length
-                            : result && typeof result === "object" && "streams" in result && Array.isArray(result.streams)
+                            : result &&
+                                typeof result === "object" &&
+                                "streams" in result &&
+                                Array.isArray(result.streams)
                               ? result.streams.length
                               : 0,
                         acceptedSources: parsed.length,
