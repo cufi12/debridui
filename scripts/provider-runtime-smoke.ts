@@ -157,15 +157,15 @@ for (const providerFile of ["flixitv.fixture", "serienstream.fixture", "aniworld
     console.log("German Nuvio provider module-load smoke test passed: " + providerFile);
 }
 
-
 let unsupportedModuleBlocked = false;
 try {
-    await executeNuvioProvider(
-        'var fs = require("fs"); module.exports = { getStreams: async () => [] };',
-        { tmdbId: 12345, mediaType: "movie" }
-    );
+    await executeNuvioProvider('var fs = require("fs"); module.exports = { getStreams: async () => [] };', {
+        tmdbId: 12345,
+        mediaType: "movie",
+    });
 } catch (error) {
-    unsupportedModuleBlocked = error instanceof Error && error.message.includes('Provider module "fs" is not supported.');
+    unsupportedModuleBlocked =
+        error instanceof Error && error.message.includes('Provider module "fs" is not supported.');
 }
 if (!unsupportedModuleBlocked) throw new Error("QuickJS unsupported CommonJS module restriction smoke test failed.");
 console.log("QuickJS unsupported CommonJS module restriction smoke test passed.");
