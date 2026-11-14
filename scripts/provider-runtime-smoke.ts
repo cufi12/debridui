@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { executeNuvioProvider } from "../src/lib/plugins/provider-runtime";
 import { sanitizeStreamHeaders } from "../src/lib/addons/parser";
+import { executeNuvioProvider } from "../src/lib/plugins/provider-runtime";
 
 const result = await executeNuvioProvider(
     `module.exports = {
