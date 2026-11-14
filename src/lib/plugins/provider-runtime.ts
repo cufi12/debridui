@@ -189,10 +189,7 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig
                                 : [[key.toLowerCase(), Array.isArray(value) ? value.join(", ") : String(value)]]
                         )
                     );
-                    const decodedBody = decodeResponseBody(
-                        Buffer.concat(chunks),
-                        responseHeaders["content-encoding"]
-                    );
+                    const decodedBody = decodeResponseBody(Buffer.concat(chunks), responseHeaders["content-encoding"]);
                     // Fetch exposes the decoded body, not the wire encoding metadata.
                     delete responseHeaders["content-encoding"];
                     delete responseHeaders["content-length"];
