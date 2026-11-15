@@ -22,6 +22,13 @@ android {
         versionName = (System.getenv('APP_VERSION_NAME') ?: '1.0.0').replaceFirst('^tv-v', '')
     }
 
+    // This wrapper is distributed as a sideloaded Android TV APK, not through Google Play.
+    // Keep the legacy target SDK until behavior changes can be tested on supported TV devices.
+    // Suppress only the Play-policy age warning; retain all other release lint checks.
+    lint {
+        disable 'ExpiredTargetSdkVersion'
+    }
+
     signingConfigs {
         release {
             if (hasReleaseSigning) {
