@@ -70,11 +70,10 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           APP_VERSION_NAME: ${{ github.ref_name }}
         run: |
+          gradle -p android :app:assembleRelease --no-daemon
           if [[ "$GITHUB_REF" == refs/tags/tv-v* ]]; then
-            gradle -p android :app:assembleRelease --no-daemon
             cp android/app/build/outputs/apk/release/app-release.apk DebridUI-TV.apk
           else
-            gradle -p android :app:assembleRelease --no-daemon
             cp android/app/build/outputs/apk/release/app-release-unsigned.apk DebridUI-TV-unsigned.apk
           fi
 
@@ -86,8 +85,27 @@ jobs:
           path: DebridUI-TV-unsigned.apk
           if-no-files-found: error
 
-      - name: Publish signed Android TV release
+      - name: Upload signed release candidate
         if: startsWith(github.ref, 'refs/tags/tv-v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: DebridUI-TV-release
+          path: DebridUI-TV.apk
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/tv-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download signed APK
+        uses: actions/download-artifact@v4
+        with:
+          name: DebridUI-TV-release
+
+      - name: Publish signed Android TV release
         uses: softprops/action-gh-release@v2
         with:
           name: DebridUI Android TV ${{ github.ref_name }}
