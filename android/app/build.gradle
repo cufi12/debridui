@@ -18,8 +18,8 @@ android {
         applicationId 'com.debridui.tv'
         minSdk 23
         targetSdk 28
-        versionCode (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
-        versionName (System.getenv('APP_VERSION_NAME') ?: '1.0.0').replaceFirst('^tv-v', '')
+        versionCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
+        versionName = (System.getenv('APP_VERSION_NAME') ?: '1.0.0').replaceFirst('^tv-v', '')
     }
 
     signingConfigs {
