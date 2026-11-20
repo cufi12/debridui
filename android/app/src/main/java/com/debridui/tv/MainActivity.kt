@@ -26,7 +26,10 @@ class MainActivity : Activity() {
           if (window.__debridTvNavigationInstalled) return;
           window.__debridTvNavigationInstalled = true;
 
-          var selector = 'a[href],button,input:not([type=hidden]),select,textarea,[role=button],[role=link],[tabindex]:not([tabindex="-1"]),[onclick]';
+          var selector = 'a[href],button,input:not([type=hidden]),select,textarea,[role=button],[role=link],[tabindex]:not([tabindex="-1"]),[onclick],[data-tv-focusable]';
+          var lastFocused = null;
+          var lastHorizontalMove = 0;
+          var scrollState = null;
 
           function candidates() {
             return Array.prototype.slice.call(document.querySelectorAll(selector)).filter(function (el) {
@@ -34,74 +37,125 @@ class MainActivity : Activity() {
               var s = window.getComputedStyle(el);
               return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' &&
                 s.display !== 'none' && s.opacity !== '0' && !el.disabled &&
-                el.getAttribute('aria-hidden') !== 'true';
+                el.getAttribute('aria-hidden') !== 'true' &&
+                !el.closest('[aria-hidden="true"],[inert]');
             });
+          }
+
+          function center(el) {
+            var r = el.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2, rect: r };
           }
 
           function focusElement(el) {
             if (!el) return;
+            lastFocused = el;
             try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
             el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
           }
 
-          window.__debridTvMoveFocus = function (direction) {
+          function directionalTarget(current, direction) {
             var items = candidates();
-            if (!items.length) return;
+            if (!items.length) return null;
+            if (!current || items.indexOf(current) < 0) return items[0];
 
-            var active = document.activeElement;
-            if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
-            var current = active && items.indexOf(active) >= 0 ? active :
-              (active && active.closest ? active.closest(selector) : null);
-
-            if (!current || items.indexOf(current) < 0) {
-              focusElement(items[0]);
-              return;
-            }
-
-            var a = current.getBoundingClientRect();
-            var ax = a.left + a.width / 2;
-            var ay = a.top + a.height / 2;
-            var best = null;
-            var bestScore = Infinity;
-
+            var a = center(current), best = null, bestScore = Infinity;
             items.forEach(function (el) {
               if (el === current) return;
-              var r = el.getBoundingClientRect();
-              var dx = (r.left + r.width / 2) - ax;
-              var dy = (r.top + r.height / 2) - ay;
-              var primary, secondary;
-
-              if (direction === 'left') { primary = -dx; secondary = Math.abs(dy); }
-              else if (direction === 'right') { primary = dx; secondary = Math.abs(dy); }
-              else if (direction === 'up') { primary = -dy; secondary = Math.abs(dx); }
-              else { primary = dy; secondary = Math.abs(dx); }
-
+              var b = center(el), dx = b.x - a.x, dy = b.y - a.y;
+              var primary = direction === 'left' ? -dx :
+                direction === 'right' ? dx : direction === 'up' ? -dy : dy;
               if (primary <= 2) return;
-              var score = primary + secondary * 2.2;
+
+              var horizontal = direction === 'left' || direction === 'right';
+              var overlap = horizontal
+                ? Math.min(a.rect.bottom, b.rect.bottom) - Math.max(a.rect.top, b.rect.top)
+                : Math.min(a.rect.right, b.rect.right) - Math.max(a.rect.left, b.rect.left);
+              var secondary = horizontal ? Math.abs(dy) : Math.abs(dx);
+              var overlapBonus = overlap > 0 ? Math.min(overlap, 80) * 0.45 : 0;
+              var score = primary + secondary * (overlap > 0 ? 0.65 : 2.4) - overlapBonus;
               if (score < bestScore) { bestScore = score; best = el; }
             });
+            return best;
+          }
 
+          window.__debridTvMoveFocus = function (direction, isRepeat) {
+            var active = document.activeElement;
+            if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) &&
+                !active.readOnly && !active.disabled) return;
+            var now = Date.now();
+            if (isRepeat && (direction === 'left' || direction === 'right')) {
+              if (now - lastHorizontalMove < 85) return;
+              lastHorizontalMove = now;
+            }
+            var current = active && active !== document.body && active !== document.documentElement
+              ? active : lastFocused;
+            var target = directionalTarget(current, direction);
+            if (target) focusElement(target);
+          };
+
+          function findScrollHost(el) {
+            var node = el;
+            while (node && node !== document.body && node !== document.documentElement) {
+              var s = window.getComputedStyle(node);
+              if (/(auto|scroll)/.test(s.overflowY) && node.scrollHeight > node.clientHeight + 8) return node;
+              node = node.parentElement;
+            }
+            return window;
+          }
+
+          window.__debridTvFastScroll = function (direction) {
+            var active = document.activeElement;
+            if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+            var anchor = active && active !== document.body ? active : lastFocused;
+            if (!anchor) return;
+            if (!scrollState) scrollState = { anchor: anchor, direction: direction, host: findScrollHost(anchor) };
+            var host = scrollState.host;
+            var amount = host === window ? Math.max(140, window.innerHeight * 0.48) : Math.max(120, host.clientHeight * 0.48);
+            var delta = direction === 'down' ? amount : -amount;
+            if (host === window) window.scrollBy({ top: delta, behavior: 'smooth' });
+            else host.scrollBy({ top: delta, behavior: 'smooth' });
+          };
+
+          window.__debridTvFinishScroll = function () {
+            if (!scrollState) return;
+            var state = scrollState;
+            scrollState = null;
+            var origin = center(state.anchor);
+            var sign = state.direction === 'down' ? 1 : -1;
+            var visible = candidates().filter(function (el) {
+              var r = el.getBoundingClientRect();
+              return r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
+            });
+            var best = null, score = Infinity;
+            visible.forEach(function (el) {
+              if (el === state.anchor) return;
+              var p = center(el), dy = (p.y - origin.y) * sign;
+              if (dy < -8) return;
+              var value = Math.max(0, dy) + Math.abs(p.x - origin.x) * 1.7;
+              if (value < score) { score = value; best = el; }
+            });
             if (best) focusElement(best);
           };
 
           window.__debridTvActivateFocus = function () {
             var active = document.activeElement;
             if (active && active !== document.body && active !== document.documentElement) {
-              if (/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) {
-                active.focus();
-              } else if (typeof active.click === 'function') {
-                active.click();
-              }
+              if (typeof active.click === 'function' && !/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) active.click();
               return;
             }
             var first = candidates()[0];
             if (first) { focusElement(first); if (typeof first.click === 'function') first.click(); }
           };
 
+          document.addEventListener('focusin', function (event) {
+            if (event.target && event.target.matches && event.target.matches(selector)) lastFocused = event.target;
+          }, true);
+
           var style = document.createElement('style');
           style.textContent = [
-            ':focus { outline: 3px solid #7c3aed !important; outline-offset: 3px !important; }',
-            'button,a,[role=button],[role=link],input,select,textarea,[tabindex] { scroll-margin: 110px !important; }',
+            ':focus { outline: 3px solid #8b5cf6 !important; outline-offset: 4px !important; border-radius: 8px; box-shadow: 0 0 0 2px rgba(139,92,246,.22) !important; }',
+            'a,button,[role=button],[role=link],input,select,textarea,[tabindex] { scroll-margin: 10vh 5vw !important; }',
             'html { scroll-behavior: smooth; }'
           ].join(' ');
           (document.head || document.documentElement).appendChild(style);
@@ -153,7 +207,7 @@ class MainActivity : Activity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN && ::webView.isInitialized) {
+        if (::webView.isInitialized) {
             val direction = when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> "left"
                 KeyEvent.KEYCODE_DPAD_RIGHT -> "right"
@@ -162,17 +216,27 @@ class MainActivity : Activity() {
                 else -> null
             }
 
-            if (direction != null) {
-                webView.evaluateJavascript(
-                    "window.__debridTvMoveFocus && window.__debridTvMoveFocus('$direction');",
-                    null
-                )
+            if (direction != null && event.action == KeyEvent.ACTION_UP) {
+                if (direction == "up" || direction == "down") {
+                    webView.evaluateJavascript("window.__debridTvFinishScroll && window.__debridTvFinishScroll();", null)
+                }
                 return true
             }
 
-            if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
-                event.keyCode == KeyEvent.KEYCODE_ENTER ||
-                event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+            if (direction != null && event.action == KeyEvent.ACTION_DOWN) {
+                if ((direction == "up" || direction == "down") && event.repeatCount > 0) {
+                    webView.evaluateJavascript("window.__debridTvFastScroll && window.__debridTvFastScroll('$direction');", null)
+                } else {
+                    val repeat = if (event.repeatCount > 0) "true" else "false"
+                    webView.evaluateJavascript("window.__debridTvMoveFocus && window.__debridTvMoveFocus('$direction', $repeat);", null)
+                }
+                return true
+            }
+
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                 event.keyCode == KeyEvent.KEYCODE_ENTER ||
+                 event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)
             ) {
                 webView.evaluateJavascript(
                     "window.__debridTvActivateFocus && window.__debridTvActivateFocus();",
