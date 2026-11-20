@@ -35,5 +35,8 @@ jobs:
       - name: Typecheck and lint
         run: bun run verify
 
+      - name: Test provider IPv4 SSRF protections
+        run: bun scripts/provider-ipv4-ssrf-test.ts
+
       - name: Smoke-test QuickJS provider runtime
         run: bun scripts/provider-runtime-smoke.ts
