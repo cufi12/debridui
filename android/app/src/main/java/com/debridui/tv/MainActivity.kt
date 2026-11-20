@@ -16,6 +16,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 
+// TV wrapper with directional-key focus navigation for Android TV remotes.
 class MainActivity : Activity() {
     private lateinit var webView: WebView
     private val appUrl = "https://debridui.onrender.com"
