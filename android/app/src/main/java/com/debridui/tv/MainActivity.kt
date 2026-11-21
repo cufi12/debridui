@@ -23,6 +23,15 @@ class MainActivity : Activity() {
 
     private val tvNavigationScript = """
         (function () {
+          // Keep the desktop navigation expanded on TV and remove the phone tab bar.
+          try {
+            if (sessionStorage.getItem('__debridTvBootstrapped') !== '1') {
+              localStorage.setItem('sidebar_state', 'true');
+              sessionStorage.setItem('__debridTvBootstrapped', '1');
+              window.location.reload();
+              return;
+            }
+          } catch (_) {}
           if (window.__debridTvNavigationInstalled) return;
           window.__debridTvNavigationInstalled = true;
 
@@ -154,9 +163,14 @@ class MainActivity : Activity() {
 
           var style = document.createElement('style');
           style.textContent = [
-            ':focus { outline: 3px solid #8b5cf6 !important; outline-offset: 4px !important; border-radius: 8px; box-shadow: 0 0 0 2px rgba(139,92,246,.22) !important; }',
-            'a,button,[role=button],[role=link],input,select,textarea,[tabindex] { scroll-margin: 10vh 5vw !important; }',
-            'html { scroll-behavior: smooth; }'
+            'html { scroll-behavior: smooth !important; }',
+            'body { overscroll-behavior: none; }',
+            'nav[aria-label="Primary"] { display: none !important; }',
+            '[data-slot="sidebar"] .group\\/menu-button, [data-slot="sidebar"] a, [data-slot="sidebar"] button { min-height: 48px !important; }',
+            ':focus-visible, :focus { outline: 3px solid #a78bfa !important; outline-offset: 4px !important; border-radius: 8px !important; box-shadow: 0 0 0 3px rgba(167,139,250,.28), 0 0 18px rgba(139,92,246,.38) !important; }',
+            'a,button,[role=button],[role=link],input,select,textarea,[tabindex] { scroll-margin: 12vh 6vw !important; }',
+            'button,a,[role=button],[role=link] { -webkit-tap-highlight-color: transparent; }',
+            '::-webkit-scrollbar { width: 0 !important; height: 0 !important; }'
           ].join(' ');
           (document.head || document.documentElement).appendChild(style);
 
@@ -171,6 +185,30 @@ class MainActivity : Activity() {
           logoImage.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(logoSvg);
           logoWrap.appendChild(logoImage);
           document.documentElement.appendChild(logoWrap);
+
+          // Restore a useful starting focus after route changes and dynamic page renders.
+          function focusFirstAvailable() {
+            if (document.activeElement && document.activeElement !== document.body &&
+                document.activeElement !== document.documentElement &&
+                document.activeElement.matches && document.activeElement.matches(selector)) return;
+            var items = candidates();
+            if (!items.length) return;
+            var preferred = items.find(function (el) {
+              return el.closest('[data-slot="sidebar"]') && el.getAttribute('aria-current') === 'page';
+            }) || items.find(function (el) {
+              return el.closest('main') || el.closest('[data-slot="sidebar"]');
+            }) || items[0];
+            focusElement(preferred);
+          }
+          window.__debridTvFocusFirst = focusFirstAvailable;
+          window.addEventListener('load', function () { setTimeout(focusFirstAvailable, 450); });
+          var routeObserver = new MutationObserver(function () {
+            if (!lastFocused || !document.documentElement.contains(lastFocused)) {
+              setTimeout(focusFirstAvailable, 120);
+            }
+          });
+          routeObserver.observe(document.body, { childList: true, subtree: true });
+          setTimeout(focusFirstAvailable, 700);
         })();
     """.trimIndent()
 
