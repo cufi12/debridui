@@ -79,7 +79,8 @@ export default function DeviceApprovalPage() {
                     </p>
                 </div>
                 <p className="mt-4 text-sm text-muted-foreground">
-                    Bestätige nur, wenn derselbe Code gerade auf deinem eigenen Fernseher angezeigt wird. Teile diesen Code niemals mit anderen.
+                    Bestätige nur, wenn derselbe Code gerade auf deinem eigenen Fernseher angezeigt wird. Teile diesen
+                    Code niemals mit anderen.
                 </p>
                 {error && (
                     <p role="alert" className="mt-3 text-sm text-destructive">
@@ -91,24 +92,18 @@ export default function DeviceApprovalPage() {
                         type="button"
                         disabled={busy || !recognized || !request}
                         onClick={() => decide("deny")}
-                        className="rounded-md border px-4 py-3 font-medium disabled:opacity-50"
-                    >
+                        className="rounded-md border px-4 py-3 font-medium disabled:opacity-50">
                         Ablehnen
                     </button>
                     <button
                         type="button"
                         disabled={busy || !recognized || !request}
                         onClick={() => decide("approve")}
-                        className="rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50"
-                    >
+                        className="rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">
                         {busy ? "Bitte warten …" : "Bestätigen"}
                     </button>
                 </div>
-                {!request && (
-                    <p className="mt-3 text-center text-xs text-muted-foreground">
-                        Prüfe den Gerätecode …
-                    </p>
-                )}
+                {!request && <p className="mt-3 text-center text-xs text-muted-foreground">Prüfe den Gerätecode …</p>}
             </div>
         </main>
     );
