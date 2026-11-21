@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, type FormEvent, useState } from "react";
+import { type FormEvent, Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 function DeviceAuthorizationContent() {
