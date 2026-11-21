@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export default function DeviceAuthorizationPage() {
@@ -17,7 +16,10 @@ export default function DeviceAuthorizationPage() {
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError(null);
-        const code = userCode.trim().replace(/[^a-z0-9]/gi, "").toUpperCase();
+        const code = userCode
+            .trim()
+            .replace(/[^a-z0-9]/gi, "")
+            .toUpperCase();
         if (!code) {
             setError("Bitte gib den Code vom Fernseher ein.");
             return;
@@ -48,7 +50,9 @@ export default function DeviceAuthorizationPage() {
                     Gib den kurzen Code ein, der auf deinem DebridUI-Fernseher angezeigt wird.
                 </p>
                 <form onSubmit={submit} className="mt-6 space-y-4">
-                    <label htmlFor="device-code" className="block text-sm font-medium">Gerätecode</label>
+                    <label htmlFor="device-code" className="block text-sm font-medium">
+                        Gerätecode
+                    </label>
                     <input
                         id="device-code"
                         autoComplete="one-time-code"
@@ -59,13 +63,24 @@ export default function DeviceAuthorizationPage() {
                         placeholder="ABCD1234"
                         className="w-full rounded-md border bg-background px-4 py-3 text-center text-2xl font-semibold tracking-[0.2em]"
                     />
-                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                    <button disabled={busy || isPending} className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">
+                    {error && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {error}
+                        </p>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={busy || isPending}
+                        className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50"
+                    >
                         {isPending ? "Lade …" : busy ? "Prüfe Code …" : "Weiter"}
                     </button>
                 </form>
                 <p className="mt-5 text-xs text-muted-foreground">
-                    Gib nur einen Code ein, den du gerade selbst auf deinem Fernseher siehst. <Link href="/" className="underline">Zurück zu DebridUI</Link>
+                    Gib nur einen Code ein, den du gerade selbst auf deinem Fernseher siehst.{" "}
+                    <Link href="/" className="underline">
+                        Zurück zu DebridUI
+                    </Link>
                 </p>
             </div>
         </main>
