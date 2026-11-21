@@ -743,76 +743,89 @@
   "comparisonToPreviousRecordedAttempt": {
     "previousArtifact": "attempts/2026-11-14-incomplete.json",
     "previousUpstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
-    "previousManifestBlobSha1": "2f59428a830ef992e983deb19c393418a72686fe",
-    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
     "manifestBlobUnchanged": true,
-    "manifestSha256RecordedValueMismatch": true,
-    "manifestSha256MismatchNote": "The prior attempt's recorded SHA-256 differs from the recomputed current value, while the manifest Git blob SHA is identical. The manifest file itself is therefore unchanged; the earlier SHA-256 field is treated as a stale/inconsistent record.",
+    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
+    "currentManifestSha256": "b57afeffb965da6129d937625de59ddfe94fd509a6ad91c31cc7a97bc0a54287",
+    "previousManifestSha256RecordMismatch": true,
+    "manifestNote": "Manifest Git blob SHA is identical. The previous attempt's recorded SHA-256 does not match the current independently self-tested UTF-8 SHA-256 and is treated as a bad historical hash record, not a file change.",
     "addedProviders": [],
     "removedProviders": [],
-    "changedProviderFiles": [
+    "changedProviderFilesByBlobSha": [],
+    "changedProviderFilesBySha256": [],
+    "providerSha256RecordMismatches": [
       {
         "id": "tele5",
         "path": "providers/tele5.js",
-        "old": "c48a95154b5be6a67a2b9c449abdae31fa8a4139ade4d352f60f7b1b5fdcd2da",
-        "new": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a"
+        "oldRecordedSha256": "c48a95154b5be6a67a2b9c449abdae31fa8a4139ade4d352f60f7b1b5fdcd2da",
+        "recomputedSha256": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a",
+        "blobShaUnchanged": true
       },
       {
         "id": "tlc",
         "path": "providers/tlc.js",
-        "old": "8346e9369910151394282b8bbe74550d2ab720d8191223ee11ab1b70fe98388e",
-        "new": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19"
+        "oldRecordedSha256": "8346e9369910151394282b8bbe74550d2ab720d8191223ee11ab1b70fe98388e",
+        "recomputedSha256": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19",
+        "blobShaUnchanged": true
       },
       {
         "id": "southpark",
         "path": "providers/southpark.js",
-        "old": "6905b963e2775d2d86d00cadbe9d833818ee5a2e1d774779dfc4774646ed3660",
-        "new": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc"
+        "oldRecordedSha256": "6905b963e2775d2d86d00cadbe9d833818ee5a2e1d774779dfc4774646ed3660",
+        "recomputedSha256": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc",
+        "blobShaUnchanged": true
       },
       {
         "id": "moflix",
         "path": "providers/moflix.js",
-        "old": "09d06a7fdeed184fbc4e8d21b92507293c47469ca12962a5e3deee10e7482134",
-        "new": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c"
+        "oldRecordedSha256": "09d06a7fdeed184fbc4e8d21b92507293c47469ca12962a5e3deee10e7482134",
+        "recomputedSha256": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c",
+        "blobShaUnchanged": true
       },
       {
         "id": "huhuto",
         "path": "providers/huhuto.js",
-        "old": "5d5f078248dcfddccbc8fcc254944e477c823b812904712830540f4bca3970d6",
-        "new": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352"
+        "oldRecordedSha256": "5d5f078248dcfddccbc8fcc254944e477c823b812904712830540f4bca3970d6",
+        "recomputedSha256": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352",
+        "blobShaUnchanged": true
       },
       {
         "id": "filmpalast",
         "path": "providers/filmpalast.js",
-        "old": "00aa1328b9aa41dc7f37d28376fd3d40df6e6506da1dc6917b0cc990af77a3b0",
-        "new": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e"
+        "oldRecordedSha256": "00aa1328b9aa41dc7f37d28376fd3d40df6e6506da1dc6917b0cc990af77a3b0",
+        "recomputedSha256": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e",
+        "blobShaUnchanged": true
       },
       {
         "id": "megakino",
         "path": "providers/megakino.js",
-        "old": "80980f55038919b0e8dcd7efeb2d63aef22ee64d20b2301e6d7108fa3b9ddfc8",
-        "new": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad"
+        "oldRecordedSha256": "80980f55038919b0e8dcd7efeb2d63aef22ee64d20b2301e6d7108fa3b9ddfc8",
+        "recomputedSha256": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad",
+        "blobShaUnchanged": true
       },
       {
         "id": "hdfilme",
         "path": "providers/hdfilme.js",
-        "old": "090c2063750c7b19760878ed266bce3b7de88f71caf37215f4ff8853f4bb50e4",
-        "new": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d"
+        "oldRecordedSha256": "090c2063750c7b19760878ed266bce3b7de88f71caf37215f4ff8853f4bb50e4",
+        "recomputedSha256": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d",
+        "blobShaUnchanged": true
       },
       {
         "id": "kinoking",
         "path": "providers/kinoking.js",
-        "old": "551235a1cbc6b31c084aef7ff8e2bbc7b719fdefb9ef8d9536b35d4c40764c93",
-        "new": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3"
+        "oldRecordedSha256": "551235a1cbc6b31c084aef7ff8e2bbc7b719fdefb9ef8d9536b35d4c40764c93",
+        "recomputedSha256": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3",
+        "blobShaUnchanged": true
       },
       {
         "id": "kellerkino",
         "path": "providers/kellerkino.js",
-        "old": "762778e161148528dd3e072a3ced516dbef5a23ac22e4b33d26a25a81343795d",
-        "new": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d"
+        "oldRecordedSha256": "762778e161148528dd3e072a3ced516dbef5a23ac22e4b33d26a25a81343795d",
+        "recomputedSha256": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d",
+        "blobShaUnchanged": true
       }
     ],
-    "hostChanges": []
+    "hostChanges": [],
+    "conclusion": "No upstream provider or host changes detected."
   },
   "hostnameInventory": {
     "primaryProviderHosts": [
@@ -1076,6 +1089,49 @@
       "path": "src/features/plugins/actions/repositories.ts",
       "blobSha1": "731fef8562303b2bef3dc264dba9a626c9079161",
       "bytes": 20702
+    },
+    "securityReview": {
+      "baselineCommit": "8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0",
+      "currentMainCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+      "positiveChanges": [
+        "Added blocking for reserved IPv4 range 192.88.99.0/24.",
+        "Added bounded gzip/deflate/br decoding with a 1.5 MB decompressed-response cap.",
+        "Verify workflow now uses contents:read and frozen lockfile installation; it no longer auto-commits fixes."
+      ],
+      "safetyRegressions": [
+        "Provider redirect hop cap increased from 3 to 5.",
+        "Enabled provider modules per search increased from 20 to 32.",
+        "New provider-file status checks can scan up to 32 providers."
+      ],
+      "unchangedControls": [
+        "DNS resolution and public IPv4 pinning",
+        "Private/reserved IP rejection",
+        "HTTP(S), standard-port and redirect revalidation checks",
+        "Sensitive header stripping on cross-origin redirects",
+        "QuickJS isolation",
+        "24 requests per provider",
+        "1.5 MB per response and 6 MB aggregate response limit",
+        "10 second HTTP request timeout and 28 second provider execution timeout",
+        "16 MB QuickJS memory and 512 KB stack limits"
+      ],
+      "repositoryAdapterReview": {
+        "providerAdapterFile": "src/lib/plugins/provider-adapter.ts",
+        "unchangedFromBaseline": true,
+        "repositoryActionsFile": "src/features/plugins/actions/repositories.ts",
+        "newProviderFileStatusCheck": "same-origin and repository-folder path checks; redirect:error; 500 KB file cap; 12 second timeout; batches of four; cap reduced to 20 in PR #24"
+      },
+      "proposedCorrectionPullRequest": "https://github.com/cufi12/debridui/pull/24"
+    },
+    "ci": {
+      "mainRunId": 44879056046,
+      "mainRunUrl": "https://github.com/cufi12/debridui/actions/runs/44879056046",
+      "conclusion": "failure",
+      "failedStep": "Typecheck and lint",
+      "detail": "TypeScript completed; Biome check failed with one error, one warning and 22 informational diagnostics. Diagnostic output was truncated; IPv4 SSRF and QuickJS runtime smoke steps were skipped.",
+      "prNumber": 24,
+      "prUrl": "https://github.com/cufi12/debridui/pull/24",
+      "prHeadSha": "ff53e0fc18ee585b05e6169509a8c96594b700d1",
+      "prChecks": "pending_or_not_yet_verified"
     }
   },
   "safety": {
