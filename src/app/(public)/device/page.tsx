@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export default function DeviceAuthorizationPage() {
+function DeviceAuthorizationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session, isPending } = authClient.useSession();
@@ -83,5 +83,18 @@ export default function DeviceAuthorizationPage() {
                 </p>
             </div>
         </main>
+    );
+}
+
+export default function DeviceAuthorizationPage() {
+    return (
+        <Suspense
+            fallback={
+                <main className="flex min-h-svh items-center justify-center p-6 text-muted-foreground">
+                    Lade Geräteanmeldung …
+                </main>
+            }>
+            <DeviceAuthorizationContent />
+        </Suspense>
     );
 }
