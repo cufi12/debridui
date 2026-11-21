@@ -25,7 +25,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAddonSources } from "@/features/addons/hooks/use-addons";
 import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
 import { type StreamingRequest, useStreamingStore } from "@/features/media/stores/streaming";
-import { selectBestSource } from "@/features/media/utils/source-selector";
 import { getRepositoryProviderStreams } from "@/features/plugins/actions/provider-streams";
 import { getEnabledRepositoryProviders } from "@/features/plugins/actions/repositories";
 import { getSourceQualityIndex } from "@/lib/addons/parser";
@@ -240,8 +239,6 @@ export function QuickPlaySkeleton() {
 export function SimpleSources({ sources, request }: { sources: AddonSource[]; request: StreamingRequest }) {
     const [pickedTier, setPickedTier] = useState<Tier | null>(null);
     const [pickedKey, setPickedKey] = useState<string | null>(null);
-    const streamingSettings = useSettingsStore((s) => s.settings.streaming);
-
     const pinned = useRef<AddonSource | null>(null);
     const best = useMemo(() => {
         const playable = sources.filter((source) => source.url || source.magnet);
