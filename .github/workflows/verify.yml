@@ -11,10 +11,11 @@ on:
     branches: [main, staging]
   workflow_dispatch:
 
-# Verification must never need to write back to the repository. In particular,
-# code from a pull request must not receive a token capable of pushing commits.
+# Verification needs to publish the required "verify" commit status after all
+# checks pass. It still cannot push commits or modify repository contents.
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   verify:
@@ -40,3 +41,23 @@ jobs:
 
       - name: Smoke-test QuickJS provider runtime
         run: bun scripts/provider-runtime-smoke.ts
+
+      # The repository ruleset currently expects a classic commit status named
+      # "verify". Publish it only after every verification step has succeeded.
+      - name: Publish required verify commit status
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.eventName === "pull_request"
+              ? context.payload.pull_request.head.sha
+              : context.sha;
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: "success",
+              context: "verify",
+              description: "All verification steps passed."
+            });

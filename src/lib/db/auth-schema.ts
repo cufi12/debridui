@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -71,6 +71,23 @@ export const verification = pgTable(
             .notNull(),
     },
     (table) => [index("verification_identifier_idx").on(table.identifier)]
+);
+
+export const deviceCode = pgTable(
+    "device_code",
+    {
+        id: text("id").primaryKey(),
+        deviceCode: text("device_code").notNull().unique(),
+        userCode: text("user_code").notNull().unique(),
+        userId: uuid("user_id").references(() => user.id, { onDelete: "cascade" }),
+        clientId: text("client_id"),
+        scope: text("scope"),
+        status: text("status").notNull(),
+        expiresAt: timestamp("expires_at").notNull(),
+        lastPolledAt: timestamp("last_polled_at"),
+        pollingInterval: integer("polling_interval"),
+    },
+    (table) => [index("device_code_userId_idx").on(table.userId)]
 );
 
 export const userRelations = relations(user, ({ many }) => ({

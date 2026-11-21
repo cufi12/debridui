@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { GoogleSignInButton } from "@/features/auth/components/google-signin-button";
+import { TvDeviceLogin } from "@/features/auth/components/tv-device-login";
 import { authClient } from "@/lib/auth-client";
 import { GOOGLE_CLIENT_ID } from "@/lib/constants";
 
@@ -146,6 +147,7 @@ export default function LoginForm() {
                         </div>
                     </form>
                 </Form>
+                {searchParams.get("tv") === "1" && <TvDeviceLogin />}
             </div>
         </div>
     );

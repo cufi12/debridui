@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { deviceAuthorization } from "better-auth/plugins";
 import { v7 as uuidv7 } from "uuid";
 import { db } from "@/lib/db/drizzle";
 
@@ -47,5 +48,11 @@ export const auth = betterAuth({
         },
         cookiePrefix: "debridui",
     },
-    plugins: [nextCookies()],
+    plugins: [
+        nextCookies(),
+        deviceAuthorization({
+            verificationUri: "/device",
+            validateClient: (clientId) => clientId === "debridui-tv",
+        }),
+    ],
 });
