@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export default function DeviceAuthorizationPage() {
@@ -71,8 +71,7 @@ export default function DeviceAuthorizationPage() {
                     <button
                         type="submit"
                         disabled={busy || isPending}
-                        className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50"
-                    >
+                        className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">
                         {isPending ? "Lade …" : busy ? "Prüfe Code …" : "Weiter"}
                     </button>
                 </form>
