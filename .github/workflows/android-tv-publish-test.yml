@@ -1,0 +1,85 @@
+name: Publish signed Android TV test APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ""
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Prepare and verify signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Missing required repository secret: $secret_name"
+              exit 1
+            fi
+          done
+          KEYSTORE_PATH="$RUNNER_TEMP/debridui-release.keystore"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          keytool -certreq -alias "$ANDROID_KEY_ALIAS" -keystore "$KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" \
+            -file "$RUNNER_TEMP/signing-key-validation.csr" >/dev/null
+          rm -f "$RUNNER_TEMP/signing-key-validation.csr"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          APP_VERSION_NAME: "1.0.0-test"
+        run: |
+          set -euo pipefail
+          gradle -p android :app:assembleRelease --no-daemon
+          cp android/app/build/outputs/apk/release/app-release.apk DebridUI-TV-signed-test.apk
+          jarsigner -verify -verbose -certs DebridUI-TV-signed-test.apk
+
+      - name: Publish APK as a GitHub test release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: tv-test-${{ github.run_number }}
+          name: DebridUI Android TV Test ${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: DebridUI-TV-signed-test.apk
+          body: |
+            Signierter Android-TV-Testbuild.
+            Dies ist eine Testversion, keine stabile Veröffentlichung.
