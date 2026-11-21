@@ -1,0 +1,1210 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "nuvio-german-providers-source-baseline",
+  "snapshotScope": "upstream-github-source",
+  "status": "complete-source-snapshot",
+  "complete": true,
+  "baselineEligibleForSource": true,
+  "baselineEligibleForPublishedManifest": false,
+  "recordedAt": "2026-11-21T10:33:54+01:00",
+  "publishedManifest": {
+    "url": "https://invalidpandaa.github.io/nuvio-german-providers/manifest.json",
+    "retrievalStatus": "unavailable",
+    "deploymentVerified": false,
+    "reason": "GitHub Pages manifest URL failed DNS resolution; deployed manifest and deployed provider bytes are unverified."
+  },
+  "upstreamSource": {
+    "repository": "InvalidPandaa/nuvio-german-providers",
+    "repositoryUrl": "https://github.com/InvalidPandaa/nuvio-german-providers",
+    "ref": "main",
+    "commit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
+    "commitDate": "2026-10-04T19:46:22Z",
+    "commitMessage": "Keep slow sites from holding up the stream list; version 1.0.5",
+    "manifestPath": "manifest.json",
+    "manifestBlobSha1": "2f59428a830ef992e983deb19c393418a72686fe",
+    "manifestSha256": "b57afeffb965da6129d937625de59ddfe94fd509a6ad91c31cc7a97bc0a54287",
+    "manifestVersion": "1.0.5",
+    "manifestContent": {
+      "name": "German Providers",
+      "version": "1.0.5",
+      "description": "Deutsche Quellen für Nuvio – portiert von Bnyro/GermanProviders (CloudStream)",
+      "author": "InvalidPandaa",
+      "scrapers": [
+        {
+          "id": "netzkino",
+          "name": "Netzkino",
+          "description": "Kostenlose Filme von Netzkino.de",
+          "version": "1.0.5",
+          "filename": "providers/netzkino.js",
+          "supportedTypes": [
+            "movie"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=netzkino.de&sz=128"
+        },
+        {
+          "id": "ard",
+          "name": "ARD Mediathek",
+          "description": "Filme und Serien aus der ARD Mediathek – kostenlos, direkte HLS/MP4-Streams. FSK16+-Inhalte nur 22–6 Uhr.",
+          "version": "1.0.5",
+          "filename": "providers/ard.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=ardmediathek.de&sz=128"
+        },
+        {
+          "id": "plutotv",
+          "name": "PlutoTV",
+          "description": "Kostenlose Filme und Serien auf Abruf von Pluto TV (deutsche Region)",
+          "version": "1.0.5",
+          "filename": "providers/plutotv.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=pluto.tv&sz=128"
+        },
+        {
+          "id": "arte",
+          "name": "Arte",
+          "description": "Filme und Serien aus der ARTE-Mediathek (deutsche Fassung, weitere Sprachversionen wie OmU gekennzeichnet)",
+          "version": "1.0.5",
+          "filename": "providers/arte.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=arte.tv&sz=128"
+        },
+        {
+          "id": "filmfrei24",
+          "name": "FilmFrei24",
+          "description": "Kostenlose Filme und Serien auf Deutsch von FilmFrei24 (direkte HLS/MP4-Streams)",
+          "version": "1.0.5",
+          "filename": "providers/filmfrei24.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=filmfrei24.com&sz=128"
+        },
+        {
+          "id": "filmo",
+          "name": "Filmo",
+          "description": "Filme auf Deutsch von Filmo.to (VOE und weitere Hoster)",
+          "version": "1.0.5",
+          "filename": "providers/filmo.js",
+          "supportedTypes": [
+            "movie"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=filmo.to&sz=128"
+        },
+        {
+          "id": "flixitv",
+          "name": "FlixiTV",
+          "description": "Klassische Filme und Serien auf Deutsch von FlixiTV (direkte MP4-Streams)",
+          "version": "1.0.5",
+          "filename": "providers/flixitv.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=flixitv-stream.eu&sz=128"
+        },
+        {
+          "id": "serienstream",
+          "name": "Serienstream",
+          "description": "Serien auf Deutsch und im Original von SerienStream (s.to)",
+          "version": "1.0.5",
+          "filename": "providers/serienstream.js",
+          "supportedTypes": [
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=serienstream.to&sz=128"
+        },
+        {
+          "id": "aniworld",
+          "name": "Aniworld",
+          "description": "Anime-Serien und -Filme auf Deutsch, mit deutschen oder englischen Untertiteln von AniWorld",
+          "version": "1.0.5",
+          "filename": "providers/aniworld.js",
+          "supportedTypes": [
+            "tv",
+            "movie"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=aniworld.to&sz=128"
+        },
+        {
+          "id": "dmax",
+          "name": "DMAX",
+          "description": "Doku-Serien aus der DMAX Mediathek – kostenlos, HLS ohne DRM",
+          "version": "1.0.5",
+          "filename": "providers/dmax.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=dmax.de&sz=128"
+        },
+        {
+          "id": "tele5",
+          "name": "TELE 5",
+          "description": "Filme und Serien aus der TELE 5 Mediathek – kostenlos, HLS ohne DRM",
+          "version": "1.0.5",
+          "filename": "providers/tele5.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=tele5.de&sz=128"
+        },
+        {
+          "id": "tlc",
+          "name": "TLC",
+          "description": "Reality- und Doku-Serien aus der TLC Mediathek – kostenlos, HLS ohne DRM",
+          "version": "1.0.5",
+          "filename": "providers/tlc.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=tlc.de&sz=128"
+        },
+        {
+          "id": "southpark",
+          "name": "South Park",
+          "description": "Alle frei verfügbaren South-Park-Folgen von southpark.de – Deutsch und Englisch",
+          "version": "1.0.5",
+          "filename": "providers/southpark.js",
+          "supportedTypes": [
+            "tv"
+          ],
+          "contentLanguage": [
+            "de",
+            "en"
+          ],
+          "formats": [
+            "m3u8"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=southpark.de&sz=128"
+        },
+        {
+          "id": "moflix",
+          "name": "Moflix",
+          "description": "Filme & Serien von moflix-stream.xyz (Deutsch, eigene HLS-Streams + Hoster)",
+          "version": "1.0.5",
+          "filename": "providers/moflix.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=moflix-stream.xyz&sz=128"
+        },
+        {
+          "id": "huhuto",
+          "name": "Huhu",
+          "description": "Filme & Serien von huhu.to (Deutsch und weitere Sprachen, VOE u. a.)",
+          "version": "1.0.5",
+          "filename": "providers/huhuto.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=huhu.to&sz=128"
+        },
+        {
+          "id": "filmpalast",
+          "name": "FilmPalast",
+          "description": "Filme und Serien von Filmpalast.to (VOE, FireStream, Vidara, VidSonic)",
+          "version": "1.0.5",
+          "filename": "providers/filmpalast.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=filmpalast.to&sz=128"
+        },
+        {
+          "id": "megakino",
+          "name": "Megakino",
+          "description": "Filme und Serien von Megakino (Domain wird automatisch ermittelt)",
+          "version": "1.0.5",
+          "filename": "providers/megakino.js",
+          "supportedTypes": [
+            "movie",
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=megakino21.com&sz=128"
+        },
+        {
+          "id": "hdfilme",
+          "name": "HDFilme",
+          "description": "Filme von HDFilme (über meinecloud.click, IMDb-basiert)",
+          "version": "1.0.5",
+          "filename": "providers/hdfilme.js",
+          "supportedTypes": [
+            "movie"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=hdfilme.cafe&sz=128"
+        },
+        {
+          "id": "kinoking",
+          "name": "KinoKing",
+          "description": "Serien auf Deutsch von KinoKing (VOE, Vidara, VidSonic u. a.)",
+          "version": "1.0.5",
+          "filename": "providers/kinoking.js",
+          "supportedTypes": [
+            "tv"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=kinoking.cc&sz=128"
+        },
+        {
+          "id": "kellerkino",
+          "name": "KellerKino",
+          "description": "Filme auf Deutsch von KellerKino",
+          "version": "1.0.5",
+          "filename": "providers/kellerkino.js",
+          "supportedTypes": [
+            "movie"
+          ],
+          "contentLanguage": [
+            "de"
+          ],
+          "formats": [
+            "m3u8",
+            "mp4"
+          ],
+          "logo": "https://www.google.com/s2/favicons?domain=kellerkino.com&sz=128"
+        }
+      ]
+    },
+    "providerFilesRetrieved": 20,
+    "providerFilesExpected": 20,
+    "providers": [
+      {
+        "id": "netzkino",
+        "path": "providers/netzkino.js",
+        "version": "1.0.5",
+        "blobSha1": "7ae224c5b9105363abe9534ad2c25ebd720eeb57",
+        "sha256": "5a795264f3e6c24d75cdfd39d6d8ee1501e14ef970bda716ceb633222ea4a53b",
+        "bytes": 7182,
+        "hosts": [
+          "api.netzkino.de.simplecache.net",
+          "api.themoviedb.org",
+          "pmd.netzkino-seite.netzkino.de",
+          "www.netzkino.de"
+        ],
+        "urlPatterns": [
+          "api.netzkino.de.simplecache.net/capi-2.0a",
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "pmd.netzkino-seite.netzkino.de/${slug}.mp4",
+          "www.netzkino.de"
+        ]
+      },
+      {
+        "id": "ard",
+        "path": "providers/ard.js",
+        "version": "1.0.5",
+        "blobSha1": "59f08d998d538d3cee6f033c65927a750b9616d4",
+        "sha256": "192ba5178e172c3cbfe9a94a6a92879015b3ffc603926f3039a107c97dc47df0",
+        "bytes": 11288,
+        "hosts": [
+          "api.ardmediathek.de",
+          "api.themoviedb.org"
+        ],
+        "urlPatterns": [
+          "api.ardmediathek.de",
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "api.themoviedb.org/3/tv/${tmdbId}/season/${season}/episode/${episode}"
+        ]
+      },
+      {
+        "id": "plutotv",
+        "path": "providers/plutotv.js",
+        "version": "1.0.5",
+        "blobSha1": "2417bef549a48d1c6c3532482436396a84fc3ca7",
+        "sha256": "38f425ac80a1f67f992a093f9ee427773ddd64b005ac2dbc074893dfe3d8f04f",
+        "bytes": 7945,
+        "hosts": [
+          "api.themoviedb.org",
+          "boot.pluto.tv"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "boot.pluto.tv/v4/start"
+        ]
+      },
+      {
+        "id": "arte",
+        "path": "providers/arte.js",
+        "version": "1.0.5",
+        "blobSha1": "e403ccc0a3f096e65d754da720371ba181fccc87",
+        "sha256": "6c152ffae36a4fb7b95bd937594986211c4bfd24e1378626f83bd215d2db2fce",
+        "bytes": 8851,
+        "hosts": [
+          "api.arte.tv",
+          "api.themoviedb.org"
+        ],
+        "urlPatterns": [
+          "api.arte.tv/api/emac/v4/de/web",
+          "api.arte.tv/api/player/v2/config/de/${programId",
+          "api.themoviedb.org/3/${type}/${tmdbId}"
+        ]
+      },
+      {
+        "id": "filmfrei24",
+        "path": "providers/filmfrei24.js",
+        "version": "1.0.5",
+        "blobSha1": "b3c80b53ca1af1cd75593da51d777d034cce5dc8",
+        "sha256": "e7237d8a430bc24d3738151681636e3b5025a9a938afcdcf825d2954bfbb756d",
+        "bytes": 7161,
+        "hosts": [
+          "api.themoviedb.org",
+          "filmfrei24.com"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "filmfrei24.com"
+        ]
+      },
+      {
+        "id": "filmo",
+        "path": "providers/filmo.js",
+        "version": "1.0.5",
+        "blobSha1": "35c8fdecf3eb644e920dd81f9b301c6d1dd5fff3",
+        "sha256": "e496ce0785c0c98b439aff57d160a7a8bdd11f0ae446f9c20c73e8d42b9bf70d",
+        "bytes": 22705,
+        "hosts": [
+          "api.themoviedb.org",
+          "filmo.to"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "filmo.to"
+        ]
+      },
+      {
+        "id": "flixitv",
+        "path": "providers/flixitv.js",
+        "version": "1.0.5",
+        "blobSha1": "4862851539f5d8e6884c6ddb149f5dd6c8c1f1a8",
+        "sha256": "9b953293cc72a2872c9c84c8d0824f545524a206383284f126ec09ae49e3f923",
+        "bytes": 22358,
+        "hosts": [
+          "api.themoviedb.org",
+          "flixitv-stream.eu"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "flixitv-stream.eu"
+        ]
+      },
+      {
+        "id": "serienstream",
+        "path": "providers/serienstream.js",
+        "version": "1.0.5",
+        "blobSha1": "29de42d215f8711f1b1bf96253b27e4b025fdfc5",
+        "sha256": "05ae34c9f93838f3f63c88943f9d02fd47a672211beda873c0fd299424f958c2",
+        "bytes": 23104,
+        "hosts": [
+          "api.themoviedb.org",
+          "serienstream.to"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "serienstream.to"
+        ]
+      },
+      {
+        "id": "aniworld",
+        "path": "providers/aniworld.js",
+        "version": "1.0.5",
+        "blobSha1": "964f469b43944727ea5d6b7376eaf5b4651a2c98",
+        "sha256": "2630965159eb2be86f2da7c7daa05a045583f21c1c8409d575f0049f5ccd7fb7",
+        "bytes": 24292,
+        "hosts": [
+          "aniworld.to",
+          "api.themoviedb.org"
+        ],
+        "urlPatterns": [
+          "aniworld.to",
+          "api.themoviedb.org/3/${type}/${tmdbId}"
+        ]
+      },
+      {
+        "id": "dmax",
+        "path": "providers/dmax.js",
+        "version": "1.0.5",
+        "blobSha1": "e7b121b9d645fe40b18e18a19d7bf07412ad6963",
+        "sha256": "c58fe2851474421202fc2478d28f16511e85ed3fcd6d161a90f8c89e9a5c3436",
+        "bytes": 9444,
+        "hosts": [
+          "api.themoviedb.org",
+          "dmax.de",
+          "public.aurora.enhanced.live"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "dmax.de",
+          "public.aurora.enhanced.live"
+        ]
+      },
+      {
+        "id": "tele5",
+        "path": "providers/tele5.js",
+        "version": "1.0.5",
+        "blobSha1": "41d16697e2f02193d068323feb57895e9c32c3ef",
+        "sha256": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a",
+        "bytes": 9447,
+        "hosts": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tele5.de"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "public.aurora.enhanced.live",
+          "tele5.de"
+        ]
+      },
+      {
+        "id": "tlc",
+        "path": "providers/tlc.js",
+        "version": "1.0.5",
+        "blobSha1": "6fd87dcd7ea3f9b1eee0fa004ed82e427419a7b3",
+        "sha256": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19",
+        "bytes": 9440,
+        "hosts": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tlc.de"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "public.aurora.enhanced.live",
+          "tlc.de"
+        ]
+      },
+      {
+        "id": "southpark",
+        "path": "providers/southpark.js",
+        "version": "1.0.5",
+        "blobSha1": "1bd3b3410fccd33f7eba9b6807709aab7cf260cb",
+        "sha256": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc",
+        "bytes": 5324,
+        "hosts": [
+          "topaz.paramount.tech",
+          "www.southpark.de"
+        ],
+        "urlPatterns": [
+          "topaz.paramount.tech/topaz/api",
+          "www.southpark.de"
+        ]
+      },
+      {
+        "id": "moflix",
+        "path": "providers/moflix.js",
+        "version": "1.0.5",
+        "blobSha1": "3a978183316799b9db4cdbacd7a370d1e56b7c05",
+        "sha256": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c",
+        "bytes": 21317,
+        "hosts": [
+          "api.themoviedb.org",
+          "moflix-stream.xyz"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "moflix-stream.xyz"
+        ]
+      },
+      {
+        "id": "huhuto",
+        "path": "providers/huhuto.js",
+        "version": "1.0.5",
+        "blobSha1": "ec09606c1db15f7ca2b465c7ae488d87af4b29fb",
+        "sha256": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352",
+        "bytes": 20258,
+        "hosts": [
+          "api.themoviedb.org",
+          "huhu.to"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "huhu.to"
+        ]
+      },
+      {
+        "id": "filmpalast",
+        "path": "providers/filmpalast.js",
+        "version": "1.0.5",
+        "blobSha1": "677211ec688b27ac3955c4aaa9339c680e5ec23e",
+        "sha256": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e",
+        "bytes": 21314,
+        "hosts": [
+          "api.themoviedb.org",
+          "filmpalast.to"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "filmpalast.to"
+        ]
+      },
+      {
+        "id": "megakino",
+        "path": "providers/megakino.js",
+        "version": "1.0.5",
+        "blobSha1": "f9b67db6a3713acbab7c44ef753fd177c58a81f2",
+        "sha256": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad",
+        "bytes": 21674,
+        "hosts": [
+          "api.themoviedb.org",
+          "megakino4.to"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "megakino4.to"
+        ]
+      },
+      {
+        "id": "hdfilme",
+        "path": "providers/hdfilme.js",
+        "version": "1.0.5",
+        "blobSha1": "ade08ce88294003459a300fbf0209c9c7e7a06a3",
+        "sha256": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d",
+        "bytes": 19969,
+        "hosts": [
+          "api.themoviedb.org",
+          "hdfilme.cafe",
+          "meinecloud.click"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "hdfilme.cafe",
+          "meinecloud.click"
+        ]
+      },
+      {
+        "id": "kinoking",
+        "path": "providers/kinoking.js",
+        "version": "1.0.5",
+        "blobSha1": "4cc4cd74f8e4b3c15cd45402e8dcd1e91a91b40b",
+        "sha256": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3",
+        "bytes": 22285,
+        "hosts": [
+          "api.themoviedb.org",
+          "kinoking.cc",
+          "meinecloud.click"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "kinoking.cc",
+          "meinecloud.click",
+          "meinecloud.click/api/embed-links"
+        ]
+      },
+      {
+        "id": "kellerkino",
+        "path": "providers/kellerkino.js",
+        "version": "1.0.5",
+        "blobSha1": "91de49e7ced5d8a7d7a4794b3843c1c8643c94f6",
+        "sha256": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d",
+        "bytes": 20951,
+        "hosts": [
+          "api.themoviedb.org",
+          "www.kellerkino.com"
+        ],
+        "urlPatterns": [
+          "api.themoviedb.org/3/${type}/${tmdbId}",
+          "www.kellerkino.com"
+        ]
+      }
+    ]
+  },
+  "comparisonToPreviousRecordedAttempt": {
+    "previousArtifact": "attempts/2026-11-14-incomplete.json",
+    "previousUpstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
+    "previousManifestBlobSha1": "2f59428a830ef992e983deb19c393418a72686fe",
+    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
+    "manifestBlobUnchanged": true,
+    "manifestSha256RecordedValueMismatch": true,
+    "manifestSha256MismatchNote": "The previous attempt recorded a different manifest SHA-256 despite the identical Git blob SHA. The current hash was recomputed from the exact fetched file content; the stable blob SHA confirms the checked-in manifest did not change.",
+    "addedProviders": [
+      "netzkino",
+      "ard",
+      "plutotv",
+      "arte",
+      "filmfrei24",
+      "filmo",
+      "flixitv",
+      "serienstream",
+      "aniworld",
+      "dmax",
+      "tele5",
+      "tlc",
+      "southpark",
+      "moflix",
+      "huhuto",
+      "filmpalast",
+      "megakino",
+      "hdfilme",
+      "kinoking",
+      "kellerkino"
+    ],
+    "removedProviders": [],
+    "changedProviderFiles": [],
+    "hostChanges": [
+      {
+        "id": "netzkino",
+        "added": [
+          "api.netzkino.de.simplecache.net",
+          "api.themoviedb.org",
+          "pmd.netzkino-seite.netzkino.de",
+          "www.netzkino.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "ard",
+        "added": [
+          "api.ardmediathek.de",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "plutotv",
+        "added": [
+          "api.themoviedb.org",
+          "boot.pluto.tv"
+        ],
+        "removed": []
+      },
+      {
+        "id": "arte",
+        "added": [
+          "api.arte.tv",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmfrei24",
+        "added": [
+          "api.themoviedb.org",
+          "filmfrei24.com"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmo",
+        "added": [
+          "api.themoviedb.org",
+          "filmo.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "flixitv",
+        "added": [
+          "api.themoviedb.org",
+          "flixitv-stream.eu"
+        ],
+        "removed": []
+      },
+      {
+        "id": "serienstream",
+        "added": [
+          "api.themoviedb.org",
+          "serienstream.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "aniworld",
+        "added": [
+          "aniworld.to",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "dmax",
+        "added": [
+          "api.themoviedb.org",
+          "dmax.de",
+          "public.aurora.enhanced.live"
+        ],
+        "removed": []
+      },
+      {
+        "id": "tele5",
+        "added": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tele5.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "tlc",
+        "added": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tlc.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "southpark",
+        "added": [
+          "topaz.paramount.tech",
+          "www.southpark.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "moflix",
+        "added": [
+          "api.themoviedb.org",
+          "moflix-stream.xyz"
+        ],
+        "removed": []
+      },
+      {
+        "id": "huhuto",
+        "added": [
+          "api.themoviedb.org",
+          "huhu.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmpalast",
+        "added": [
+          "api.themoviedb.org",
+          "filmpalast.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "megakino",
+        "added": [
+          "api.themoviedb.org",
+          "megakino4.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "hdfilme",
+        "added": [
+          "api.themoviedb.org",
+          "hdfilme.cafe",
+          "meinecloud.click"
+        ],
+        "removed": []
+      },
+      {
+        "id": "kinoking",
+        "added": [
+          "api.themoviedb.org",
+          "kinoking.cc",
+          "meinecloud.click"
+        ],
+        "removed": []
+      },
+      {
+        "id": "kellerkino",
+        "added": [
+          "api.themoviedb.org",
+          "www.kellerkino.com"
+        ],
+        "removed": []
+      }
+    ]
+  },
+  "hostnameInventory": {
+    "primaryProviderHosts": [
+      "aniworld.to",
+      "api.ardmediathek.de",
+      "api.arte.tv",
+      "api.netzkino.de.simplecache.net",
+      "api.themoviedb.org",
+      "boot.pluto.tv",
+      "dmax.de",
+      "filmfrei24.com",
+      "filmo.to",
+      "filmpalast.to",
+      "flixitv-stream.eu",
+      "hdfilme.cafe",
+      "huhu.to",
+      "kinoking.cc",
+      "megakino4.to",
+      "meinecloud.click",
+      "moflix-stream.xyz",
+      "pmd.netzkino-seite.netzkino.de",
+      "public.aurora.enhanced.live",
+      "serienstream.to",
+      "tele5.de",
+      "tlc.de",
+      "topaz.paramount.tech",
+      "www.kellerkino.com",
+      "www.netzkino.de",
+      "www.southpark.de"
+    ],
+    "sharedHosterRegexPatterns": [
+      "abstream.to",
+      "charlestoughrace.com",
+      "d0000d.com",
+      "d000d.com",
+      "dhtpre.com",
+      "do7go.com",
+      "donaldlineelse.com",
+      "doods.pro",
+      "doodstream.com",
+      "dooodster.com",
+      "dr0pstream.com",
+      "ds2play.com",
+      "dsvplay.com",
+      "goofy-banana.com",
+      "hubu.cloud",
+      "lulustream.com",
+      "luluvdo.com",
+      "luluvdoo.com",
+      "mdy48tn97.com",
+      "metagnathtuggers.com",
+      "moflix-stream.click",
+      "moflix.rpmplay.xyz",
+      "moflix.upns.xyz",
+      "nathanfromsubject.com",
+      "peytonepre.com",
+      "playmogo.com",
+      "ryderjet.com",
+      "savefiles.com",
+      "shavetape.cash",
+      "simpulumlamerop.com",
+      "smoothpre.com",
+      "streamruby.com",
+      "swdyu.com",
+      "tubelessceliolymph.com",
+      "urochsunloath.com",
+      "vide0.net",
+      "videzz.net",
+      "vidoza.net",
+      "voe.sx",
+      "watchadsontape.com",
+      "yip.su"
+    ],
+    "manifestLogoHostnames": [
+      "www.google.com"
+    ],
+    "urlPatterns": [
+      "https://api.themoviedb.org/3/{type}/{tmdbId}?api_key={TMDB_API_KEY}&language=de-DE&append_to_response=external_ids,translations,alternative_titles",
+      "https://api.themoviedb.org/3/tv/{tmdbId}/season/{season}/episode/{episode}?api_key={TMDB_API_KEY}&language=de-DE",
+      "https://api.netzkino.de.simplecache.net/capi-2.0a",
+      "https://pmd.netzkino-seite.netzkino.de/{slug}.mp4",
+      "https://api.ardmediathek.de",
+      "https://boot.pluto.tv/v4/start?appName=web&appVersion=9.22.0&deviceVersion=142.0.0&deviceModel=web&deviceMake=firefox&clientID={uuid}",
+      "https://api.arte.tv/api/emac/v4/de/web",
+      "https://api.arte.tv/api/player/v2/config/de/{programId}",
+      "https://public.aurora.enhanced.live",
+      "https://topaz.paramount.tech/topaz/api",
+      "https://meinecloud.click/api/embed-links",
+      "https://filmo.to",
+      "https://flixitv-stream.eu",
+      "https://serienstream.to",
+      "https://aniworld.to",
+      "https://dmax.de",
+      "https://tele5.de",
+      "https://tlc.de",
+      "https://www.southpark.de",
+      "https://moflix-stream.xyz",
+      "https://huhu.to",
+      "https://filmpalast.to",
+      "https://megakino4.to/",
+      "https://hdfilme.cafe/",
+      "https://kinoking.cc",
+      "https://www.kellerkino.com"
+    ],
+    "extractionNote": "Static string/regex extraction only. Hostnames and URL patterns were not contacted or validated as live services."
+  },
+  "pagesWorkflow": {
+    "path": ".github/workflows/pages.yml",
+    "blobSha1": "426b364a943d6e43ec5686a1243d0a8693785508",
+    "content": "name: Deploy to GitHub Pages\n\non:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\npermissions:\n  contents: read\n  pages: write\n  id-token: write\n\nconcurrency:\n  group: pages\n  cancel-in-progress: true\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    environment:\n      name: github-pages\n      url: ${{ steps.deployment.outputs.page_url }}manifest.json\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 22\n          cache: npm\n      - run: npm ci\n      # rebuild from src/ so Pages never serves stale bundles; also validates manifest.json\n      - run: node build.js\n      - run: node check.js\n      - name: Collect site\n        run: |\n          mkdir _site\n          cp -r manifest.json providers _site/\n      - uses: actions/upload-pages-artifact@v3\n      - id: deployment\n        uses: actions/deploy-pages@v4\n"
+  },
+  "targetProject": {
+    "repository": "cufi12/debridui",
+    "branch": "main",
+    "previousCommit": "8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0",
+    "currentCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+    "comparisonStatus": "ahead",
+    "aheadBy": 22,
+    "behindBy": 0,
+    "changedFiles": [
+      {
+        "path": ".github/workflows/android-tv-release.yml",
+        "status": "added",
+        "additions": 115,
+        "deletions": 0,
+        "changes": 115
+      },
+      {
+        "path": ".github/workflows/verify.yml",
+        "status": "modified",
+        "additions": 7,
+        "deletions": 29,
+        "changes": 36
+      },
+      {
+        "path": "android/app/build.gradle",
+        "status": "modified",
+        "additions": 36,
+        "deletions": 2,
+        "changes": 38
+      },
+      {
+        "path": "android/app/src/main/java/com/debridui/tv/MainActivity.kt",
+        "status": "modified",
+        "additions": 235,
+        "deletions": 4,
+        "changes": 239
+      },
+      {
+        "path": "docs/android-tv-releases.md",
+        "status": "added",
+        "additions": 41,
+        "deletions": 0,
+        "changes": 41
+      },
+      {
+        "path": "docs/provider-repositories.md",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 1,
+        "changes": 2
+      },
+      {
+        "path": "scripts/provider-ipv4-ssrf-test.ts",
+        "status": "added",
+        "additions": 31,
+        "deletions": 0,
+        "changes": 31
+      },
+      {
+        "path": "scripts/provider-runtime-smoke.ts",
+        "status": "modified",
+        "additions": 27,
+        "deletions": 1,
+        "changes": 28
+      },
+      {
+        "path": "src/app/(auth)/(app)/addons/_components/repository-provider-list-section.tsx",
+        "status": "added",
+        "additions": 192,
+        "deletions": 0,
+        "changes": 192
+      },
+      {
+        "path": "src/app/(auth)/(app)/addons/page.tsx",
+        "status": "modified",
+        "additions": 2,
+        "deletions": 0,
+        "changes": 2
+      },
+      {
+        "path": "src/app/layout.tsx",
+        "status": "modified",
+        "additions": 4,
+        "deletions": 0,
+        "changes": 4
+      },
+      {
+        "path": "src/features/media/components/sources.tsx",
+        "status": "modified",
+        "additions": 15,
+        "deletions": 4,
+        "changes": 19
+      },
+      {
+        "path": "src/features/media/utils/source-selector.ts",
+        "status": "modified",
+        "additions": 13,
+        "deletions": 33,
+        "changes": 46
+      },
+      {
+        "path": "src/features/plugins/actions/provider-streams.ts",
+        "status": "modified",
+        "additions": 2,
+        "deletions": 2,
+        "changes": 4
+      },
+      {
+        "path": "src/features/plugins/actions/repositories.ts",
+        "status": "modified",
+        "additions": 83,
+        "deletions": 2,
+        "changes": 85
+      },
+      {
+        "path": "src/lib/addons/parser.ts",
+        "status": "modified",
+        "additions": 24,
+        "deletions": 13,
+        "changes": 37
+      },
+      {
+        "path": "src/lib/plugins/provider-runtime.ts",
+        "status": "modified",
+        "additions": 157,
+        "deletions": 15,
+        "changes": 172
+      }
+    ],
+    "providerRuntime": {
+      "path": "src/lib/plugins/provider-runtime.ts",
+      "blobSha1": "6824e362e892c5899bb91fbd95bd4e7da6eb55fd",
+      "sha256": "794920e2b395acc00afa89d91a6ee4ed394ff759f4ef486bb56d63a23364e965",
+      "bytes": 40326
+    },
+    "providerAdapter": {
+      "path": "src/lib/plugins/provider-adapter.ts",
+      "blobSha1": "3e95d304b82fca6dff3d3708449a56b60413c375",
+      "sha256": "3e3f2925aebef79e5d240cb12c77073f56d2e90c727b01907e306d9344646f66",
+      "bytes": 6868
+    },
+    "providerStreamsAction": {
+      "path": "src/features/plugins/actions/provider-streams.ts",
+      "blobSha1": "b1b0a4c8cde826305358d2edb5e106aaa0557fc7",
+      "sha256": "2aa9f4f4804ba2f33e774cb8ca0265147d9a7c065f0bf804fe579d1033594df2",
+      "bytes": 3729
+    }
+  },
+  "safety": {
+    "providerFilesTreatedAsUntrustedData": true,
+    "providerCodeExecuted": false,
+    "secretsStored": false,
+    "queryStringsExcludedFromUrlPatternInventory": true
+  },
+  "nextRunInstruction": "Read latest-source.json first. This is a complete baseline for checked-in upstream GitHub source only. Do not create or replace latest.json until the public GitHub Pages manifest and every deployed file it references have been fetched and hashed."
+}
