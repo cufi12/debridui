@@ -52,6 +52,9 @@ export const auth = betterAuth({
         nextCookies(),
         deviceAuthorization({
             verificationUri: "/device",
+            // Work around Better Auth's Zod 4 options-schema bug when schema is omitted.
+            // The empty mapping keeps the plugin's default device_code table schema.
+            schema: {},
             validateClient: (clientId) => clientId === "debridui-tv",
         }),
     ],
