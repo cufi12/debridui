@@ -41,10 +41,7 @@ export function selectBestSource(
 
     // First try sources inside the user's quality preferences.
     const matchingSources = sources.filter(
-        (source) =>
-            source.url &&
-            matchesResolutionRange(source, range) &&
-            matchesSourceQualityRange(source, range)
+        (source) => source.url && matchesResolutionRange(source, range) && matchesSourceQualityRange(source, range)
     );
 
     // If none of those sources is cached, fall back to any cached playable source.
