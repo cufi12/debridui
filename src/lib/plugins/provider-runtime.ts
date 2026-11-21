@@ -11,7 +11,7 @@ import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
 const PROVIDER_TIMEOUT_MS = 28_000;
 const FETCH_TIMEOUT_MS = 10_000;
-const MAX_REDIRECTS = 5;
+const MAX_REDIRECTS = 3;
 const MAX_REQUESTS = 24;
 const MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
