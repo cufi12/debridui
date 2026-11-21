@@ -174,21 +174,21 @@ const TIERS: { key: Tier; label: string; note: string }[] = [
     { key: "other", label: "Other", note: "Everything else" },
 ];
 
-/** Cached first, then the better release, then the bigger file */
+/** Prefer cached releases, then the smallest known file, then source quality. */
 function bestFirst(a: AddonSource, b: AddonSource) {
     const cachedDiff = Number(!!b.isCached) - Number(!!a.isCached);
     if (cachedDiff !== 0) return cachedDiff;
-    const byQuality = getSourceQualityIndex(a.quality) - getSourceQualityIndex(b.quality);
-    if (byQuality !== 0) return byQuality;
-    return parseSize(b.size) - parseSize(a.size);
+    const sizeDiff = parseSize(a.size) - parseSize(b.size);
+    if (sizeDiff !== 0) return sizeDiff;
+    return getSourceQualityIndex(a.quality) - getSourceQualityIndex(b.quality);
 }
 
 const SIZE_UNITS: Record<string, number> = { KB: 1e-6, MB: 1e-3, GB: 1, TB: 1e3 };
 
 function parseSize(size?: string): number {
     const match = size?.match(/([\d.]+)\s*([KMGT]i?B)/i);
-    if (!match) return 0;
-    return Number(match[1]) * (SIZE_UNITS[match[2].replace("i", "").toUpperCase()] ?? 0);
+    if (!match) return Number.POSITIVE_INFINITY;
+    return Number(match[1]) * (SIZE_UNITS[match[2].replace("i", "").toUpperCase()] ?? Number.POSITIVE_INFINITY);
 }
 
 const sourceKey = (source: AddonSource) => `${source.addonId}-${source.url}`;
@@ -243,8 +243,12 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
     const streamingSettings = useSettingsStore((s) => s.settings.streaming);
 
     const pinned = useRef<AddonSource | null>(null);
-    const best = useMemo(() => selectBestSource(sources, streamingSettings).source, [sources, streamingSettings]);
-    // Pinned so a late-arriving addon cannot re-point Play at a source the user never read
+    const best = useMemo(() => {
+        const playable = sources.filter((source) => source.url || source.magnet);
+        const cached = playable.filter((source) => source.isCached);
+        return [...(cached.length > 0 ? cached : playable)].sort(bestFirst)[0] ?? null;
+    }, [sources]);
+    // Pin the smallest cached playable release by default; the user can still choose any other release.
     if (best && !pinned.current) pinned.current = best;
     const preferred = pinned.current;
 
