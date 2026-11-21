@@ -10,10 +10,7 @@ const isEmailSignupDisabled = process.env.NEXT_PUBLIC_DISABLE_EMAIL_SIGNUP === "
 const configuredAppURL = process.env.NEXT_PUBLIC_APP_URL;
 // Docker builds use a substitution placeholder; Better Auth requires a valid URL
 // while Next.js collects page data. The real URL is supplied at runtime.
-const appURL =
-    configuredAppURL && !configuredAppURL.startsWith("__")
-        ? configuredAppURL
-        : "http://localhost:3000";
+const appURL = configuredAppURL && !configuredAppURL.startsWith("__") ? configuredAppURL : "http://localhost:3000";
 
 export const auth = betterAuth({
     baseURL: appURL,
