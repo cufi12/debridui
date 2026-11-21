@@ -15,76 +15,89 @@
   "comparison": {
     "previousArtifact": "attempts/2026-11-14-incomplete.json",
     "previousUpstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
-    "previousManifestBlobSha1": "2f59428a830ef992e983deb19c393418a72686fe",
-    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
     "manifestBlobUnchanged": true,
-    "manifestSha256RecordedValueMismatch": true,
-    "manifestSha256MismatchNote": "The prior attempt's recorded SHA-256 differs from the recomputed current value, while the manifest Git blob SHA is identical. The manifest file itself is therefore unchanged; the earlier SHA-256 field is treated as a stale/inconsistent record.",
+    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
+    "currentManifestSha256": "b57afeffb965da6129d937625de59ddfe94fd509a6ad91c31cc7a97bc0a54287",
+    "previousManifestSha256RecordMismatch": true,
+    "manifestNote": "Manifest Git blob SHA is identical. The previous attempt's recorded SHA-256 does not match the current independently self-tested UTF-8 SHA-256 and is treated as a bad historical hash record, not a file change.",
     "addedProviders": [],
     "removedProviders": [],
-    "changedProviderFiles": [
+    "changedProviderFilesByBlobSha": [],
+    "changedProviderFilesBySha256": [],
+    "providerSha256RecordMismatches": [
       {
         "id": "tele5",
         "path": "providers/tele5.js",
-        "old": "c48a95154b5be6a67a2b9c449abdae31fa8a4139ade4d352f60f7b1b5fdcd2da",
-        "new": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a"
+        "oldRecordedSha256": "c48a95154b5be6a67a2b9c449abdae31fa8a4139ade4d352f60f7b1b5fdcd2da",
+        "recomputedSha256": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a",
+        "blobShaUnchanged": true
       },
       {
         "id": "tlc",
         "path": "providers/tlc.js",
-        "old": "8346e9369910151394282b8bbe74550d2ab720d8191223ee11ab1b70fe98388e",
-        "new": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19"
+        "oldRecordedSha256": "8346e9369910151394282b8bbe74550d2ab720d8191223ee11ab1b70fe98388e",
+        "recomputedSha256": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19",
+        "blobShaUnchanged": true
       },
       {
         "id": "southpark",
         "path": "providers/southpark.js",
-        "old": "6905b963e2775d2d86d00cadbe9d833818ee5a2e1d774779dfc4774646ed3660",
-        "new": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc"
+        "oldRecordedSha256": "6905b963e2775d2d86d00cadbe9d833818ee5a2e1d774779dfc4774646ed3660",
+        "recomputedSha256": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc",
+        "blobShaUnchanged": true
       },
       {
         "id": "moflix",
         "path": "providers/moflix.js",
-        "old": "09d06a7fdeed184fbc4e8d21b92507293c47469ca12962a5e3deee10e7482134",
-        "new": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c"
+        "oldRecordedSha256": "09d06a7fdeed184fbc4e8d21b92507293c47469ca12962a5e3deee10e7482134",
+        "recomputedSha256": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c",
+        "blobShaUnchanged": true
       },
       {
         "id": "huhuto",
         "path": "providers/huhuto.js",
-        "old": "5d5f078248dcfddccbc8fcc254944e477c823b812904712830540f4bca3970d6",
-        "new": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352"
+        "oldRecordedSha256": "5d5f078248dcfddccbc8fcc254944e477c823b812904712830540f4bca3970d6",
+        "recomputedSha256": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352",
+        "blobShaUnchanged": true
       },
       {
         "id": "filmpalast",
         "path": "providers/filmpalast.js",
-        "old": "00aa1328b9aa41dc7f37d28376fd3d40df6e6506da1dc6917b0cc990af77a3b0",
-        "new": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e"
+        "oldRecordedSha256": "00aa1328b9aa41dc7f37d28376fd3d40df6e6506da1dc6917b0cc990af77a3b0",
+        "recomputedSha256": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e",
+        "blobShaUnchanged": true
       },
       {
         "id": "megakino",
         "path": "providers/megakino.js",
-        "old": "80980f55038919b0e8dcd7efeb2d63aef22ee64d20b2301e6d7108fa3b9ddfc8",
-        "new": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad"
+        "oldRecordedSha256": "80980f55038919b0e8dcd7efeb2d63aef22ee64d20b2301e6d7108fa3b9ddfc8",
+        "recomputedSha256": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad",
+        "blobShaUnchanged": true
       },
       {
         "id": "hdfilme",
         "path": "providers/hdfilme.js",
-        "old": "090c2063750c7b19760878ed266bce3b7de88f71caf37215f4ff8853f4bb50e4",
-        "new": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d"
+        "oldRecordedSha256": "090c2063750c7b19760878ed266bce3b7de88f71caf37215f4ff8853f4bb50e4",
+        "recomputedSha256": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d",
+        "blobShaUnchanged": true
       },
       {
         "id": "kinoking",
         "path": "providers/kinoking.js",
-        "old": "551235a1cbc6b31c084aef7ff8e2bbc7b719fdefb9ef8d9536b35d4c40764c93",
-        "new": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3"
+        "oldRecordedSha256": "551235a1cbc6b31c084aef7ff8e2bbc7b719fdefb9ef8d9536b35d4c40764c93",
+        "recomputedSha256": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3",
+        "blobShaUnchanged": true
       },
       {
         "id": "kellerkino",
         "path": "providers/kellerkino.js",
-        "old": "762778e161148528dd3e072a3ced516dbef5a23ac22e4b33d26a25a81343795d",
-        "new": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d"
+        "oldRecordedSha256": "762778e161148528dd3e072a3ced516dbef5a23ac22e4b33d26a25a81343795d",
+        "recomputedSha256": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d",
+        "blobShaUnchanged": true
       }
     ],
-    "hostChanges": []
+    "hostChanges": [],
+    "conclusion": "No upstream provider or host changes detected."
   },
   "targetProject": {
     "repository": "cufi12/debridui",
@@ -233,62 +246,55 @@
       "sha256": "2aa9f4f4804ba2f33e774cb8ca0265147d9a7c065f0bf804fe579d1033594df2",
       "bytes": 3729
     },
+    "compareUrl": "https://github.com/cufi12/debridui/compare/8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0...2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
     "repositoryAdapter": {
       "path": "src/features/plugins/actions/repositories.ts",
       "blobSha1": "731fef8562303b2bef3dc264dba9a626c9079161",
       "bytes": 20702
     },
-    "diffPatches": [
-      {
-        "filename": ".github/workflows/verify.yml",
-        "status": "modified",
-        "additions": 7,
-        "deletions": 29,
-        "patch": "@@ -11,8 +11,10 @@ on:\n     branches: [main, staging]\n   workflow_dispatch:\n \n+# Verification must never need to write back to the repository. In particular,\n+# code from a pull request must not receive a token capable of pushing commits.\n permissions:\n-  contents: write\n+  contents: read\n \n jobs:\n   verify:\n@@ -28,37 +30,13 @@ jobs:\n           bun-version: latest\n \n       - name: Install dependencies\n-        run: bun install\n-\n-      - name: Commit lockfile updates\n-        run: |\n-          if ! git diff --quiet -- bun.lock; then\n-            git config user.name \"github-actions[bot]\"\n-            git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n-            git add bun.lock\n-            git commit -m \"chore: update bun lockfile\"\n-            TARGET_BRANCH=\"${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}\"\n-            git pull --rebase origin \"$TARGET_BRANCH\"\n-            git push origin \"HEAD:$TARGET_BRANCH\"\n-          fi\n-\n-      - name: Apply safe formatting and lint fixes\n-        run: bun run check:fix\n-\n-      - name: Commit formatting fixes\n-        run: |\n-          if ! git diff --quiet; then\n-            git config user.name \"github-actions[bot]\"\n-            git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\n-            git add -u\n-            git commit -m \"style: apply Biome fixes\"\n-            TARGET_BRANCH=\"${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}\"\n-            git pull --rebase origin \"$TARGET_BRANCH\"\n-            git push origin \"HEAD:$TARGET_BRANCH\"\n-          fi\n+        run: bun install --frozen-lockfile\n \n       - name: Typecheck and lint\n         run: bun run verify\n \n+      - name: Test provider IPv4 SSRF protections\n+        run: bun scripts/provider-ipv4-ssrf-test.ts\n+\n       - name: Smoke-test QuickJS provider runtime\n         run: bun scripts/provider-runtime-smoke.ts"
+    "securityReview": {
+      "baselineCommit": "8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0",
+      "currentMainCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+      "positiveChanges": [
+        "Added blocking for reserved IPv4 range 192.88.99.0/24.",
+        "Added bounded gzip/deflate/br decoding with a 1.5 MB decompressed-response cap.",
+        "Verify workflow now uses contents:read and frozen lockfile installation; it no longer auto-commits fixes."
+      ],
+      "safetyRegressions": [
+        "Provider redirect hop cap increased from 3 to 5.",
+        "Enabled provider modules per search increased from 20 to 32.",
+        "New provider-file status checks can scan up to 32 providers."
+      ],
+      "unchangedControls": [
+        "DNS resolution and public IPv4 pinning",
+        "Private/reserved IP rejection",
+        "HTTP(S), standard-port and redirect revalidation checks",
+        "Sensitive header stripping on cross-origin redirects",
+        "QuickJS isolation",
+        "24 requests per provider",
+        "1.5 MB per response and 6 MB aggregate response limit",
+        "10 second HTTP request timeout and 28 second provider execution timeout",
+        "16 MB QuickJS memory and 512 KB stack limits"
+      ],
+      "repositoryAdapterReview": {
+        "providerAdapterFile": "src/lib/plugins/provider-adapter.ts",
+        "unchangedFromBaseline": true,
+        "repositoryActionsFile": "src/features/plugins/actions/repositories.ts",
+        "newProviderFileStatusCheck": "same-origin and repository-folder path checks; redirect:error; 500 KB file cap; 12 second timeout; batches of four; cap reduced to 20 in PR #24"
       },
-      {
-        "filename": "docs/provider-repositories.md",
-        "status": "modified",
-        "additions": 1,
-        "deletions": 1,
-        "patch": "@@ -56,7 +56,7 @@ For movies, `mediaType` is `movie`. For series, it is `tv`, with `season` and `e\n - Provider code receives no Node.js APIs, filesystem access, process environment, or ambient user cookies.\n - Outbound requests are limited to HTTP(S), public IPv4 destinations, and standard ports. Private/reserved network destinations are rejected and DNS results are pinned for each request.\n - Up to 20 enabled provider modules are considered per search, in batches of four. Each provider is limited to 24 requests, 1.5 MB per response, 6 MB total response data, 500 KB of source, 28 seconds of execution, 16 MB of VM memory, and a 512 KB stack. Individual HTTP requests time out after 10 seconds.\n-- Redirects are revalidated and limited to three hops.\n+- Redirects are revalidated and limited to five hops.\n - The runtime supports the common single-file `module.exports.getStreams` shape, `fetch`, response `text()`/`json()`, basic `URL`/`URLSearchParams`, `atob`, `btoa`, and a no-op console. Its restricted `require()` shim supports only `cheerio` and `crypto-js`: Cheerio is backed by a host-side HTML parser and exposes the provider-used subset (`load`, selector/context lookup, `find`, `first`, `eq`, `text`, `html`, `attr`, `each`, `map`, and `toArray`). The CryptoJS shim supports only AES-CBC with PKCS7 padding and UTF-8 keys/IVs, returning Latin-1 plaintext. These are compatibility subsets, not complete implementations of either package. HTML input is capped at 1.5 MB, at most 12 DOM documents and 2,000 DOM operations are allowed per provider invocation, and other CommonJS modules are rejected.\n - Returned HTTP headers are retained on stream sources. Playback support for custom headers depends on the selected player; not every external player can apply them.\n "
-      },
-      {
-        "filename": "scripts/provider-ipv4-ssrf-test.ts",
-        "status": "added",
-        "additions": 31,
-        "deletions": 0,
-        "patch": "@@ -0,0 +1,31 @@\n+import assert from \"node:assert/strict\";\n+import { isPublicIpv4 } from \"../src/lib/plugins/provider-runtime\";\n+\n+const blocked = [\n+    \"0.0.0.0\",\n+    \"10.0.0.1\",\n+    \"100.64.0.1\",\n+    \"127.0.0.1\",\n+    \"169.254.1.1\",\n+    \"172.16.0.1\",\n+    \"192.0.2.1\",\n+    \"192.88.99.1\",\n+    \"192.168.1.1\",\n+    \"198.18.0.1\",\n+    \"198.51.100.1\",\n+    \"203.0.113.1\",\n+    \"224.0.0.1\",\n+    \"255.255.255.255\",\n+    \"::1\",\n+];\n+\n+const allowed = [\"1.1.1.1\", \"8.8.8.8\", \"93.184.216.34\"];\n+\n+for (const address of blocked) {\n+    assert.equal(isPublicIpv4(address), false, `${address} must be blocked`);\n+}\n+for (const address of allowed) {\n+    assert.equal(isPublicIpv4(address), true, `${address} must be allowed`);\n+}\n+\n+console.info(`Passed IPv4 SSRF regression checks (${blocked.length + allowed.length} cases).`);"
-      },
-      {
-        "filename": "scripts/provider-runtime-smoke.ts",
-        "status": "modified",
-        "additions": 27,
-        "deletions": 1,
-        "patch": "@@ -1,5 +1,5 @@\n import { readFile } from \"node:fs/promises\";\n-import { sanitizeStreamHeaders } from \"../src/lib/addons/parser\";\n+import { parseStream, sanitizeStreamHeaders } from \"../src/lib/addons/parser\";\n import { executeNuvioProvider } from \"../src/lib/plugins/provider-runtime\";\n \n const result = await executeNuvioProvider(\n@@ -45,6 +45,32 @@ if (sanitizeStreamHeaders({ Referer: \"https://provider.example/\\r\\nInjected: yes\n }\n console.log(\"Provider header sanitization smoke test passed.\");\n \n+const ambiguousAudioSource = parseStream(\n+    {\n+        name: \"Example Film GER 1080p\",\n+        title: \"Spanish audio ESP\",\n+        url: \"https://example.com/film.mp4\",\n+    },\n+    \"language-smoke-test\",\n+    \"Language smoke test\"\n+);\n+if (!ambiguousAudioSource.description?.includes(\"Widersprüchliche Sprachangaben – unklar\")) {\n+    throw new Error(\"Conflicting audio language metadata was not marked as unclear.\");\n+}\n+const germanAudioSource = parseStream(\n+    {\n+        name: \"Example Film 1080p\",\n+        title: \"Audio: DE\",\n+        url: \"https://example.com/film-de.mp4\",\n+    },\n+    \"language-smoke-test\",\n+    \"Language smoke test\"\n+);\n+if (!germanAudioSource.description?.includes(\"Deutsch laut Quelle – nicht geprüft\")) {\n+    throw new Error(\"Unambiguous German source metadata was not recognized.\");\n+}\n+console.log(\"Audio language ambiguity smoke tests passed.\");\n+\n const blockedFetchResult = await executeNuvioProvider(\n     `module.exports = {\n         getStreams: async () => {"
-      },
-      {
-        "filename": "src/features/plugins/actions/provider-streams.ts",
-        "status": "modified",
-        "additions": 2,
-        "deletions": 2,
-        "patch": "@@ -24,7 +24,7 @@ export async function getRepositoryProviderStreams(\n     const modules = await getEnabledRepositoryProviderSources(invocation.mediaType);\n     const enabled = modules\n         .filter((module): module is typeof module & { source: string } => Boolean(module.source))\n-        .slice(0, 20);\n+        .slice(0, 32);\n     const loadFailures = modules.filter((module) => !module.source);\n     console.info(\"[repository-providers] Search started:\", {\n         mediaType: invocation.mediaType,\n@@ -72,7 +72,7 @@ export async function getRepositoryProviderStreams(\n             })\n         );\n         sources.push(...batch.flat());\n-        if (sources.length >= 100) return sources.slice(0, 100);\n+        if (sources.length >= 100) return sources.slice(0, 32);\n     }\n \n     console.info(\"[repository-providers] Search finished:\", {"
-      },
-      {
-        "filename": "src/features/plugins/actions/repositories.ts",
-        "status": "modified",
-        "additions": 83,
-        "deletions": 2,
-        "patch": "@@ -183,7 +183,7 @@ export async function getEnabledRepositoryProviders(mediaType?: \"movie\" | \"tv\")\n                     supportedTypes: provider.supportedTypes,\n                 }))\n         )\n-        .slice(0, 100);\n+        .slice(0, 32);\n }\n \n export async function addPluginRepository(rawUrl: string) {\n@@ -272,7 +272,7 @@ export async function getEnabledRepositoryProviderSources(mediaType: \"movie\" | \"\n                 )\n                 .map((provider) => ({ repository, provider }))\n         )\n-        .slice(0, 20);\n+        .slice(0, 32);\n \n     const output: Array<{\n         repositoryId: string;\n@@ -373,6 +373,87 @@ export async function getEnabledRepositoryProviderSources(mediaType: \"movie\" | \"\n     return output;\n }\n \n+/** Check enabled provider files without executing their code. */\n+export async function getRepositoryProviderFileStatuses() {\n+    const userId = await currentUserId();\n+    const repositories = await readRepositories(userId);\n+    const providers = repositories\n+        .flatMap((repository) =>\n+            repository.providers.filter((provider) => provider.enabled).map((provider) => ({ repository, provider }))\n+        )\n+        .slice(0, 32);\n+\n+    const statuses: Array<{\n+        repositoryId: string;\n+        providerId: string;\n+        status: \"ok\" | \"empty\" | \"error\";\n+        bytes: number;\n+        message: string;\n+    }> = [];\n+\n+    for (let index = 0; index < providers.length; index += 4) {\n+        const batch = await Promise.all(\n+            providers.slice(index, index + 4).map(async ({ repository, provider }) => {\n+                const controller = new AbortController();\n+                const timeout = setTimeout(() => controller.abort(), 12_000);\n+                try {\n+                    const base = new URL(\".\", validateRepositoryUrl(repository.url));\n+                    const file = new URL(provider.filename, base);\n+                    const folder = base.pathname.replace(/[^/]*$/, \"\");\n+                    if (\n+                        file.protocol !== \"https:\" ||\n+                        file.origin !== base.origin ||\n+                        !file.pathname.startsWith(folder)\n+                    ) {\n+                        throw new Error(\"Ungültiger Provider-Pfad.\");\n+                    }\n+                    const response = await fetch(file, {\n+                        headers: { accept: \"text/javascript, application/javascript, text/plain\" },\n+                        cache: \"no-store\",\n+                        redirect: \"error\",\n+                        signal: controller.signal,\n+                    });\n+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);\n+                    const source = await readLimitedText(response, 500_000);\n+                    const bytes = new TextEncoder().encode(source).byteLength;\n+                    const trimmed = source.trim();\n+                    const looksLikeHtml = /^(<!doctype\\\\s+html|<html[\\\\s>])/i.test(trimmed);\n+                    if (!trimmed || looksLikeHtml) {\n+                        return {\n+                            repositoryId: repository.id,\n+                            providerId: provider.id,\n+                            status: \"empty\" as const,\n+                            bytes,\n+                            message: looksLikeHtml\n+                                ? \"Server liefert HTML statt Provider-Code.\"\n+                                : \"Quelldatei ist leer.\",\n+                        };\n+                    }\n+                    return {\n+                        repositoryId: repository.id,\n+                        providerId: provider.id,\n+                        status: \"ok\" as const,\n+                        bytes,\n+                        message: \"Quelldatei erreichbar und nicht leer.\",\n+                    };\n+                } catch (error) {\n+                    return {\n+                        repositoryId: repository.id,\n+                        providerId: provider.id,\n+                        status: \"error\" as const,\n+                        bytes: 0,\n+                        message: error instanceof Error ? error.message : \"Datei konnte nicht geprüft werden.\",\n+                    };\n+                } finally {\n+                    clearTimeout(timeout);\n+                }\n+            })\n+        );\n+        statuses.push(...batch);\n+    }\n+    return statuses;\n+}\n+\n export async function getRepositoryProviderSource(repositoryId: string, providerId: string) {\n     const userId = await currentUserId();\n     const repositories = await readRepositories(userId);"
-      },
-      {
-        "filename": "src/lib/plugins/provider-runtime.ts",
-        "status": "modified",
-        "additions": 157,
-        "deletions": 15,
-        "patch": "@@ -3,13 +3,15 @@ import { lookup } from \"node:dns/promises\";\n import { request as httpRequest } from \"node:http\";\n import { request as httpsRequest } from \"node:https\";\n import { isIP } from \"node:net\";\n+import { brotliDecompressSync, gunzipSync, inflateRawSync, inflateSync } from \"node:zlib\";\n import { load as loadCheerio } from \"cheerio\";\n import { getQuickJS } from \"quickjs-emscripten\";\n import { sanitizeStreamHeaders } from \"@/lib/addons/parser\";\n import type { ProviderInvocation } from \"@/lib/plugins/provider-adapter\";\n \n const PROVIDER_TIMEOUT_MS = 28_000;\n const FETCH_TIMEOUT_MS = 10_000;\n+const MAX_REDIRECTS = 5;\n const MAX_REQUESTS = 24;\n const MAX_RESPONSE_BYTES = 1_500_000;\n const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;\n@@ -29,9 +31,49 @@ type PinnedResponse = {\n     body: string;\n };\n \n+/** Match the automatic content decoding provided by the Fetch API. */\n+function decodeResponseBody(body: Buffer, contentEncoding?: string): Buffer {\n+    if (!contentEncoding || !body.length) return body;\n+\n+    let decoded = body;\n+    const encodings = contentEncoding\n+        .split(\",\")\n+        .map((encoding) => encoding.trim().toLowerCase())\n+        .filter(Boolean)\n+        .reverse();\n+\n+    for (const encoding of encodings) {\n+        switch (encoding) {\n+            case \"identity\":\n+                break;\n+            case \"gzip\":\n+            case \"x-gzip\":\n+                decoded = gunzipSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });\n+                break;\n+            case \"deflate\":\n+                try {\n+                    decoded = inflateSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });\n+                } catch {\n+                    decoded = inflateRawSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });\n+                }\n+                break;\n+            case \"br\":\n+                decoded = brotliDecompressSync(decoded, { maxOutputLength: MAX_RESPONSE_BYTES });\n+                break;\n+            default:\n+                throw new Error(`Unsupported provider response encoding: ${encoding}.`);\n+        }\n+        if (decoded.byteLength > MAX_RESPONSE_BYTES) {\n+            throw new Error(\"Provider response exceeds 1.5 MB after decompression.\");\n+        }\n+    }\n+\n+    return decoded;\n+}\n+\n let quickJsPromise: ReturnType<typeof getQuickJS> | undefined;\n \n-function isPublicIpv4(address: string): boolean {\n+export function isPublicIpv4(address: string): boolean {\n     if (isIP(address) !== 4) return false;\n     const [a, b, c] = address.split(\".\").map(Number);\n     if (a === undefined || b === undefined || c === undefined) return false;\n@@ -43,7 +85,7 @@ function isPublicIpv4(address: string): boolean {\n         a >= 224 ||\n         (a === 169 && b === 254) ||\n         (a === 172 && b >= 16 && b <= 31) ||\n-        (a === 192 && (b === 0 || b === 168)) ||\n+        (a === 192 && (b === 0 || b === 88 || b === 168)) ||\n         (a === 100 && b >= 64 && b <= 127) ||\n         (a === 198 && (b === 18 || b === 19 || (b === 51 && c === 100))) ||\n         (a === 203 && b === 0 && c === 113)\n@@ -74,7 +116,12 @@ function normalizeRequestHeaders(value: unknown): Record<string, string> {\n     return Object.fromEntries(Object.entries(safe).map(([key, header]) => [key, header]));\n }\n \n-async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSignal): Promise<PinnedResponse> {\n+async function requestPinned(\n+    url: URL,\n+    init: ProviderFetchInit,\n+    signal: AbortSignal,\n+    providerId?: string\n+): Promise<PinnedResponse> {\n     if (url.protocol !== \"https:\" && url.protocol !== \"http:\") {\n         throw new Error(\"Only HTTP and HTTPS provider requests are supported.\");\n     }\n@@ -94,6 +141,9 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig\n \n     const transport = url.protocol === \"https:\" ? httpsRequest : httpRequest;\n     const headers = normalizeRequestHeaders(init.headers);\n+    if (!Object.keys(headers).some((name) => name.toLowerCase() === \"accept-encoding\")) {\n+        headers[\"Accept-Encoding\"] = \"gzip, deflate, br\";\n+    }\n     const body = method === \"GET\" || method === \"HEAD\" ? undefined : init.body;\n \n     return await new Promise<PinnedResponse>((resolve, reject) => {\n@@ -129,59 +179,151 @@ async function requestPinned(url: URL, init: ProviderFetchInit, signal: AbortSig\n                 response.on(\"error\", (error) => {\n                     if (!settled) {\n                         settled = true;\n+                        cleanup();\n                         reject(error);\n                     }\n                 });\n                 response.on(\"end\", () => {\n                     if (settled) return;\n                     settled = true;\n+                    cleanup();\n                     const responseHeaders = Object.fromEntries(\n                         Object.entries(response.headers).flatMap(([key, value]) =>\n                             value === undefined\n                                 ? []\n                                 : [[key.toLowerCase(), Array.isArray(value) ? value.join(\", \") : String(value)]]\n                         )\n                     );\n+                    const decodedBody = decodeResponseBody(Buffer.concat(chunks), responseHeaders[\"content-encoding\"]);\n+                    if (providerId === \"serienstream\") {\n+                        const location = responseHeaders.location;\n+                        let safeLocation: string | undefined;\n+                        if (location) {\n+                            try {\n+                                const parsedLocation = new URL(location, url);\n+                                safeLocation = `${parsedLocation.hostname}${parsedLocation.pathname}`;\n+                            } catch {\n+                                safeLocation = \"[invalid location]\";\n+                            }\n+                        }\n+                        console.warn(\"[repository-providers] Serienstream HTTP response:\", {\n+                            method,\n+                            url: `${url.hostname}${url.pathname}`,\n+                            status: response.statusCode ?? 0,\n+                            contentType: responseHeaders[\"content-type\"] ?? \"\",\n+                            contentEncoding: responseHeaders[\"content-encoding\"] ?? \"identity\",\n+                            bytes: total,\n+                            location: safeLocation,\n+                        });\n+                    }\n+                    // Fetch exposes the decoded body, not the wire encoding metadata.\n+                    delete responseHeaders[\"content-encoding\"];\n+                    delete responseHeaders[\"content-length\"];\n                     resolve({\n                         status: response.statusCode ?? 0,\n                         url: url.toString(),\n                         headers: responseHeaders,\n-                        body: Buffer.concat(chunks).toString(\"utf8\"),\n+                        body: decodedBody.toString(\"utf8\"),\n                     });\n                 });\n             }\n         );\n \n         const abort = () => request.destroy(new Error(\"Provider request was cancelled.\"));\n+        const cleanup = () => signal.removeEventListener(\"abort\", abort);\n         if (signal.aborted) abort();\n         else signal.addEventListener(\"abort\", abort, { once: true });\n \n         request.on(\"timeout\", () => request.destroy(new Error(\"Provider request timed out.\")));\n         request.on(\"error\", (error) => {\n             if (!settled) {\n                 settled = true;\n+                cleanup();\n+                if (providerId === \"serienstream\") {\n+                    console.warn(\"[repository-providers] Serienstream HTTP request failed:\", {\n+                        url: `${url.hostname}${url.pathname}`,\n+                        error: error.message,\n+                    });\n+                }\n                 reject(error);\n             }\n         });\n         request.end(body);\n     });\n }\n \n+/**\n+ * Serienstream's /r endpoint can return a small HTML page that navigates to\n+ * the actual hoster without an HTTP Location header. Parse only explicit,\n+ * static redirect declarations; never execute provider HTML or JavaScript.\n+ */\n+function serienstreamHtmlRedirect(body: string): { url: string | null; challenge: boolean } {\n+    if (/captcha|verify (?:that )?you are human|cf-chl-|cloudflare ray id|challenge-platform/i.test(body)) {\n+        return { url: null, challenge: true };\n+    }\n+\n+    const metaTag = body.match(/<meta\\b[^>]*>/gi)?.find((tag) => /http-equiv\\s*=\\s*[\"']?refresh[\"']?/i.test(tag));\n+    const metaContent = metaTag?.match(/content\\s*=\\s*[\"']([^\"']+)[\"']/i)?.[1];\n+    const metaTarget = metaContent?.match(/url\\s*=\\s*['\"]?([^;'\"]+)/i)?.[1]?.trim();\n+    const scriptTarget =\n+        body.match(/(?:window\\.)?location(?:\\.href)?\\s*=\\s*(['\"])(.*?)\\1/i)?.[2] ??\n+        body.match(/(?:window\\.)?location\\.replace\\(\\s*(['\"])(.*?)\\1\\s*\\)/i)?.[2];\n+    const target = (metaTarget || scriptTarget)?.replaceAll(\"\\\\/\", \"/\");\n+    if (!target) return { url: null, challenge: false };\n+\n+    try {\n+        const parsed = new URL(target, \"https://serienstream.to/\");\n+        if (parsed.protocol !== \"https:\" && parsed.protocol !== \"http:\") return { url: null, challenge: false };\n+        return { url: parsed.toString(), challenge: false };\n+    } catch {\n+        return { url: null, challenge: false };\n+    }\n+}\n+\n async function safeProviderFetch(\n     rawUrl: string,\n     init: ProviderFetchInit,\n-    signal: AbortSignal\n+    signal: AbortSignal,\n+    providerId?: string\n ): Promise<PinnedResponse> {\n     let url = new URL(rawUrl);\n     let method = init.method || \"GET\";\n     let body = init.body;\n     let headers = normalizeRequestHeaders(init.headers);\n \n-    for (let redirectCount = 0; redirectCount <= 3; redirectCount++) {\n-        const response = await requestPinned(url, { method, body, headers }, signal);\n-        const location = response.headers.location;\n-        if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;\n-        if (redirectCount === 3) throw new Error(\"Too many provider redirects.\");\n+    for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {\n+        const response = await requestPinned(url, { method, body, headers }, signal, providerId);\n+        let location = response.headers.location;\n+        let redirectStatus = response.status;\n+\n+        // Limit HTML redirect handling to Serienstream's own /r endpoint.\n+        // CAPTCHA/challenge pages are reported, never solved or bypassed.\n+        if (\n+            !location &&\n+            providerId === \"serienstream\" &&\n+            url.hostname === \"serienstream.to\" &&\n+            url.pathname === \"/r\" &&\n+            response.status >= 200 &&\n+            response.status < 300 &&\n+            /html/i.test(response.headers[\"content-type\"] ?? \"\")\n+        ) {\n+            const parsed = serienstreamHtmlRedirect(response.body);\n+            if (parsed.challenge) {\n+                console.warn(\n+                    \"[repository-providers] Serienstream /r returned a challenge page; no redirect attempted.\"\n+                );\n+            } else if (parsed.url) {\n+                location = parsed.url;\n+                redirectStatus = 302;\n+                console.info(\"[repository-providers] Serienstream /r HTML redirect detected.\");\n+            } else {\n+                console.warn(\"[repository-providers] Serienstream /r returned HTML without an explicit redirect.\");\n+            }\n+        }\n+\n+        const isHttpRedirect = [301, 302, 303, 307, 308].includes(redirectStatus) && Boolean(location);\n+        if (!isHttpRedirect || !location) return response;\n+        if (redirectCount === MAX_REDIRECTS) throw new Error(\"Too many provider redirects.\");\n \n         const nextUrl = new URL(location, url);\n         if (nextUrl.origin !== url.origin) {\n@@ -192,8 +334,8 @@ async function safeProviderFetch(\n             );\n         }\n         if (\n-            response.status === 303 ||\n-            ((response.status === 301 || response.status === 302) && method.toUpperCase() === \"POST\")\n+            redirectStatus === 303 ||\n+            ((redirectStatus === 301 || redirectStatus === 302) && method.toUpperCase() === \"POST\")\n         ) {\n             method = \"GET\";\n             body = undefined;\n@@ -450,10 +592,10 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g\n \n     const requireFunction = vm.newFunction(\"require\", (name) => {\n         const moduleName = vm.getString(name);\n-        if (moduleName !== \"cheerio\" && moduleName !== \"crypto-js\") {\n+        if (moduleName !== \"cheerio\" && moduleName !== \"cheerio-without-node-native\" && moduleName !== \"crypto-js\") {\n             throw new Error('Provider module \"' + moduleName + '\" is not supported.');\n         }\n-        return vm.getProp(vm.global, moduleName === \"cheerio\" ? \"__cheerioModule\" : \"__cryptoJsModule\");\n+        return vm.getProp(vm.global, moduleName === \"crypto-js\" ? \"__cryptoJsModule\" : \"__cheerioModule\");\n     });\n     setFunction(\"require\", requireFunction);\n }\n@@ -655,7 +797,7 @@ export async function executeNuvioProvider(\n         deferredPromises.push(deferred);\n \n         const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(\n-            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal)\n+            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId)\n         );\n         void requestPromise\n             .then((response) => {"
-      }
-    ]
+      "proposedCorrectionPullRequest": "https://github.com/cufi12/debridui/pull/24"
+    },
+    "ci": {
+      "mainRunId": 44879056046,
+      "mainRunUrl": "https://github.com/cufi12/debridui/actions/runs/44879056046",
+      "conclusion": "failure",
+      "failedStep": "Typecheck and lint",
+      "detail": "TypeScript completed; Biome check failed with one error, one warning and 22 informational diagnostics. Diagnostic output was truncated; IPv4 SSRF and QuickJS runtime smoke steps were skipped.",
+      "prNumber": 24,
+      "prUrl": "https://github.com/cufi12/debridui/pull/24",
+      "prHeadSha": "ff53e0fc18ee585b05e6169509a8c96594b700d1",
+      "prChecks": "pending_or_not_yet_verified"
+    }
   },
   "notes": [
     "All 20 checked-in provider files and manifest.json were retrieved from upstream GitHub main and SHA-256 hashed.",
