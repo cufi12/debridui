@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 export async function POST(request: Request) {
-    if (new URL(request.url).protocol !== "https:" && process.env.NODE_ENV === "production") {
+    const requestUrl = new URL(request.url);
+    const origin = request.headers.get("origin");
+    if (origin && origin !== requestUrl.origin) {
+        return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    }
+    if (requestUrl.protocol !== "https:" && process.env.NODE_ENV === "production") {
         return NextResponse.json({ error: "HTTPS required" }, { status: 400 });
     }
 
