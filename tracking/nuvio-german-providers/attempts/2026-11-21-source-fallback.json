@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "nuvio-german-providers-source-fallback-attempt",
+  "status": "published-deployment-unverified",
+  "complete": false,
+  "baselineEligible": false,
+  "recordedAt": "2026-11-21T10:33:54+01:00",
+  "sourceSnapshotPath": "tracking/nuvio-german-providers/latest-source.json",
+  "publishedManifestUrl": "https://invalidpandaa.github.io/nuvio-german-providers/manifest.json",
+  "publishedManifestStatus": "unavailable",
+  "upstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
+  "manifestVersion": "1.0.5",
+  "providerFilesRetrieved": 20,
+  "providerFilesExpected": 20,
+  "comparison": {
+    "previousArtifact": "attempts/2026-11-14-incomplete.json",
+    "previousUpstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
+    "previousManifestBlobSha1": "2f59428a830ef992e983deb19c393418a72686fe",
+    "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
+    "manifestBlobUnchanged": true,
+    "manifestSha256RecordedValueMismatch": true,
+    "manifestSha256MismatchNote": "The previous attempt recorded a different manifest SHA-256 despite the identical Git blob SHA. The current hash was recomputed from the exact fetched file content; the stable blob SHA confirms the checked-in manifest did not change.",
+    "addedProviders": [
+      "netzkino",
+      "ard",
+      "plutotv",
+      "arte",
+      "filmfrei24",
+      "filmo",
+      "flixitv",
+      "serienstream",
+      "aniworld",
+      "dmax",
+      "tele5",
+      "tlc",
+      "southpark",
+      "moflix",
+      "huhuto",
+      "filmpalast",
+      "megakino",
+      "hdfilme",
+      "kinoking",
+      "kellerkino"
+    ],
+    "removedProviders": [],
+    "changedProviderFiles": [],
+    "hostChanges": [
+      {
+        "id": "netzkino",
+        "added": [
+          "api.netzkino.de.simplecache.net",
+          "api.themoviedb.org",
+          "pmd.netzkino-seite.netzkino.de",
+          "www.netzkino.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "ard",
+        "added": [
+          "api.ardmediathek.de",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "plutotv",
+        "added": [
+          "api.themoviedb.org",
+          "boot.pluto.tv"
+        ],
+        "removed": []
+      },
+      {
+        "id": "arte",
+        "added": [
+          "api.arte.tv",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmfrei24",
+        "added": [
+          "api.themoviedb.org",
+          "filmfrei24.com"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmo",
+        "added": [
+          "api.themoviedb.org",
+          "filmo.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "flixitv",
+        "added": [
+          "api.themoviedb.org",
+          "flixitv-stream.eu"
+        ],
+        "removed": []
+      },
+      {
+        "id": "serienstream",
+        "added": [
+          "api.themoviedb.org",
+          "serienstream.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "aniworld",
+        "added": [
+          "aniworld.to",
+          "api.themoviedb.org"
+        ],
+        "removed": []
+      },
+      {
+        "id": "dmax",
+        "added": [
+          "api.themoviedb.org",
+          "dmax.de",
+          "public.aurora.enhanced.live"
+        ],
+        "removed": []
+      },
+      {
+        "id": "tele5",
+        "added": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tele5.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "tlc",
+        "added": [
+          "api.themoviedb.org",
+          "public.aurora.enhanced.live",
+          "tlc.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "southpark",
+        "added": [
+          "topaz.paramount.tech",
+          "www.southpark.de"
+        ],
+        "removed": []
+      },
+      {
+        "id": "moflix",
+        "added": [
+          "api.themoviedb.org",
+          "moflix-stream.xyz"
+        ],
+        "removed": []
+      },
+      {
+        "id": "huhuto",
+        "added": [
+          "api.themoviedb.org",
+          "huhu.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "filmpalast",
+        "added": [
+          "api.themoviedb.org",
+          "filmpalast.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "megakino",
+        "added": [
+          "api.themoviedb.org",
+          "megakino4.to"
+        ],
+        "removed": []
+      },
+      {
+        "id": "hdfilme",
+        "added": [
+          "api.themoviedb.org",
+          "hdfilme.cafe",
+          "meinecloud.click"
+        ],
+        "removed": []
+      },
+      {
+        "id": "kinoking",
+        "added": [
+          "api.themoviedb.org",
+          "kinoking.cc",
+          "meinecloud.click"
+        ],
+        "removed": []
+      },
+      {
+        "id": "kellerkino",
+        "added": [
+          "api.themoviedb.org",
+          "www.kellerkino.com"
+        ],
+        "removed": []
+      }
+    ]
+  },
+  "targetProject": {
+    "repository": "cufi12/debridui",
+    "branch": "main",
+    "previousCommit": "8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0",
+    "currentCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+    "comparisonStatus": "ahead",
+    "aheadBy": 22,
+    "behindBy": 0,
+    "changedFiles": [
+      {
+        "path": ".github/workflows/android-tv-release.yml",
+        "status": "added",
+        "additions": 115,
+        "deletions": 0,
+        "changes": 115
+      },
+      {
+        "path": ".github/workflows/verify.yml",
+        "status": "modified",
+        "additions": 7,
+        "deletions": 29,
+        "changes": 36
+      },
+      {
+        "path": "android/app/build.gradle",
+        "status": "modified",
+        "additions": 36,
+        "deletions": 2,
+        "changes": 38
+      },
+      {
+        "path": "android/app/src/main/java/com/debridui/tv/MainActivity.kt",
+        "status": "modified",
+        "additions": 235,
+        "deletions": 4,
+        "changes": 239
+      },
+      {
+        "path": "docs/android-tv-releases.md",
+        "status": "added",
+        "additions": 41,
+        "deletions": 0,
+        "changes": 41
+      },
+      {
+        "path": "docs/provider-repositories.md",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 1,
+        "changes": 2
+      },
+      {
+        "path": "scripts/provider-ipv4-ssrf-test.ts",
+        "status": "added",
+        "additions": 31,
+        "deletions": 0,
+        "changes": 31
+      },
+      {
+        "path": "scripts/provider-runtime-smoke.ts",
+        "status": "modified",
+        "additions": 27,
+        "deletions": 1,
+        "changes": 28
+      },
+      {
+        "path": "src/app/(auth)/(app)/addons/_components/repository-provider-list-section.tsx",
+        "status": "added",
+        "additions": 192,
+        "deletions": 0,
+        "changes": 192
+      },
+      {
+        "path": "src/app/(auth)/(app)/addons/page.tsx",
+        "status": "modified",
+        "additions": 2,
+        "deletions": 0,
+        "changes": 2
+      },
+      {
+        "path": "src/app/layout.tsx",
+        "status": "modified",
+        "additions": 4,
+        "deletions": 0,
+        "changes": 4
+      },
+      {
+        "path": "src/features/media/components/sources.tsx",
+        "status": "modified",
+        "additions": 15,
+        "deletions": 4,
+        "changes": 19
+      },
+      {
+        "path": "src/features/media/utils/source-selector.ts",
+        "status": "modified",
+        "additions": 13,
+        "deletions": 33,
+        "changes": 46
+      },
+      {
+        "path": "src/features/plugins/actions/provider-streams.ts",
+        "status": "modified",
+        "additions": 2,
+        "deletions": 2,
+        "changes": 4
+      },
+      {
+        "path": "src/features/plugins/actions/repositories.ts",
+        "status": "modified",
+        "additions": 83,
+        "deletions": 2,
+        "changes": 85
+      },
+      {
+        "path": "src/lib/addons/parser.ts",
+        "status": "modified",
+        "additions": 24,
+        "deletions": 13,
+        "changes": 37
+      },
+      {
+        "path": "src/lib/plugins/provider-runtime.ts",
+        "status": "modified",
+        "additions": 157,
+        "deletions": 15,
+        "changes": 172
+      }
+    ],
+    "providerRuntime": {
+      "path": "src/lib/plugins/provider-runtime.ts",
+      "blobSha1": "6824e362e892c5899bb91fbd95bd4e7da6eb55fd",
+      "sha256": "794920e2b395acc00afa89d91a6ee4ed394ff759f4ef486bb56d63a23364e965",
+      "bytes": 40326
+    },
+    "providerAdapter": {
+      "path": "src/lib/plugins/provider-adapter.ts",
+      "blobSha1": "3e95d304b82fca6dff3d3708449a56b60413c375",
+      "sha256": "3e3f2925aebef79e5d240cb12c77073f56d2e90c727b01907e306d9344646f66",
+      "bytes": 6868
+    },
+    "providerStreamsAction": {
+      "path": "src/features/plugins/actions/provider-streams.ts",
+      "blobSha1": "b1b0a4c8cde826305358d2edb5e106aaa0557fc7",
+      "sha256": "2aa9f4f4804ba2f33e774cb8ca0265147d9a7c065f0bf804fe579d1033594df2",
+      "bytes": 3729
+    }
+  },
+  "notes": [
+    "All 20 checked-in provider files and manifest.json were retrieved from upstream GitHub main and SHA-256 hashed.",
+    "The public GitHub Pages manifest failed DNS resolution, so deployed manifest and provider bytes remain unverified.",
+    "No published-deployment baseline was advanced."
+  ]
+}
