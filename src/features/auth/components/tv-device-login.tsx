@@ -109,7 +109,6 @@ export function TvDeviceLogin() {
             {qrUrl ? (
                 <div className="mx-auto mt-4 w-fit rounded-lg bg-white p-3">
                     {/* The QR image service receives only the public /device URL, not the one-time code. */}
-                    {/* biome-ignore lint/a11y/useAltText: QR code is described by the adjacent instructions. */}
                     <img src={qrUrl} width="220" height="220" alt="QR-Code zur Geräteanmeldung" />
                 </div>
             ) : (
@@ -124,7 +123,9 @@ export function TvDeviceLogin() {
                 </>
             )}
             {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-            <p className="mt-4 text-xs text-muted-foreground">Bestätige den Code nur, wenn er auf diesem Fernseher angezeigt wird.</p>
+            <p className="mt-4 text-xs text-muted-foreground">
+                Bestätige den Code nur, wenn er auf diesem Fernseher angezeigt wird.
+            </p>
         </section>
     );
 }
