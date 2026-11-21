@@ -118,7 +118,10 @@ export function TvDeviceLogin() {
             )}
             {request && (
                 <>
-                    <p className="mt-4 text-sm text-muted-foreground">Oder öffne <span className="font-medium text-foreground">{request.verification_uri}</span> am Handy und gib diesen Code ein:</p>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                        Oder öffne <span className="font-medium text-foreground">{request.verification_uri}</span> am
+                        Handy und gib diesen Code ein:
+                    </p>
                     <p className="mt-2 text-3xl font-bold tracking-[0.2em]">{request.user_code}</p>
                 </>
             )}
