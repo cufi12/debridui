@@ -1131,7 +1131,11 @@
       "prNumber": 24,
       "prUrl": "https://github.com/cufi12/debridui/pull/24",
       "prHeadSha": "ff53e0fc18ee585b05e6169509a8c96594b700d1",
-      "prChecks": "pending_or_not_yet_verified"
+      "prChecks": "failure",
+      "prRunId": 44891257575,
+      "prRunUrl": "https://github.com/cufi12/debridui/actions/runs/44891257575",
+      "prConclusion": "failure",
+      "prFailureDetail": "The PR Verify run also failed in Typecheck and lint: tsc completed, Biome check failed with one error, one warning and 22 infos; four diagnostics were omitted by the configured cap. The IPv4 SSRF and QuickJS runtime smoke steps were skipped. The same failure summary is present on main."
     }
   },
   "safety": {
