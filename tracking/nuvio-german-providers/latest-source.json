@@ -747,200 +747,72 @@
     "previousManifestSha256Recorded": "9cd2745586faa361f44a70effa9116612e99652c7f5f34fd01b5f8a162271679",
     "manifestBlobUnchanged": true,
     "manifestSha256RecordedValueMismatch": true,
-    "manifestSha256MismatchNote": "The previous attempt recorded a different manifest SHA-256 despite the identical Git blob SHA. The current hash was recomputed from the exact fetched file content; the stable blob SHA confirms the checked-in manifest did not change.",
-    "addedProviders": [
-      "netzkino",
-      "ard",
-      "plutotv",
-      "arte",
-      "filmfrei24",
-      "filmo",
-      "flixitv",
-      "serienstream",
-      "aniworld",
-      "dmax",
-      "tele5",
-      "tlc",
-      "southpark",
-      "moflix",
-      "huhuto",
-      "filmpalast",
-      "megakino",
-      "hdfilme",
-      "kinoking",
-      "kellerkino"
-    ],
+    "manifestSha256MismatchNote": "The prior attempt's recorded SHA-256 differs from the recomputed current value, while the manifest Git blob SHA is identical. The manifest file itself is therefore unchanged; the earlier SHA-256 field is treated as a stale/inconsistent record.",
+    "addedProviders": [],
     "removedProviders": [],
-    "changedProviderFiles": [],
-    "hostChanges": [
-      {
-        "id": "netzkino",
-        "added": [
-          "api.netzkino.de.simplecache.net",
-          "api.themoviedb.org",
-          "pmd.netzkino-seite.netzkino.de",
-          "www.netzkino.de"
-        ],
-        "removed": []
-      },
-      {
-        "id": "ard",
-        "added": [
-          "api.ardmediathek.de",
-          "api.themoviedb.org"
-        ],
-        "removed": []
-      },
-      {
-        "id": "plutotv",
-        "added": [
-          "api.themoviedb.org",
-          "boot.pluto.tv"
-        ],
-        "removed": []
-      },
-      {
-        "id": "arte",
-        "added": [
-          "api.arte.tv",
-          "api.themoviedb.org"
-        ],
-        "removed": []
-      },
-      {
-        "id": "filmfrei24",
-        "added": [
-          "api.themoviedb.org",
-          "filmfrei24.com"
-        ],
-        "removed": []
-      },
-      {
-        "id": "filmo",
-        "added": [
-          "api.themoviedb.org",
-          "filmo.to"
-        ],
-        "removed": []
-      },
-      {
-        "id": "flixitv",
-        "added": [
-          "api.themoviedb.org",
-          "flixitv-stream.eu"
-        ],
-        "removed": []
-      },
-      {
-        "id": "serienstream",
-        "added": [
-          "api.themoviedb.org",
-          "serienstream.to"
-        ],
-        "removed": []
-      },
-      {
-        "id": "aniworld",
-        "added": [
-          "aniworld.to",
-          "api.themoviedb.org"
-        ],
-        "removed": []
-      },
-      {
-        "id": "dmax",
-        "added": [
-          "api.themoviedb.org",
-          "dmax.de",
-          "public.aurora.enhanced.live"
-        ],
-        "removed": []
-      },
+    "changedProviderFiles": [
       {
         "id": "tele5",
-        "added": [
-          "api.themoviedb.org",
-          "public.aurora.enhanced.live",
-          "tele5.de"
-        ],
-        "removed": []
+        "path": "providers/tele5.js",
+        "old": "c48a95154b5be6a67a2b9c449abdae31fa8a4139ade4d352f60f7b1b5fdcd2da",
+        "new": "017c7940f2bd98deda010c03871af1e981bd899027c5ace7c76150c7129bf33a"
       },
       {
         "id": "tlc",
-        "added": [
-          "api.themoviedb.org",
-          "public.aurora.enhanced.live",
-          "tlc.de"
-        ],
-        "removed": []
+        "path": "providers/tlc.js",
+        "old": "8346e9369910151394282b8bbe74550d2ab720d8191223ee11ab1b70fe98388e",
+        "new": "68e1dd9dafb087b9e9eabeb014a0e5024e2499062b62e4c5445e546c89d1cc19"
       },
       {
         "id": "southpark",
-        "added": [
-          "topaz.paramount.tech",
-          "www.southpark.de"
-        ],
-        "removed": []
+        "path": "providers/southpark.js",
+        "old": "6905b963e2775d2d86d00cadbe9d833818ee5a2e1d774779dfc4774646ed3660",
+        "new": "e47012b6d771c1b25865cf0a007dcc8da059208bdce9773f1bed6943442c8fcc"
       },
       {
         "id": "moflix",
-        "added": [
-          "api.themoviedb.org",
-          "moflix-stream.xyz"
-        ],
-        "removed": []
+        "path": "providers/moflix.js",
+        "old": "09d06a7fdeed184fbc4e8d21b92507293c47469ca12962a5e3deee10e7482134",
+        "new": "78b727d8b3bcdee800637ff07f00a1cd49c642b3e29b0f1f27263af5a861142c"
       },
       {
         "id": "huhuto",
-        "added": [
-          "api.themoviedb.org",
-          "huhu.to"
-        ],
-        "removed": []
+        "path": "providers/huhuto.js",
+        "old": "5d5f078248dcfddccbc8fcc254944e477c823b812904712830540f4bca3970d6",
+        "new": "5e1259e1ec5acc4710a5bb52d089bbbc7193cf965acddde91653300db0753352"
       },
       {
         "id": "filmpalast",
-        "added": [
-          "api.themoviedb.org",
-          "filmpalast.to"
-        ],
-        "removed": []
+        "path": "providers/filmpalast.js",
+        "old": "00aa1328b9aa41dc7f37d28376fd3d40df6e6506da1dc6917b0cc990af77a3b0",
+        "new": "a8c668c9a9b0f212d978af7bda4c93d994a9c028d0049c9b46e9391e4ae7f29e"
       },
       {
         "id": "megakino",
-        "added": [
-          "api.themoviedb.org",
-          "megakino4.to"
-        ],
-        "removed": []
+        "path": "providers/megakino.js",
+        "old": "80980f55038919b0e8dcd7efeb2d63aef22ee64d20b2301e6d7108fa3b9ddfc8",
+        "new": "d255aacaea0c882f0872c49f4ac214b4dbd9caa4192f96f86f06f45d17fcf5ad"
       },
       {
         "id": "hdfilme",
-        "added": [
-          "api.themoviedb.org",
-          "hdfilme.cafe",
-          "meinecloud.click"
-        ],
-        "removed": []
+        "path": "providers/hdfilme.js",
+        "old": "090c2063750c7b19760878ed266bce3b7de88f71caf37215f4ff8853f4bb50e4",
+        "new": "c61b6125663b79e27ca0aa08561440ead546ac528439217b386589b3ff08dd6d"
       },
       {
         "id": "kinoking",
-        "added": [
-          "api.themoviedb.org",
-          "kinoking.cc",
-          "meinecloud.click"
-        ],
-        "removed": []
+        "path": "providers/kinoking.js",
+        "old": "551235a1cbc6b31c084aef7ff8e2bbc7b719fdefb9ef8d9536b35d4c40764c93",
+        "new": "d547c68709301729c994ef0e364b4e829a85e28618aef72687ae16ce8b55c0e3"
       },
       {
         "id": "kellerkino",
-        "added": [
-          "api.themoviedb.org",
-          "www.kellerkino.com"
-        ],
-        "removed": []
+        "path": "providers/kellerkino.js",
+        "old": "762778e161148528dd3e072a3ced516dbef5a23ac22e4b33d26a25a81343795d",
+        "new": "bb1bf84a572aa6cd8a457d77833ea853dab6cde41d3b3719e99b5084998f4c3d"
       }
-    ]
+    ],
+    "hostChanges": []
   },
   "hostnameInventory": {
     "primaryProviderHosts": [
@@ -1198,6 +1070,12 @@
       "blobSha1": "b1b0a4c8cde826305358d2edb5e106aaa0557fc7",
       "sha256": "2aa9f4f4804ba2f33e774cb8ca0265147d9a7c065f0bf804fe579d1033594df2",
       "bytes": 3729
+    },
+    "compareUrl": "https://github.com/cufi12/debridui/compare/8af4a1ac515ce841d6be0fd5865d9356fbc0a1f0...2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+    "repositoryAdapter": {
+      "path": "src/features/plugins/actions/repositories.ts",
+      "blobSha1": "731fef8562303b2bef3dc264dba9a626c9079161",
+      "bytes": 20702
     }
   },
   "safety": {
