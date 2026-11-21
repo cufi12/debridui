@@ -39,26 +39,34 @@ export function selectBestSource(
 ): SelectionResult {
     const range = getActiveRange(settings);
 
-    // Filter sources that match preferences
+    // First try sources inside the user's quality preferences.
     const matchingSources = sources.filter(
         (source) =>
-            source.url && // Must have a playable URL
+            source.url &&
             matchesResolutionRange(source, range) &&
             matchesSourceQualityRange(source, range)
     );
+
+    // If none of those sources is cached, fall back to any cached playable source.
+    // This allows a cached 720p release to beat an uncached 1080p release instead
+    // of showing "Not cached" when a lower-resolution cached option exists.
+    const cachedPreferred = matchingSources.some((source) => source.isCached)
+        ? matchingSources.filter((source) => source.isCached)
+        : sources.filter((source) => source.url && source.isCached);
+    const candidates = cachedPreferred.length > 0 ? cachedPreferred : matchingSources;
 
     // Rank only a single, unambiguous language indication.
     const getLanguagePriority = (source: AddonSource): number => {
         const metadata = source.title + " " + (source.description || "");
         const flags = [
-            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\s*[:=]?\s*DE\b/i.test(
+            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\\s*[:=]?\\s*DE\\b/i.test(
                 metadata
             ),
-            /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\s*[:=]?\s*EN\b/i.test(metadata),
-            /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\s*[:=]?\s*ES\b/i.test(
+            /(?:^|[^A-Z0-9])(?:ENG|ENGLISH|EN)(?=$|[^A-Z0-9])|🇬🇧|🇺🇸|AUDIO\\s*[:=]?\\s*EN\\b/i.test(metadata),
+            /(?:^|[^A-Z0-9])(?:SPA|SPANISH|ESPANOL|ESPAÑOL|CASTELLANO|ESP)(?=$|[^A-Z0-9])|🇪🇸|AUDIO\\s*[:=]?\\s*ES\\b/i.test(
                 metadata
             ),
-            /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\s*[:=]?\s*IT\b/i.test(metadata),
+            /(?:^|[^A-Z0-9])(?:ITA|ITALIAN|ITALIANO|IT)(?=$|[^A-Z0-9])|🇮🇹|AUDIO\\s*[:=]?\\s*IT\\b/i.test(metadata),
         ];
         if (flags.filter(Boolean).length !== 1) return 2;
         if (flags[0]) return 0;
@@ -71,19 +79,15 @@ export function selectBestSource(
         const languageDiff = getLanguagePriority(a) - getLanguagePriority(b);
         if (languageDiff !== 0) return languageDiff;
 
-        // Within the same language, prefer cached sources, then resolution and source quality.
-        const cacheDiff = Number(Boolean(b.isCached)) - Number(Boolean(a.isCached));
-        if (cacheDiff !== 0) return cacheDiff;
-
         const resolutionDiff = getResolutionIndex(a.resolution) - getResolutionIndex(b.resolution);
         if (resolutionDiff !== 0) return resolutionDiff;
 
         return getSourceQualityIndex(a.quality) - getSourceQualityIndex(b.quality);
     };
 
-    const sortedMatches = [...matchingSources].sort(sortByPriority);
-    const cachedMatches = sortedMatches.filter((s) => s.isCached);
-    const uncachedMatches = sortedMatches.filter((s) => !s.isCached);
+    const sortedMatches = [...candidates].sort(sortByPriority);
+    const cachedMatches = sortedMatches.filter((source) => source.isCached);
+    const uncachedMatches = sortedMatches.filter((source) => !source.isCached);
 
     if (sortedMatches.length > 0) {
         return {
