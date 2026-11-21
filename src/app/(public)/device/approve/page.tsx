@@ -41,7 +41,7 @@ export default function DeviceApprovalPage() {
             : await authClient.device.deny({ userCode });
         setBusy(false);
         if (result.error) {
-            setError(result.error.message || "Die Entscheidung konnte nicht gespeichert werden.");
+            setError(result.error.error_description || "Die Entscheidung konnte nicht gespeichert werden.");
             return;
         }
         router.replace(action === "approve" ? "/?device=approved" : "/?device=denied");
