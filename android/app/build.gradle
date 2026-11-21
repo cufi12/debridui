@@ -9,6 +9,13 @@ def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = [releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword]
     .every { value -> value != null && !value.trim().isEmpty() }
+def isTaggedRelease = (System.getenv('GITHUB_REF') ?: '').startsWith('refs/tags/tv-v')
+
+if (isTaggedRelease && !hasReleaseSigning) {
+    throw new GradleException(
+        'Android TV tagged releases require ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD.'
+    )
+}
 
 android {
     namespace 'com.debridui.tv'
