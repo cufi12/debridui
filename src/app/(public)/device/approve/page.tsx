@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 type DeviceRequest = {
@@ -10,7 +10,7 @@ type DeviceRequest = {
     scope?: string;
 };
 
-export default function DeviceApprovalPage() {
+function DeviceApprovalContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const userCode = (searchParams.get("user_code") || "").replace(/[^a-z0-9]/gi, "").toUpperCase();
@@ -106,5 +106,18 @@ export default function DeviceApprovalPage() {
                 {!request && <p className="mt-3 text-center text-xs text-muted-foreground">Prüfe den Gerätecode …</p>}
             </div>
         </main>
+    );
+}
+
+export default function DeviceApprovalPage() {
+    return (
+        <Suspense
+            fallback={
+                <main className="flex min-h-svh items-center justify-center p-6 text-muted-foreground">
+                    Lade Geräteanmeldung …
+                </main>
+            }>
+            <DeviceApprovalContent />
+        </Suspense>
     );
 }
