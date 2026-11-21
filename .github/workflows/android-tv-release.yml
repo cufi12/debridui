@@ -50,18 +50,42 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64" || (echo "Missing ANDROID_KEYSTORE_BASE64 repository secret" && exit 1)
-          test -n "$ANDROID_KEYSTORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD repository secret" && exit 1)
-          test -n "$ANDROID_KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS repository secret" && exit 1)
-          test -n "$ANDROID_KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD repository secret" && exit 1)
+          set -euo pipefail
+          for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Missing required repository secret: $secret_name"
+              exit 1
+            fi
+          done
 
-      - name: Prepare signing key
+      - name: Prepare and verify signing key
         if: startsWith(github.ref, 'refs/tags/tv-v')
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/debridui-release.keystore"
-          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/debridui-release.keystore" >> "$GITHUB_ENV"
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/debridui-release.keystore"
+
+          # GitHub secrets may contain wrapped Base64; remove whitespace before decoding.
+          if ! printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$KEYSTORE_PATH"; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not valid Base64. Re-encode the original keystore file and update the repository secret."
+            exit 1
+          fi
+
+          if [[ ! -s "$KEYSTORE_PATH" ]]; then
+            echo "::error::Decoded Android keystore is empty."
+            exit 1
+          fi
+
+          # Confirm that the file is a readable keystore and the configured alias exists.
+          if ! keytool -list -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::The decoded keystore, store password, or key alias is invalid. Check the existing signing credentials."
+            exit 1
+          fi
+
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
       - name: Build release APK
         env:
@@ -70,6 +94,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           APP_VERSION_NAME: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
           gradle -p android :app:assembleRelease --no-daemon
           if [[ "$GITHUB_REF" == refs/tags/tv-v* ]]; then
             cp android/app/build/outputs/apk/release/app-release.apk DebridUI-TV.apk
