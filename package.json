@@ -26,7 +26,7 @@
         "lint:fix": "biome lint --write",
         "format": "biome format --write",
         "format:check": "biome format",
-        "check": "biome check",
+        "check": "biome check --max-diagnostics=100",
         "check:fix": "biome check --write",
         "typecheck": "tsc --noEmit",
         "verify": "bun run typecheck && bun run check",

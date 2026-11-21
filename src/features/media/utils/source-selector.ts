@@ -35,7 +35,7 @@ export interface SelectionResult {
 export function selectBestSource(
     sources: AddonSource[],
     settings: StreamingSettings,
-    germanReleaseNames: string[] = []
+    _germanReleaseNames: string[] = []
 ): SelectionResult {
     const range = getActiveRange(settings);
 
