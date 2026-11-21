@@ -94,7 +94,14 @@ export default function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={cn("font-sans antialiased")}>
                 <header className="sticky top-0 z-50 flex h-16 items-center border-b border-white/10 bg-[#101114]/95 px-6 backdrop-blur">
-                    <Image src="/logo.svg" alt="DebridUI" width={145} height={32} priority className="h-8 w-auto invert" />
+                    <Image
+                        src="/logo.svg"
+                        alt="DebridUI"
+                        width={145}
+                        height={32}
+                        priority
+                        className="h-8 w-auto invert"
+                    />
                 </header>
                 <Providers>{children}</Providers>
                 <Analytics />
