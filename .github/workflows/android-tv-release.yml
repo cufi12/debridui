@@ -64,6 +64,7 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           KEYSTORE_PATH="$RUNNER_TEMP/debridui-release.keystore"
@@ -84,6 +85,16 @@ jobs:
             echo "::error::The decoded keystore, store password, or key alias is invalid. Check the existing signing credentials."
             exit 1
           fi
+
+          # Generate a temporary certificate request to verify the private-key password.
+          # This reads the key but does not modify the keystore.
+          if ! keytool -certreq -alias "$ANDROID_KEY_ALIAS" -keystore "$KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" \
+            -file "$RUNNER_TEMP/signing-key-validation.csr" >/dev/null 2>&1; then
+            echo "::error::ANDROID_KEY_PASSWORD is invalid for the configured key alias."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/signing-key-validation.csr"
 
           echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
