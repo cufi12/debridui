@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 export default function DeviceAuthorizationPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { data: session, isPending } = authClient.useSession();
     const [userCode, setUserCode] = useState(searchParams.get("user_code") || "");
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -15,13 +16,17 @@ export default function DeviceAuthorizationPage() {
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError(null);
-        setBusy(true);
         const code = userCode.trim().replace(/[^a-z0-9]/gi, "").toUpperCase();
         if (!code) {
             setError("Bitte gib den Code vom Fernseher ein.");
-            setBusy(false);
             return;
         }
+        if (!session?.user) {
+            const returnTo = `/device?user_code=${encodeURIComponent(code)}`;
+            router.push(`/login?callbackUrl=${encodeURIComponent(returnTo)}`);
+            return;
+        }
+        setBusy(true);
 
         const { data, error: verifyError } = await authClient.device({
             query: { user_code: code },
@@ -54,8 +59,8 @@ export default function DeviceAuthorizationPage() {
                         className="w-full rounded-md border bg-background px-4 py-3 text-center text-2xl font-semibold tracking-[0.2em]"
                     />
                     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                    <button disabled={busy} className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">
-                        {busy ? "Prüfe Code …" : "Weiter"}
+                    <button disabled={busy || isPending} className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">
+                        {isPending ? "Lade …" : busy ? "Prüfe Code …" : "Weiter"}
                     </button>
                 </form>
                 <p className="mt-5 text-xs text-muted-foreground">
