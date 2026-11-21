@@ -33,7 +33,7 @@ export default function DeviceAuthorizationPage() {
             query: { user_code: code },
         });
         if (verifyError || !data) {
-            setError(verifyError?.message || "Der Code ist ungültig oder abgelaufen.");
+            setError(verifyError?.error_description || "Der Code ist ungültig oder abgelaufen.");
             setBusy(false);
             return;
         }
