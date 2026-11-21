@@ -177,8 +177,9 @@ const TIERS: { key: Tier; label: string; note: string }[] = [
 function bestFirst(a: AddonSource, b: AddonSource) {
     const cachedDiff = Number(!!b.isCached) - Number(!!a.isCached);
     if (cachedDiff !== 0) return cachedDiff;
-    const sizeDiff = parseSize(a.size) - parseSize(b.size);
-    if (sizeDiff !== 0) return sizeDiff;
+    const sizeA = parseSize(a.size);
+    const sizeB = parseSize(b.size);
+    if (sizeA !== sizeB) return sizeA - sizeB;
     return getSourceQualityIndex(a.quality) - getSourceQualityIndex(b.quality);
 }
 
