@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 type DeviceRequest = {
@@ -36,9 +36,10 @@ export default function DeviceApprovalPage() {
     async function decide(action: "approve" | "deny") {
         setBusy(true);
         setError(null);
-        const result = action === "approve"
-            ? await authClient.device.approve({ userCode })
-            : await authClient.device.deny({ userCode });
+        const result =
+            action === "approve"
+                ? await authClient.device.approve({ userCode })
+                : await authClient.device.deny({ userCode });
         setBusy(false);
         if (result.error) {
             setError(result.error.error_description || "Die Entscheidung konnte nicht gespeichert werden.");
@@ -48,7 +49,11 @@ export default function DeviceApprovalPage() {
     }
 
     if (isPending || !session?.user) {
-        return <main className="flex min-h-svh items-center justify-center p-6 text-muted-foreground">Lade Anmeldung …</main>;
+        return (
+            <main className="flex min-h-svh items-center justify-center p-6 text-muted-foreground">
+                Lade Anmeldung …
+            </main>
+        );
     }
 
     const recognized = request?.client_id === "debridui-tv";
@@ -63,19 +68,47 @@ export default function DeviceApprovalPage() {
                 <div className="mt-5 rounded-lg bg-muted p-4">
                     <p className="text-xs text-muted-foreground">Code auf dem Fernseher</p>
                     <p className="mt-1 text-2xl font-bold tracking-[0.2em]">{userCode}</p>
-                    <p className="mt-3 text-sm">Konto: <strong>{session.user.email}</strong></p>
-                    <p className="mt-1 text-sm">Anwendung: <strong>{recognized ? "DebridUI für Android TV" : "Unbekanntes Gerät"}</strong></p>
-                    <p className="mt-1 text-sm">Berechtigungen: <strong>{request?.scope || "DebridUI-Kontositzung"}</strong></p>
+                    <p className="mt-3 text-sm">
+                        Konto: <strong>{session.user.email}</strong>
+                    </p>
+                    <p className="mt-1 text-sm">
+                        Anwendung: <strong>{recognized ? "DebridUI für Android TV" : "Unbekanntes Gerät"}</strong>
+                    </p>
+                    <p className="mt-1 text-sm">
+                        Berechtigungen: <strong>{request?.scope || "DebridUI-Kontositzung"}</strong>
+                    </p>
                 </div>
                 <p className="mt-4 text-sm text-muted-foreground">
                     Bestätige nur, wenn derselbe Code gerade auf deinem eigenen Fernseher angezeigt wird. Teile diesen Code niemals mit anderen.
                 </p>
-                {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+                {error && (
+                    <p role="alert" className="mt-3 text-sm text-destructive">
+                        {error}
+                    </p>
+                )}
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                    <button disabled={busy || !recognized || !request} onClick={() => decide("deny")} className="rounded-md border px-4 py-3 font-medium disabled:opacity-50">Ablehnen</button>
-                    <button disabled={busy || !recognized || !request} onClick={() => decide("approve")} className="rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50">{busy ? "Bitte warten …" : "Bestätigen"}</button>
+                    <button
+                        type="button"
+                        disabled={busy || !recognized || !request}
+                        onClick={() => decide("deny")}
+                        className="rounded-md border px-4 py-3 font-medium disabled:opacity-50"
+                    >
+                        Ablehnen
+                    </button>
+                    <button
+                        type="button"
+                        disabled={busy || !recognized || !request}
+                        onClick={() => decide("approve")}
+                        className="rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                        {busy ? "Bitte warten …" : "Bestätigen"}
+                    </button>
                 </div>
-                {!request && <p className="mt-3 text-center text-xs text-muted-foreground">Prüfe den Gerätecode …</p>}
+                {!request && (
+                    <p className="mt-3 text-center text-xs text-muted-foreground">
+                        Prüfe den Gerätecode …
+                    </p>
+                )}
             </div>
         </main>
     );
