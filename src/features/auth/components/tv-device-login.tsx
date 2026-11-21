@@ -39,7 +39,7 @@ export function TvDeviceLogin() {
             const device = data as DeviceCode;
             interval = Math.max(5, device.interval || 5);
             setRequest(device);
-            setStatus("QR-Code mit dem Handy scannen und Anmeldung bestätigen");
+            setStatus("QR-Code scannen und den Code auf dem Handy eingeben");
             poll(device);
         }
 
@@ -96,12 +96,10 @@ export function TvDeviceLogin() {
         };
     }, []);
 
-    const completeUrl = request?.verification_uri_complete || (request
-        ? `${request.verification_uri}?user_code=${encodeURIComponent(request.user_code)}`
-        : "");
-
-    const qrUrl = completeUrl
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(completeUrl)}`
+    // QR provider receives only the public verification page, never the one-time code.
+    const verificationUrl = request ? new URL(request.verification_uri, window.location.origin).toString() : "";
+    const qrUrl = verificationUrl
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(verificationUrl)}`
         : "";
 
     return (
@@ -110,7 +108,7 @@ export function TvDeviceLogin() {
             <p className="mt-2 text-sm text-muted-foreground">{status}</p>
             {qrUrl ? (
                 <div className="mx-auto mt-4 w-fit rounded-lg bg-white p-3">
-                    {/* QR content is a short-lived verification URL for this TV request. */}
+                    {/* The QR image service receives only the public /device URL, not the one-time code. */}
                     {/* biome-ignore lint/a11y/useAltText: QR code is described by the adjacent instructions. */}
                     <img src={qrUrl} width="220" height="220" alt="QR-Code zur Geräteanmeldung" />
                 </div>
