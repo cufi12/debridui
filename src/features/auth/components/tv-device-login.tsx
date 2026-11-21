@@ -32,7 +32,7 @@ export function TvDeviceLogin() {
             });
             if (cancelled) return;
             if (requestError || !data) {
-                setError(requestError?.message || "Der QR-Code konnte nicht erstellt werden.");
+                setError(requestError?.error_description || "Der QR-Code konnte nicht erstellt werden.");
                 setStatus("Anmeldung nicht verfügbar");
                 return;
             }
@@ -81,7 +81,7 @@ export function TvDeviceLogin() {
                 return;
             }
             if (code && code !== "authorization_pending" && code !== "slow_down") {
-                setError(pollError?.message || "Verbindung fehlgeschlagen.");
+                setError(pollError?.error_description || "Verbindung fehlgeschlagen.");
                 setStatus("Anmeldung fehlgeschlagen");
                 return;
             }
