@@ -54,8 +54,11 @@ export default function LoginForm() {
                 toast.success("Logged in successfully");
                 router.push(callbackUrl);
             }
-        } catch {
-            toast.error("An unexpected error occurred");
+        } catch (error) {
+            // Keep the user-facing message generic, but retain the actual failure in
+            // WebView/remote debugging logs so Android-specific login issues can be diagnosed.
+            console.error("[DebridUI] Login submission failed:", error);
+            toast.error("Anmeldung fehlgeschlagen. Bitte versuche es erneut.");
         }
     }
 
