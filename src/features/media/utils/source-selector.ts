@@ -68,7 +68,7 @@ export function selectBestSource(
     // of showing "Not cached" when a lower-resolution cached option exists.
     const cachedPreferred = matchingSources.some((source) => source.isCached)
         ? matchingSources.filter((source) => source.isCached)
-        : sources.filter((source) => source.url && source.isCached);
+        : germanSources.filter((source) => source.isCached);
     const candidates = cachedPreferred.length > 0 ? cachedPreferred : matchingSources;
 
     // Rank only a single, unambiguous language indication.
