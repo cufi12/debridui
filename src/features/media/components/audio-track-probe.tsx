@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuthGuaranteed } from "@/features/auth/components/auth-provider";
@@ -36,43 +36,70 @@ function languageName(code: string | null): string {
     return code.toUpperCase();
 }
 
-export function AudioTrackProbe({ source }: { source: AddonSource }) {
+export function AudioTrackProbe({ source, auto = false }: { source: AddonSource; auto?: boolean }) {
     const { currentAccount } = useAuthGuaranteed();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<ProbeResponse | null>(null);
+    const autoChecked = useRef(false);
     const hash = source.magnet?.match(/urn:btih:([a-f0-9]{40})/i)?.[1];
 
-    if (currentAccount.type !== AccountType.REALDEBRID || !hash) return null;
+    const checkTracks = useCallback(
+        async (silent = false) => {
+            setLoading(true);
+            setResult(null);
+            try {
+                const response = await fetch("/api/media/audio-tracks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ accountId: currentAccount.id, hash }),
+                    cache: "no-store",
+                });
+                const data = (await response.json()) as ProbeResponse;
+                if (!response.ok) {
+                    if (silent) {
+                        setResult({ error: data.error || "Tonspur-Prüfung momentan nicht möglich." });
+                        return;
+                    }
+                    throw new Error(data.error || "Tonspur-Prüfung fehlgeschlagen.");
+                }
+                setResult(data);
+            } catch (error) {
+                if (silent) {
+                    setResult({ error: error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen." });
+                } else {
+                    toast.error(error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen.");
+                }
+            } finally {
+                setLoading(false);
+            }
+        },
+        [currentAccount.id, hash]
+    );
 
-    async function checkTracks() {
-        setLoading(true);
-        setResult(null);
-        try {
-            const response = await fetch("/api/media/audio-tracks", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accountId: currentAccount.id, hash }),
-                cache: "no-store",
-            });
-            const data = (await response.json()) as ProbeResponse;
-            if (!response.ok) throw new Error(data.error || "Tonspur-Prüfung fehlgeschlagen.");
-            setResult(data);
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen.");
-        } finally {
-            setLoading(false);
-        }
-    }
+    useEffect(() => {
+        if (currentAccount.type !== AccountType.REALDEBRID || !auto || !source.isCached || !hash || autoChecked.current)
+            return;
+        autoChecked.current = true;
+        void checkTracks(true);
+    }, [auto, source.isCached, hash, checkTracks, currentAccount.type]);
+
+    if (currentAccount.type !== AccountType.REALDEBRID || !hash) return null;
 
     const tracks = result?.audioTracks || [];
     const hasGerman = tracks.some(isGermanTrack);
 
     return (
         <div className="space-y-2">
-            <Button type="button" size="sm" variant="outline" onClick={checkTracks} disabled={loading}>
-                {loading ? "Prüfe Tonspuren…" : "Tonspuren prüfen"}
+            <Button type="button" size="sm" variant="outline" onClick={() => checkTracks(false)} disabled={loading}>
+                {loading ? "Prüfe Tonspuren…" : result ? "Tonspuren erneut prüfen" : "Tonspuren prüfen"}
             </Button>
-            {result && (
+            {result?.error && !result.verified && (
+                <p className="text-xs text-muted-foreground">
+                    {result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und
+                    starte die Prüfung erneut.
+                </p>
+            )}
+            {result?.verified && (
                 <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">

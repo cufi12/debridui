@@ -364,7 +364,7 @@ export function SimpleSources({ sources, request }: { sources: AddonSource[]; re
                         {active.addonName}
                     </p>
                     <p className="text-xs text-muted-foreground leading-snug wrap-break-word">{active.title}</p>
-                    <AudioTrackProbe source={active} />
+                    <AudioTrackProbe source={active} auto />
                     {active.description && (
                         <p className="text-[11px] leading-relaxed text-muted-foreground/70 whitespace-pre-wrap wrap-break-word">
                             {active.description}
