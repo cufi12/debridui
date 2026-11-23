@@ -1,4 +1,4 @@
-name: Build DebridUI Android TV APK
+name: Build DebridUI Android APKs
 
 on:
   workflow_dispatch:
@@ -42,18 +42,26 @@ jobs:
       - name: Build Android TV APK
         run: gradle -p android :app:assembleDebug --no-daemon
 
-      - name: Prepare APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk DebridUI-TV.apk
+      - name: Build Android Smartphone APK
+        run: gradle -p android :mobile:assembleDebug --no-daemon
 
-      - name: Publish APK download
+      - name: Prepare APKs
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk DebridUI-TV.apk
+          cp android/mobile/build/outputs/apk/debug/mobile-debug.apk DebridUI-Android.apk
+
+      - name: Publish APK downloads
         uses: softprops/action-gh-release@v2
         with:
           tag_name: tv-latest
-          name: DebridUI Android TV
+          name: DebridUI Android Apps
           body: |
-            Android TV wrapper for the hosted DebridUI web app.
-            Install DebridUI-TV.apk with Downloader on your Android TV.
+            DebridUI Android TV and Smartphone wrappers for https://debridui.onrender.com.
+            Install DebridUI-TV.apk on Android TV.
+            Install DebridUI-Android.apk on Android smartphones.
           prerelease: true
           make_latest: false
           overwrite_files: true
-          files: DebridUI-TV.apk
+          files: |
+            DebridUI-TV.apk
+            DebridUI-Android.apk
