@@ -43,8 +43,6 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
     const autoChecked = useRef(false);
     const hash = source.magnet?.match(/urn:btih:([a-f0-9]{40})/i)?.[1];
 
-    if (currentAccount.type !== AccountType.REALDEBRID || !hash) return null;
-
     const checkTracks = useCallback(async (silent = false) => {
         setLoading(true);
         setResult(null);
@@ -81,16 +79,18 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
         void checkTracks(true);
     }, [auto, source.isCached, hash, checkTracks]);
 
+    if (currentAccount.type !== AccountType.REALDEBRID || !hash) return null;
+
     const tracks = result?.audioTracks || [];
     const hasGerman = tracks.some(isGermanTrack);
 
     return (
         <div className="space-y-2">
-            <Button type="button" size="sm" variant="outline" onClick={checkTracks} disabled={loading}>
+            <Button type="button" size="sm" variant="outline" onClick={() => checkTracks(false)} disabled={loading}>
                 {loading ? "Prüfe Tonspuren…" : result ? "Tonspuren erneut prüfen" : "Tonspuren prüfen"}
             </Button>
             {result?.error && !result.verified && (
-                <p className="text-xs text-muted-foreground">{result.error} Füge die Quelle zuerst deinem Real-Debrid-Konto hinzu und starte die Prüfung erneut.</p>
+                <p className="text-xs text-muted-foreground">{result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und starte die Prüfung erneut.</p>
             )}
             {result && result.verified && (
                 <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-2">
