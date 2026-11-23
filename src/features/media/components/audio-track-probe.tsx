@@ -45,39 +45,40 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
 
     const checkTracks = useCallback(
         async (silent = false) => {
-        setLoading(true);
-        setResult(null);
-        try {
-            const response = await fetch("/api/media/audio-tracks", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accountId: currentAccount.id, hash }),
-                cache: "no-store",
-            });
-            const data = (await response.json()) as ProbeResponse;
-            if (!response.ok) {
-                if (silent) {
-                    setResult({ error: data.error || "Tonspur-Prüfung momentan nicht möglich." });
-                    return;
+            setLoading(true);
+            setResult(null);
+            try {
+                const response = await fetch("/api/media/audio-tracks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ accountId: currentAccount.id, hash }),
+                    cache: "no-store",
+                });
+                const data = (await response.json()) as ProbeResponse;
+                if (!response.ok) {
+                    if (silent) {
+                        setResult({ error: data.error || "Tonspur-Prüfung momentan nicht möglich." });
+                        return;
+                    }
+                    throw new Error(data.error || "Tonspur-Prüfung fehlgeschlagen.");
                 }
-                throw new Error(data.error || "Tonspur-Prüfung fehlgeschlagen.");
+                setResult(data);
+            } catch (error) {
+                if (silent) {
+                    setResult({ error: error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen." });
+                } else {
+                    toast.error(error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen.");
+                }
+            } finally {
+                setLoading(false);
             }
-            setResult(data);
-        } catch (error) {
-            if (silent) {
-                setResult({ error: error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen." });
-            } else {
-                toast.error(error instanceof Error ? error.message : "Tonspur-Prüfung fehlgeschlagen.");
-            }
-        } finally {
-            setLoading(false);
-        }
         },
         [currentAccount.id, hash]
     );
 
     useEffect(() => {
-        if (currentAccount.type !== AccountType.REALDEBRID || !auto || !source.isCached || !hash || autoChecked.current) return;
+        if (currentAccount.type !== AccountType.REALDEBRID || !auto || !source.isCached || !hash || autoChecked.current)
+            return;
         autoChecked.current = true;
         void checkTracks(true);
     }, [auto, source.isCached, hash, checkTracks, currentAccount.type]);
@@ -94,7 +95,8 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
             </Button>
             {result?.error && !result.verified && (
                 <p className="text-xs text-muted-foreground">
-                    {result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und starte die Prüfung erneut.
+                    {result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und
+                    starte die Prüfung erneut.
                 </p>
             )}
             {result?.verified && (
