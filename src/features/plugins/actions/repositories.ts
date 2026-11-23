@@ -67,12 +67,12 @@ async function currentUserId() {
 
 function validateRepositoryUrl(value: string) {
     const url = new URL(z.string().url().parse(value));
-    const allowed = ["raw.githubusercontent.com", "github.io", "gitlab.com", "gitlab.io", "codeberg.org"];
+    const allowed = ["raw.githubusercontent.com", "github.io", "gitlab.com", "gitlab.io", "codeberg.org", "git.invalidpanda.dev"];
     if (
         url.protocol !== "https:" ||
         !allowed.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))
     ) {
-        throw new Error("Erlaubt sind HTTPS-Manifest-URLs von GitHub, GitLab oder Codeberg.");
+        throw new Error("Erlaubt sind HTTPS-Manifest-URLs von GitHub, GitLab, Codeberg oder dem freigegebenen Forgejo-Host.");
     }
     if (!url.pathname.toLowerCase().endsWith("manifest.json")) {
         throw new Error("Die Repository-URL muss auf manifest.json enden.");
