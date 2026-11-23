@@ -39,9 +39,27 @@ export function selectBestSource(
 ): SelectionResult {
     const range = getActiveRange(settings);
 
-    // First try sources inside the user's quality preferences.
-    const matchingSources = sources.filter(
-        (source) => source.url && matchesResolutionRange(source, range) && matchesSourceQualityRange(source, range)
+    // Only consider sources that positively indicate German audio. Unknown-language
+    // and explicitly non-German releases must never be used as an automatic fallback.
+    const normalizeReleaseName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+    const germanNames = _germanReleaseNames.map(normalizeReleaseName).filter((name) => name.length >= 8);
+    const hasGermanAudio = (source: AddonSource): boolean => {
+        const metadata = `${source.title} ${source.description || ""}`;
+        const germanTag =
+            /(?:^|[^A-Z0-9])(?:GER|GERMAN|DEU|DEUTSCH(?:E|ER|ES)?|DE)(?=$|[^A-Z0-9])|🇩🇪|AUDIO\\s*[:=]?\\s*DE\\b/i.test(
+                metadata
+            );
+        if (germanTag) return true;
+
+        const normalizedMetadata = normalizeReleaseName(metadata);
+        return germanNames.some((name) => normalizedMetadata.includes(name));
+    };
+
+    // Apply the language requirement before cache and quality fallback logic.
+    const germanSources = sources.filter((source) => source.url && hasGermanAudio(source));
+    const matchingSources = germanSources.filter(
+        (source) => matchesResolutionRange(source, range) && matchesSourceQualityRange(source, range)
     );
 
     // If none of those sources is cached, fall back to any cached playable source.
@@ -49,7 +67,7 @@ export function selectBestSource(
     // of showing "Not cached" when a lower-resolution cached option exists.
     const cachedPreferred = matchingSources.some((source) => source.isCached)
         ? matchingSources.filter((source) => source.isCached)
-        : sources.filter((source) => source.url && source.isCached);
+        : germanSources.filter((source) => source.isCached);
     const candidates = cachedPreferred.length > 0 ? cachedPreferred : matchingSources;
 
     // Rank only a single, unambiguous language indication.
