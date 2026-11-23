@@ -244,7 +244,7 @@ export const useStreamingStore = create<StreamingState>()((set, get) => ({
                     position: TOAST_POSITION,
                     description:
                         allSources.length > 0
-                            ? "No sources match your quality preferences"
+                            ? "No source is positively identified as containing German audio. English, Spanish, and unknown-language sources were skipped."
                             : "No sources available from enabled addons or repository providers",
                 });
                 return;
