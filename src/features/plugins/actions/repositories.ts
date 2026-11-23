@@ -89,6 +89,52 @@ function validateRepositoryUrl(value: string) {
     return url.toString();
 }
 
+/** Accept common Nuvio manifest spelling/casing variants before strict validation. */
+function normalizeManifestInput(input: unknown): unknown {
+    if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+    const manifest = input as Record<string, unknown>;
+    const rawProviders = manifest.providers ?? manifest.scrapers ?? manifest.Scraper;
+    if (!Array.isArray(rawProviders)) {
+        return {
+            ...manifest,
+            name: manifest.name ?? manifest.Name,
+            version: manifest.version ?? manifest.Version,
+        };
+    }
+
+    const providers = rawProviders.map((entry) => {
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) return entry;
+        const provider = entry as Record<string, unknown>;
+        const rawTypes = provider.supportedTypes;
+        const supportedTypes = Array.isArray(rawTypes)
+            ? rawTypes.map((value) => {
+                  if (typeof value !== "string") return value;
+                  const normalized = value.toLowerCase();
+                  if (normalized === "film" || normalized === "movie") return "movie";
+                  if (normalized === "tv" || normalized === "serie" || normalized === "series") return "tv";
+                  return normalized;
+              })
+            : rawTypes;
+
+        return {
+            ...provider,
+            name: provider.name ?? provider.Name,
+            version: provider.version ?? provider.Version,
+            filename: provider.filename ?? provider.file ?? provider.Dateiname,
+            logo: provider.logo ?? provider.Logo,
+            supportedTypes,
+        };
+    });
+
+    return {
+        ...manifest,
+        name: manifest.name ?? manifest.Name,
+        version: manifest.version ?? manifest.Version,
+        providers: manifest.providers ? providers : undefined,
+        scrapers: manifest.providers ? manifest.scrapers : providers,
+    };
+}
+
 async function readLimitedText(response: Response, maxBytes = 1_000_000): Promise<string> {
     const declaredLength = Number(response.headers.get("content-length") || 0);
     if (declaredLength > maxBytes) throw new Error("Datei ist zu groß (maximal 1 MB).");
@@ -127,7 +173,7 @@ async function loadManifest(url: string) {
         });
         if (!response.ok) throw new Error(`Repository antwortet mit HTTP ${response.status}.`);
         const text = await readLimitedText(response);
-        const parsed = repositoryManifestSchema.parse(JSON.parse(text));
+        const parsed = repositoryManifestSchema.parse(normalizeManifestInput(JSON.parse(text)));
         const base = new URL(".", url);
         const providers = (parsed.providers ?? parsed.scrapers ?? []).map((provider) => {
             const file = new URL(provider.filename, base);
@@ -313,187 +359,35 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
                     }
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), 12_000);
+                    let source = "";
                     try {
                         const response = await fetch(file, {
-                            headers: { accept: "text/javascript, application/javascript, text/plain" },
                             cache: "no-store",
                             redirect: "error",
                             signal: controller.signal,
                         });
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const source = await readLimitedText(response, 500_000);
-                        const bytes = new TextEncoder().encode(source).byteLength;
-                        console.info("[repository-providers] Provider file loaded:", {
-                            providerId: provider.id,
-                            httpStatus: response.status,
-                            bytes,
-                        });
-                        return {
-                            repositoryId: repository.id,
-                            repositoryName: repository.name,
-                            providerId: provider.id,
-                            providerName: provider.name,
-                            source,
-                            bytes,
-                        };
+                        source = await readLimitedText(response, 500_000);
                     } finally {
                         clearTimeout(timeout);
                     }
+                    const bytes = Buffer.byteLength(source, "utf8");
+                    if (totalBytes + bytes > 6_000_000) throw new Error("Provider-Gesamtlimit überschritten.");
+                    totalBytes += bytes;
+                    return { repositoryId: repository.id, repositoryName: repository.name, providerId: provider.id, providerName: provider.name, source };
                 } catch (error) {
-                    console.warn("[repository-providers] Provider file load failed:", {
-                        providerId: provider.id,
-                        error: error instanceof Error ? error.message : String(error),
-                    });
-                    return {
-                        repositoryId: repository.id,
-                        repositoryName: repository.name,
-                        providerId: provider.id,
-                        providerName: provider.name,
-                        error: "Provider-Quelldatei konnte nicht geladen werden.",
-                        bytes: 0,
-                    };
+                    return { repositoryId: repository.id, repositoryName: repository.name, providerId: provider.id, providerName: provider.name, error: error instanceof Error ? error.message : "Provider-Datei konnte nicht geladen werden." };
                 }
             })
         );
-        for (const item of batch) {
-            if (item.source) {
-                if (totalBytes + item.bytes > 3_000_000) {
-                    output.push({
-                        repositoryId: item.repositoryId,
-                        repositoryName: item.repositoryName,
-                        providerId: item.providerId,
-                        providerName: item.providerName,
-                        error: "Gesamtlimit für Provider-Code erreicht.",
-                    });
-                    continue;
-                }
-                totalBytes += item.bytes;
-            }
-            const { bytes: _bytes, ...publicItem } = item;
-            output.push(publicItem);
-        }
+        output.push(...batch);
     }
-    console.info("[repository-providers] Provider file loading finished:", {
-        returnedProviders: output.length,
-        loadedProviders: output.filter((item) => Boolean(item.source)).length,
-        failedProviders: output.filter((item) => Boolean(item.error)).length,
-        totalBytes,
+
+    console.info("[repository-providers] Provider files loaded:", {
+        mediaType,
+        configuredProviders: providers.length,
+        loadedProviders: output.filter((item) => item.source).length,
+        sourceLoadFailures: output.filter((item) => item.error).length,
     });
     return output;
-}
-
-/** Check enabled provider files without executing their code. */
-export async function getRepositoryProviderFileStatuses() {
-    const userId = await currentUserId();
-    const repositories = await readRepositories(userId);
-    const providers = repositories
-        .flatMap((repository) =>
-            repository.providers.filter((provider) => provider.enabled).map((provider) => ({ repository, provider }))
-        )
-        .slice(0, 32);
-
-    const statuses: Array<{
-        repositoryId: string;
-        providerId: string;
-        status: "ok" | "empty" | "error";
-        bytes: number;
-        message: string;
-    }> = [];
-
-    for (let index = 0; index < providers.length; index += 4) {
-        const batch = await Promise.all(
-            providers.slice(index, index + 4).map(async ({ repository, provider }) => {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 12_000);
-                try {
-                    const base = new URL(".", validateRepositoryUrl(repository.url));
-                    const file = new URL(provider.filename, base);
-                    const folder = base.pathname.replace(/[^/]*$/, "");
-                    if (
-                        file.protocol !== "https:" ||
-                        file.origin !== base.origin ||
-                        !file.pathname.startsWith(folder)
-                    ) {
-                        throw new Error("Ungültiger Provider-Pfad.");
-                    }
-                    const response = await fetch(file, {
-                        headers: { accept: "text/javascript, application/javascript, text/plain" },
-                        cache: "no-store",
-                        redirect: "error",
-                        signal: controller.signal,
-                    });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const source = await readLimitedText(response, 500_000);
-                    const bytes = new TextEncoder().encode(source).byteLength;
-                    const trimmed = source.trim();
-                    const looksLikeHtml = /^(<!doctype\\s+html|<html[\\s>])/i.test(trimmed);
-                    if (!trimmed || looksLikeHtml) {
-                        return {
-                            repositoryId: repository.id,
-                            providerId: provider.id,
-                            status: "empty" as const,
-                            bytes,
-                            message: looksLikeHtml
-                                ? "Server liefert HTML statt Provider-Code."
-                                : "Quelldatei ist leer.",
-                        };
-                    }
-                    return {
-                        repositoryId: repository.id,
-                        providerId: provider.id,
-                        status: "ok" as const,
-                        bytes,
-                        message: "Quelldatei erreichbar und nicht leer.",
-                    };
-                } catch (error) {
-                    return {
-                        repositoryId: repository.id,
-                        providerId: provider.id,
-                        status: "error" as const,
-                        bytes: 0,
-                        message: error instanceof Error ? error.message : "Datei konnte nicht geprüft werden.",
-                    };
-                } finally {
-                    clearTimeout(timeout);
-                }
-            })
-        );
-        statuses.push(...batch);
-    }
-    return statuses;
-}
-
-export async function getRepositoryProviderSource(repositoryId: string, providerId: string) {
-    const userId = await currentUserId();
-    const repositories = await readRepositories(userId);
-    const repository = repositories.find((item) => item.id === repositoryId);
-    if (!repository) throw new Error("Repository nicht gefunden.");
-
-    const provider = repository.providers.find((item) => item.id === providerId);
-    if (!provider) throw new Error("Provider nicht gefunden.");
-    if (!provider.enabled) throw new Error("Provider ist deaktiviert.");
-
-    const manifestUrl = validateRepositoryUrl(repository.url);
-    const base = new URL(".", manifestUrl);
-    const file = new URL(provider.filename, base);
-    const folder = base.pathname.replace(/[^/]*$/, "");
-    if (file.protocol !== "https:" || file.origin !== base.origin || !file.pathname.startsWith(folder)) {
-        throw new Error("Ungültiger Provider-Pfad.");
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12_000);
-    try {
-        const response = await fetch(file, {
-            headers: { accept: "text/javascript, application/javascript, text/plain" },
-            cache: "no-store",
-            redirect: "error",
-            signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`Provider antwortet mit HTTP ${response.status}.`);
-        const source = await readLimitedText(response);
-        return { providerId: provider.id, providerName: provider.name, source };
-    } finally {
-        clearTimeout(timeout);
-    }
 }
