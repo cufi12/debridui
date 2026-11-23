@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "DebridUI-TV"
-include(":app")
+rootProject.name = "DebridUI-Android"
+include(":app", ":mobile")
