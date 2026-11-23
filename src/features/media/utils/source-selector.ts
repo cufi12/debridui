@@ -41,8 +41,7 @@ export function selectBestSource(
 
     // Only consider sources that positively indicate German audio. Unknown-language
     // and explicitly non-German releases must never be used as an automatic fallback.
-    const normalizeReleaseName = (value: string) =>
-        value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const normalizeReleaseName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
     const germanNames = _germanReleaseNames.map(normalizeReleaseName).filter((name) => name.length >= 8);
     const hasGermanAudio = (source: AddonSource): boolean => {
