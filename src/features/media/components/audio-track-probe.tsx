@@ -74,10 +74,10 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
     }, [currentAccount.id, hash]);
 
     useEffect(() => {
-        if (!auto || !source.isCached || !hash || autoChecked.current) return;
+        if (currentAccount.type !== AccountType.REALDEBRID || !auto || !source.isCached || !hash || autoChecked.current) return;
         autoChecked.current = true;
         void checkTracks(true);
-    }, [auto, source.isCached, hash, checkTracks]);
+    }, [auto, source.isCached, hash, checkTracks, currentAccount.type]);
 
     if (currentAccount.type !== AccountType.REALDEBRID || !hash) return null;
 
@@ -90,7 +90,9 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
                 {loading ? "Prüfe Tonspuren…" : result ? "Tonspuren erneut prüfen" : "Tonspuren prüfen"}
             </Button>
             {result?.error && !result.verified && (
-                <p className="text-xs text-muted-foreground">{result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und starte die Prüfung erneut.</p>
+                <p className="text-xs text-muted-foreground">
+                    {result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und starte die Prüfung erneut.
+                </p>
             )}
             {result && result.verified && (
                 <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-2">
