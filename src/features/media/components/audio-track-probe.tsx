@@ -43,7 +43,8 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
     const autoChecked = useRef(false);
     const hash = source.magnet?.match(/urn:btih:([a-f0-9]{40})/i)?.[1];
 
-    const checkTracks = useCallback(async (silent = false) => {
+    const checkTracks = useCallback(
+        async (silent = false) => {
         setLoading(true);
         setResult(null);
         try {
@@ -71,7 +72,9 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
         } finally {
             setLoading(false);
         }
-    }, [currentAccount.id, hash]);
+        },
+        [currentAccount.id, hash]
+    );
 
     useEffect(() => {
         if (currentAccount.type !== AccountType.REALDEBRID || !auto || !source.isCached || !hash || autoChecked.current) return;
@@ -94,7 +97,7 @@ export function AudioTrackProbe({ source, auto = false }: { source: AddonSource;
                     {result.error} Falls die Quelle noch nicht in deinem Real-Debrid-Konto liegt, füge sie hinzu und starte die Prüfung erneut.
                 </p>
             )}
-            {result && result.verified && (
+            {result?.verified && (
                 <div className="rounded-sm border border-border/50 bg-muted/20 p-2.5 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
