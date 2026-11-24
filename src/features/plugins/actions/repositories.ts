@@ -164,7 +164,37 @@ async function readRepositories(userId: string): Promise<Repository[]> {
         .limit(1);
     const settings = row?.settings && typeof row.settings === "object" ? (row.settings as Record<string, unknown>) : {};
     const parsed = z.array(z.any()).max(20).safeParse(settings.pluginRepositories);
-    return parsed.success ? (parsed.data as Repository[]) : [];
+    const repositories: Repository[] = parsed.success ? (parsed.data as Repository[]) : [];
+
+    // Keep the upstream repository as the canonical source. Provider JS is
+    // always fetched from the filenames in this live manifest; nothing is vendored.
+    const defaultRepositoryUrl =
+        "https://git.invalidpanda.dev/invalidpanda/nuvio-german-providers/raw/branch/main/manifest.json";
+    if (repositories.some((repository) => repository.url === defaultRepositoryUrl)) {
+        return repositories;
+    }
+
+    try {
+        const manifest = await loadManifest(defaultRepositoryUrl);
+        const repository: Repository = {
+            id: crypto.randomUUID(),
+            url: defaultRepositoryUrl,
+            ...manifest,
+            providers: manifest.providers.map((provider) => ({
+                ...provider,
+                // Make the two requested sources available immediately.
+                enabled: ["filmpalast", "serienstream"].includes(provider.id.trim().toLowerCase()),
+            })),
+            updatedAt: new Date().toISOString(),
+        };
+        const updated = [...repositories, repository].slice(0, 20);
+        await writeRepositories(userId, updated);
+        return updated;
+    } catch (error) {
+        // Do not break the rest of DebridUI if the upstream host is temporarily down.
+        console.warn("[repository-providers] Could not initialize built-in upstream repository:", error);
+        return repositories;
+    }
 }
 
 async function writeRepositories(userId: string, repositories: Repository[]) {
