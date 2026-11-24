@@ -951,7 +951,8 @@ export async function executeNuvioProvider(
         deferredPromises.push(deferred);
 
         const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(
-            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId, cookieJar)
+            (localResponse) =>
+                localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId, cookieJar)
         );
         void requestPromise
             .then((response) => {
