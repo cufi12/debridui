@@ -159,7 +159,7 @@ function storeProviderCookies(jar: ProviderCookieJar, requestUrl: URL, setCookie
             const attribute = rawName?.toLowerCase();
             const attributeValue = rawValue.join("=").trim();
             if (attribute === "domain") {
-                const candidate = attributeValue.replace(/^./, "").toLowerCase();
+                const candidate = attributeValue.replace(/^\\./, "").toLowerCase();
                 if (!candidate || !cookieDomainMatches(requestUrl.hostname.toLowerCase(), candidate)) {
                     validDomain = false;
                     break;
