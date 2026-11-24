@@ -116,11 +116,107 @@ function normalizeRequestHeaders(value: unknown): Record<string, string> {
     return Object.fromEntries(Object.entries(safe).map(([key, header]) => [key, header]));
 }
 
+type ProviderCookie = {
+    name: string;
+    value: string;
+    domain: string;
+    path: string;
+    secure: boolean;
+    expiresAt: number | null;
+};
+type ProviderCookieJar = Map<string, ProviderCookie>;
+
+function cookieDomainMatches(hostname: string, domain: string): boolean {
+    // Keep cookies host-only: a provider must not set a broad parent-domain
+    // cookie that could be forwarded to another provider host.
+    return hostname === domain;
+}
+
+function cookiePathMatches(requestPath: string, cookiePath: string): boolean {
+    if (requestPath === cookiePath) return true;
+    if (!requestPath.startsWith(cookiePath)) return false;
+    return cookiePath.endsWith("/") || requestPath[cookiePath.length] === "/";
+}
+
+/** Keep ordinary Set-Cookie session state isolated to one provider invocation. */
+function storeProviderCookies(jar: ProviderCookieJar, requestUrl: URL, setCookies: string[] = []): void {
+    for (const line of setCookies) {
+        const parts = line.split(";");
+        const pair = parts.shift()?.trim() ?? "";
+        const separator = pair.indexOf("=");
+        if (separator <= 0) continue;
+        const name = pair.slice(0, separator).trim();
+        const value = pair.slice(separator + 1).trim();
+        if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name)) continue;
+
+        let domain = requestUrl.hostname.toLowerCase();
+        const requestPath = requestUrl.pathname || "/";
+        const lastSlash = requestPath.lastIndexOf("/");
+        let path = lastSlash <= 0 ? "/" : requestPath.slice(0, lastSlash);
+        let secure = false;
+        let expiresAt: number | null = null;
+        let maxAge: number | null = null;
+        let validDomain = true;
+
+        for (const rawAttribute of parts) {
+            const [rawName, ...rawValue] = rawAttribute.trim().split("=");
+            const attribute = rawName?.toLowerCase();
+            const attributeValue = rawValue.join("=").trim();
+            if (attribute === "domain") {
+                const candidate = attributeValue.replace(/^\./, "").toLowerCase();
+                if (!candidate || candidate !== requestUrl.hostname.toLowerCase()) {
+                    validDomain = false;
+                    break;
+                }
+                domain = candidate;
+            } else if (attribute === "path" && attributeValue.startsWith("/")) {
+                path = attributeValue;
+            } else if (attribute === "secure") {
+                secure = true;
+            } else if (attribute === "max-age" && /^-?\d+$/.test(attributeValue)) {
+                maxAge = Number(attributeValue);
+            } else if (attribute === "expires") {
+                const parsed = Date.parse(attributeValue);
+                if (Number.isFinite(parsed)) expiresAt = parsed;
+            }
+        }
+        if (!validDomain) continue;
+        if (maxAge !== null) expiresAt = Date.now() + maxAge * 1000;
+
+        const key = `${domain}\t${path}\t${name}`;
+        if (expiresAt !== null && expiresAt <= Date.now()) {
+            jar.delete(key);
+            continue;
+        }
+        jar.set(key, { name, value, domain, path, secure, expiresAt });
+    }
+}
+
+function providerCookieHeader(jar: ProviderCookieJar, url: URL): string {
+    const now = Date.now();
+    const matches: ProviderCookie[] = [];
+    for (const [key, cookie] of jar) {
+        if (cookie.expiresAt !== null && cookie.expiresAt <= now) {
+            jar.delete(key);
+            continue;
+        }
+        if (
+            cookieDomainMatches(url.hostname.toLowerCase(), cookie.domain) &&
+            cookiePathMatches(url.pathname || "/", cookie.path) &&
+            (!cookie.secure || url.protocol === "https:")
+        ) {
+            matches.push(cookie);
+        }
+    }
+    return matches.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+}
+
 async function requestPinned(
     url: URL,
     init: ProviderFetchInit,
     signal: AbortSignal,
-    providerId?: string
+    providerId?: string,
+    cookieJar?: ProviderCookieJar
 ): Promise<PinnedResponse> {
     if (url.protocol !== "https:" && url.protocol !== "http:") {
         throw new Error("Only HTTP and HTTPS provider requests are supported.");
@@ -141,6 +237,10 @@ async function requestPinned(
 
     const transport = url.protocol === "https:" ? httpsRequest : httpRequest;
     const headers = normalizeRequestHeaders(init.headers);
+    if (cookieJar && !Object.keys(headers).some((name) => name.toLowerCase() === "cookie")) {
+        const cookie = providerCookieHeader(cookieJar, url);
+        if (cookie) headers.Cookie = cookie;
+    }
     if (!Object.keys(headers).some((name) => name.toLowerCase() === "accept-encoding")) {
         headers["Accept-Encoding"] = "gzip, deflate, br";
     }
@@ -187,6 +287,10 @@ async function requestPinned(
                     if (settled) return;
                     settled = true;
                     cleanup();
+                    if (cookieJar) {
+                        const setCookies = response.headers["set-cookie"];
+                        storeProviderCookies(cookieJar, url, Array.isArray(setCookies) ? setCookies : []);
+                    }
                     const responseHeaders = Object.fromEntries(
                         Object.entries(response.headers).flatMap(([key, value]) =>
                             value === undefined
@@ -295,7 +399,8 @@ async function safeProviderFetch(
     rawUrl: string,
     init: ProviderFetchInit,
     signal: AbortSignal,
-    providerId?: string
+    providerId?: string,
+    cookieJar?: ProviderCookieJar
 ): Promise<PinnedResponse> {
     let url = new URL(rawUrl);
     let method = init.method || "GET";
@@ -303,7 +408,7 @@ async function safeProviderFetch(
     let headers = normalizeRequestHeaders(init.headers);
 
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
-        const response = await requestPinned(url, { method, body, headers }, signal, providerId);
+        const response = await requestPinned(url, { method, body, headers }, signal, providerId, cookieJar);
         let location = response.headers.location;
         let redirectStatus = response.status;
 
@@ -664,6 +769,7 @@ export async function executeNuvioProvider(
     const vm = QuickJS.newContext();
     const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
     const controllers = new Set<AbortController>();
+    const cookieJar: ProviderCookieJar = new Map();
     const deferredPromises: ReturnType<typeof vm.newPromise>[] = [];
     let requestCount = 0;
     let totalResponseBytes = 0;
@@ -845,7 +951,8 @@ export async function executeNuvioProvider(
         deferredPromises.push(deferred);
 
         const requestPromise = localTmdbDetail(rawUrl, invocation, controller.signal).then(
-            (localResponse) => localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId)
+            (localResponse) =>
+                localResponse ?? safeProviderFetch(rawUrl, init, controller.signal, providerId, cookieJar)
         );
         void requestPromise
             .then((response) => {
