@@ -50,6 +50,12 @@ const repositoryManifestSchema = z
     );
 
 type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
+const BLOCKED_PROVIDER_IDS = new Set(["filmpalast", "serienstream"]);
+
+function isBlockedProvider(provider: Pick<Provider, "id">) {
+    return BLOCKED_PROVIDER_IDS.has(provider.id.trim().toLowerCase());
+}
+
 type Repository = {
     id: string;
     url: string;
@@ -166,7 +172,11 @@ async function writeRepositories(userId: string, repositories: Repository[]) {
 }
 
 export async function getPluginRepositories() {
-    return readRepositories(await currentUserId());
+    const repositories = await readRepositories(await currentUserId());
+    return repositories.map((repository) => ({
+        ...repository,
+        providers: repository.providers.filter((provider) => !isBlockedProvider(provider)),
+    }));
 }
 
 /** Return only explicitly enabled providers for stream discovery. */
@@ -175,7 +185,7 @@ export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") 
     return repositories
         .flatMap((repository) =>
             repository.providers
-                .filter((provider) => provider.enabled && provider.id.toLowerCase() !== "filmpalast")
+                .filter((provider) => provider.enabled && !isBlockedProvider(provider))
                 .filter(
                     (provider) =>
                         !mediaType ||
@@ -210,7 +220,7 @@ export async function addPluginRepository(rawUrl: string) {
         updatedAt: new Date().toISOString(),
     };
     await writeRepositories(userId, [...existing, repository]);
-    return repository;
+    return { ...repository, providers: repository.providers.filter((provider) => !isBlockedProvider(provider)) };
 }
 
 export async function refreshPluginRepository(repositoryId: string) {
@@ -228,7 +238,7 @@ export async function refreshPluginRepository(repositoryId: string) {
         userId,
         repositories.map((repo) => (repo.id === repositoryId ? updated : repo))
     );
-    return updated;
+    return { ...updated, providers: updated.providers.filter((provider) => !isBlockedProvider(provider)) };
 }
 
 export async function setRepositoryProviderEnabled(repositoryId: string, providerId: string, enabled: boolean) {
@@ -237,6 +247,9 @@ export async function setRepositoryProviderEnabled(repositoryId: string, provide
     const repo = repos.find((item) => item.id === repositoryId);
     if (!repo) throw new Error("Repository nicht gefunden.");
     if (!repo.providers.some((provider) => provider.id === providerId)) throw new Error("Provider nicht gefunden.");
+    if (BLOCKED_PROVIDER_IDS.has(providerId.trim().toLowerCase())) {
+        throw new Error("Dieser Provider ist in DebridUI gesperrt.");
+    }
     const updated = repos.map((item) =>
         item.id !== repositoryId
             ? item
@@ -273,7 +286,7 @@ export async function getEnabledRepositoryProviderSources(mediaType: "movie" | "
     const providers = repositories
         .flatMap((repository) =>
             repository.providers
-                .filter((provider) => provider.enabled)
+                .filter((provider) => provider.enabled && !isBlockedProvider(provider))
                 .filter((provider) =>
                     mediaType === "movie"
                         ? provider.supportedTypes.includes("movie")
@@ -389,7 +402,7 @@ export async function getRepositoryProviderFileStatuses() {
     const providers = repositories
         .flatMap((repository) =>
             repository.providers
-                .filter((provider) => provider.enabled && provider.id.toLowerCase() !== "filmpalast")
+                .filter((provider) => provider.enabled && !isBlockedProvider(provider))
                 .map((provider) => ({ repository, provider }))
         )
         .slice(0, 32);
@@ -473,6 +486,7 @@ export async function getRepositoryProviderSource(repositoryId: string, provider
 
     const provider = repository.providers.find((item) => item.id === providerId);
     if (!provider) throw new Error("Provider nicht gefunden.");
+    if (isBlockedProvider(provider)) throw new Error("Dieser Provider ist in DebridUI gesperrt.");
     if (!provider.enabled) throw new Error("Provider ist deaktiviert.");
 
     const manifestUrl = validateRepositoryUrl(repository.url);
