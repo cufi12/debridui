@@ -127,7 +127,9 @@ type ProviderCookie = {
 type ProviderCookieJar = Map<string, ProviderCookie>;
 
 function cookieDomainMatches(hostname: string, domain: string): boolean {
-    return hostname === domain || hostname.endsWith(`.${domain}`);
+    // Keep cookies host-only: a provider must not set a broad parent-domain
+    // cookie that could be forwarded to another provider host.
+    return hostname === domain;
 }
 
 function cookiePathMatches(requestPath: string, cookiePath: string): boolean {
@@ -160,7 +162,7 @@ function storeProviderCookies(jar: ProviderCookieJar, requestUrl: URL, setCookie
             const attributeValue = rawValue.join("=").trim();
             if (attribute === "domain") {
                 const candidate = attributeValue.replace(/^\./, "").toLowerCase();
-                if (!candidate || !cookieDomainMatches(requestUrl.hostname.toLowerCase(), candidate)) {
+                if (!candidate || candidate !== requestUrl.hostname.toLowerCase()) {
                     validDomain = false;
                     break;
                 }
@@ -180,7 +182,7 @@ function storeProviderCookies(jar: ProviderCookieJar, requestUrl: URL, setCookie
         if (maxAge !== null) expiresAt = Date.now() + maxAge * 1000;
 
         const key = `${domain}\t${path}\t${name}`;
-        if (!value || (expiresAt !== null && expiresAt <= Date.now())) {
+        if (expiresAt !== null && expiresAt <= Date.now()) {
             jar.delete(key);
             continue;
         }
