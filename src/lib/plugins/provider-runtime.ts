@@ -281,12 +281,7 @@ function serienstreamHtmlRedirect(body: string): { url: string | null; challenge
         // the provider parse the homepage instead of the hoster response.
         // Keep same-origin homepage navigations as the original /r response;
         // the provider can inspect that HTML just like it does on other pages.
-        if (
-            parsed.origin === "https://serienstream.to" &&
-            parsed.pathname === "/" &&
-            !parsed.search &&
-            !parsed.hash
-        ) {
+        if (parsed.origin === "https://serienstream.to" && parsed.pathname === "/" && !parsed.search && !parsed.hash) {
             return { url: null, challenge: false };
         }
 
