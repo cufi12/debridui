@@ -315,7 +315,10 @@ async function safeProviderFetch(
             } else if (parsed.url) {
                 location = parsed.url;
                 redirectStatus = 302;
-                console.info("[repository-providers] Serienstream /r HTML redirect detected.");
+                const redirectTarget = new URL(parsed.url);
+                console.info("[repository-providers] Serienstream /r HTML redirect detected:", {
+                    destination: `${redirectTarget.hostname}${redirectTarget.pathname}`,
+                });
             } else {
                 console.warn("[repository-providers] Serienstream /r returned HTML without an explicit redirect.");
             }
