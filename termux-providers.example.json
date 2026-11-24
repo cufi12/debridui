@@ -1,0 +1,8 @@
+{
+  "repositories": [
+    {
+      "name": "Mein Provider-Repository",
+      "manifestUrl": "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/manifest.json"
+    }
+  ]
+}
