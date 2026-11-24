@@ -11,7 +11,7 @@ import type { ProviderInvocation } from "@/lib/plugins/provider-adapter";
 
 const PROVIDER_TIMEOUT_MS = 28_000;
 const FETCH_TIMEOUT_MS = 10_000;
-const MAX_REDIRECTS = 5;
+const MAX_REDIRECTS = 10;
 const MAX_REQUESTS = 24;
 const MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_TOTAL_RESPONSE_BYTES = 6_000_000;
@@ -237,6 +237,16 @@ async function requestPinned(
 
     const transport = url.protocol === "https:" ? httpsRequest : httpRequest;
     const headers = normalizeRequestHeaders(init.headers);
+    // Some public catalog and hoster endpoints reject requests without a
+    // conventional browser User-Agent. Preserve provider-specific headers,
+    // but supply neutral German-language defaults when they are absent.
+    if (!Object.keys(headers).some((name) => name.toLowerCase() === "user-agent")) {
+        headers["User-Agent"] =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+    }
+    if (!Object.keys(headers).some((name) => name.toLowerCase() === "accept-language")) {
+        headers["Accept-Language"] = "de-DE,de;q=0.9,en;q=0.8";
+    }
     if (cookieJar && !Object.keys(headers).some((name) => name.toLowerCase() === "cookie")) {
         const cookie = providerCookieHeader(cookieJar, url);
         if (cookie) headers.Cookie = cookie;
