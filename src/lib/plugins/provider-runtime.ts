@@ -274,6 +274,22 @@ function serienstreamHtmlRedirect(body: string): { url: string | null; challenge
     try {
         const parsed = new URL(target, "https://serienstream.to/");
         if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return { url: null, challenge: false };
+
+        // Serienstream sometimes answers /r with an inline page whose script
+        // navigates back to the site's homepage. Following that navigation in
+        // the provider sandbox discards the original redirect page and makes
+        // the provider parse the homepage instead of the hoster response.
+        // Keep same-origin homepage navigations as the original /r response;
+        // the provider can inspect that HTML just like it does on other pages.
+        if (
+            parsed.origin === "https://serienstream.to" &&
+            parsed.pathname === "/" &&
+            !parsed.search &&
+            !parsed.hash
+        ) {
+            return { url: null, challenge: false };
+        }
+
         return { url: parsed.toString(), challenge: false };
     } catch {
         return { url: null, challenge: false };
