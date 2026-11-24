@@ -175,7 +175,7 @@ export async function getEnabledRepositoryProviders(mediaType?: "movie" | "tv") 
     return repositories
         .flatMap((repository) =>
             repository.providers
-                .filter((provider) => provider.enabled)
+                .filter((provider) => provider.enabled && provider.id.toLowerCase() !== "filmpalast")
                 .filter(
                     (provider) =>
                         !mediaType ||
@@ -388,7 +388,9 @@ export async function getRepositoryProviderFileStatuses() {
     const repositories = await readRepositories(userId);
     const providers = repositories
         .flatMap((repository) =>
-            repository.providers.filter((provider) => provider.enabled).map((provider) => ({ repository, provider }))
+            repository.providers
+                .filter((provider) => provider.enabled && provider.id.toLowerCase() !== "filmpalast")
+                .map((provider) => ({ repository, provider }))
         )
         .slice(0, 32);
 
