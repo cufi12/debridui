@@ -50,7 +50,7 @@ const repositoryManifestSchema = z
     );
 
 type Provider = z.infer<typeof providerSchema> & { enabled: boolean };
-const BLOCKED_PROVIDER_IDS = new Set(["serienstream"]);
+const BLOCKED_PROVIDER_IDS = new Set<string>();
 
 function isBlockedProvider(provider: Pick<Provider, "id">) {
     return BLOCKED_PROVIDER_IDS.has(provider.id.trim().toLowerCase());
