@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
     getPluginRepositories,
     getRepositoryProviderFileStatuses,
+    refreshPluginRepository,
     setRepositoryProviderEnabled,
 } from "@/features/plugins/actions/repositories";
 
@@ -37,6 +38,10 @@ export function RepositoryProviderListSection() {
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
+            const currentRepositories = await getPluginRepositories();
+            // Refresh every configured repository manifest independently. One
+            // unavailable repository must not block the others.
+            await Promise.allSettled(currentRepositories.map((repository) => refreshPluginRepository(repository.id)));
             const nextRepositories = await getPluginRepositories();
             setRepositories(nextRepositories);
             const checks = await getRepositoryProviderFileStatuses();
@@ -50,6 +55,10 @@ export function RepositoryProviderListSection() {
 
     useEffect(() => {
         void refresh();
+        // Keep repository manifests and enabled provider files fresh while
+        // the DebridUI provider page is open (30 minutes).
+        const interval = window.setInterval(() => void refresh(), 30 * 60 * 1000);
+        return () => window.clearInterval(interval);
     }, [refresh]);
 
     const providers = repositories.flatMap((repository) =>
