@@ -247,7 +247,9 @@ export async function setRepositoryProviderEnabled(repositoryId: string, provide
     const repo = repos.find((item) => item.id === repositoryId);
     if (!repo) throw new Error("Repository nicht gefunden.");
     if (!repo.providers.some((provider) => provider.id === providerId)) throw new Error("Provider nicht gefunden.");
-    if (BLOCKED_PROVIDER_IDS.has(providerId.trim().toLowerCase())) throw new Error("Dieser Provider ist in DebridUI gesperrt.");
+    if (BLOCKED_PROVIDER_IDS.has(providerId.trim().toLowerCase())) {
+        throw new Error("Dieser Provider ist in DebridUI gesperrt.");
+    }
     const updated = repos.map((item) =>
         item.id !== repositoryId
             ? item
