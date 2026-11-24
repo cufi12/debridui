@@ -119,7 +119,13 @@ export function parseRepositoryProviderStreams(
     // Namespaced IDs prevent providers with the same manifest ID in different
     // repositories from colliding with each other or with Stremio add-ons.
     const sourceId = `repository:${repositoryId}:${providerId}`;
-    return parseStreams(streams, sourceId, providerName);
+    const sources = parseStreams(streams, sourceId, providerName);
+    // Serienstream links are external hoster links, not debrid-cache results.
+    // Always show them as OTHER / NOT CACHED, regardless of text markers.
+    if (providerId.toLowerCase() === "serienstream") {
+        return sources.map((source) => ({ ...source, isCached: false }));
+    }
+    return sources;
 }
 
 export interface RepositoryProviderModule {
