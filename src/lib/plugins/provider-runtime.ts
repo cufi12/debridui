@@ -150,7 +150,9 @@ function storeProviderCookies(jar: ProviderCookieJar, requestUrl: URL, setCookie
         if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name)) continue;
 
         let domain = requestUrl.hostname.toLowerCase();
-        let path = requestUrl.pathname.slice(0, requestUrl.pathname.lastIndexOf("/") + 1) || "/";
+        const requestPath = requestUrl.pathname || "/";
+        const lastSlash = requestPath.lastIndexOf("/");
+        let path = lastSlash <= 0 ? "/" : requestPath.slice(0, lastSlash);
         let secure = false;
         let expiresAt: number | null = null;
         let maxAge: number | null = null;
