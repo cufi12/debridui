@@ -48,7 +48,8 @@ async function checkRepository(entry) {
         throw new Error("Provider file URL is outside the manifest directory.");
       }
       const source = await fetchText(file);
-      if (!source.trim() || /^\s*(<!doctype\\s+html|<html[\\s>])/i.test(source)) throw new Error("Empty file or HTML response.");
+      const normalized = source.trimStart().toLowerCase();
+      if (!normalized || normalized.startsWith("<!doctype html") || normalized.startsWith("<html")) throw new Error("Empty file or HTML response.");
       return { id: provider.id ?? provider.filename, status: "ok", bytes: Buffer.byteLength(source, "utf8") };
     } catch (error) {
       return { id: provider.id ?? provider.filename ?? "unknown", status: "error", message: error.message };
