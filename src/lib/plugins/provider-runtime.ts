@@ -520,25 +520,40 @@ function installProviderCompatibility(vm: ReturnType<Awaited<ReturnType<typeof g
             return vm.newNumber(saveSelection(getOwner(id), getSelection(id).find(vm.getString(selector))));
         })
     );
-    setFunction("__domFilter", vm.newFunction("__domFilter", (selectionId, selector) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).filter(vm.getString(selector))));
-    }));
-    setFunction("__domParent", vm.newFunction("__domParent", (selectionId) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).parent()));
-    }));
-    setFunction("__domChildren", vm.newFunction("__domChildren", (selectionId) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).children()));
-    }));
-    setFunction("__domClosest", vm.newFunction("__domClosest", (selectionId, selector) => {
-        const id = vm.getNumber(selectionId);
-        return vm.newNumber(saveSelection(getOwner(id), getSelection(id).closest(vm.getString(selector))));
-    }));
-    setFunction("__domHasClass", vm.newFunction("__domHasClass", (selectionId, name) =>
-        getSelection(vm.getNumber(selectionId)).hasClass(vm.getString(name)) ? vm.true : vm.false
-    ));
+    setFunction(
+        "__domFilter",
+        vm.newFunction("__domFilter", (selectionId, selector) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).filter(vm.getString(selector))));
+        })
+    );
+    setFunction(
+        "__domParent",
+        vm.newFunction("__domParent", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).parent()));
+        })
+    );
+    setFunction(
+        "__domChildren",
+        vm.newFunction("__domChildren", (selectionId) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).children()));
+        })
+    );
+    setFunction(
+        "__domClosest",
+        vm.newFunction("__domClosest", (selectionId, selector) => {
+            const id = vm.getNumber(selectionId);
+            return vm.newNumber(saveSelection(getOwner(id), getSelection(id).closest(vm.getString(selector))));
+        })
+    );
+    setFunction(
+        "__domHasClass",
+        vm.newFunction("__domHasClass", (selectionId, name) =>
+            getSelection(vm.getNumber(selectionId)).hasClass(vm.getString(name)) ? vm.true : vm.false
+        )
+    );
     setFunction(
         "__domFirst",
         vm.newFunction("__domFirst", (selectionId) => {
