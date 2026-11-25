@@ -4,7 +4,6 @@ const PLAYLIST_SOURCES = [
     { country: "Österreich", code: "at" },
     { country: "Albanien / Kosovo", code: "al" },
     { country: "Albanien / Kosovo", code: "xk" },
-    { country: "Albanien / Kosovo", code: "xk" },
     { country: "Türkei", code: "tr" },
 ] as const;
 
