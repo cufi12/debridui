@@ -18,7 +18,7 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
 async function fetchIPTVText(url: string): Promise<string> {
-    const response = await fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
+    const response = await fetch(url.startsWith("/") ? url : `/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
         method: "GET",
         cache: "no-store",
     });
@@ -67,9 +67,10 @@ export default function IPTVPage() {
     useEffect(() => {
         try {
             const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as IPTVConfig;
-            setPlaylistUrl(config.playlistUrl || "");
+            const initialPlaylist = config.playlistUrl || "/api/iptv/playlist";
+            setPlaylistUrl(initialPlaylist);
             setEpgUrl(config.epgUrl || "");
-            autoLoadUrlRef.current = config.playlistUrl || "";
+            autoLoadUrlRef.current = initialPlaylist;
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                 url?: string;
                 channels?: IPTVChannel[];
@@ -206,7 +207,7 @@ export default function IPTVPage() {
     }
 
     async function loadPlaylist() {
-        if (!/^https?:\/\//i.test(playlistUrl.trim())) {
+        if (!/^https?:\/\//i.test(playlistUrl.trim()) && playlistUrl.trim() !== "/api/iptv/playlist") {
             setError("Bitte eine gültige M3U-URL eingeben.");
             return;
         }
@@ -311,6 +312,10 @@ export default function IPTVPage() {
     return (
         <div className="mx-auto w-full max-w-6xl space-y-4 pb-16">
             <PageHeader icon={Tv} title="IPTV" description="Live-TV aus deiner M3U-Playlist" />
+            <p className="text-xs text-muted-foreground">
+                Standardmässig werden frei verfügbare Länder-Playlists für Deutschland, Schweiz, Österreich,
+                Albanien/Kosovo und Türkei geladen. Eigene autorisierte M3U-Quellen kannst du weiterhin eintragen.
+            </p>
             {!channels.length && (
                 <section className="rounded-lg border border-border/60 p-4 space-y-3">
                     <h2 className="font-medium">Playlist verbinden</h2>
