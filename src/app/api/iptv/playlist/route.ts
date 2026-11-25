@@ -1,3 +1,5 @@
+// Public country M3U files from IPTV-org. Each country code is a separate source:
+// "al" is Albania and "xk" is Kosovo; both intentionally share one DebridUI group.
 const PLAYLIST_SOURCES = [
     { country: "Deutschland", code: "de" },
     { country: "Schweiz", code: "ch" },
