@@ -74,6 +74,7 @@ export default function IPTVPage() {
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                 url?: string;
                 channels?: IPTVChannel[];
+                savedAt?: number;
             } | null;
             if (
                 localCache?.url === config.playlistUrl &&
@@ -106,6 +107,7 @@ export default function IPTVPage() {
                     return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                         url?: string;
                         channels?: IPTVChannel[];
+                savedAt?: number;
                     } | null;
                 } catch {
                     return null;
