@@ -14,8 +14,9 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
   "$PG_BIN/initdb" -D "$PGDATA" -U nextjs --auth-local=trust --auth-host=trust
 fi
 
+# Keep the Unix socket and its lock file in the writable /tmp directory.
 if ! "$PG_BIN/pg_ctl" -D "$PGDATA" -l /tmp/test-postgres.log \
-  -o "-h 127.0.0.1 -p 5432 -c listen_addresses=127.0.0.1 -c max_connections=20 -c shared_buffers=64MB" \
+  -o "-k /tmp -h 127.0.0.1 -p 5432 -c listen_addresses=127.0.0.1 -c max_connections=20 -c shared_buffers=64MB" \
   -w start; then
   echo "[test-db] PostgreSQL failed to start; server log follows:"
   cat /tmp/test-postgres.log || true
