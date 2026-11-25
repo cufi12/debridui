@@ -4,6 +4,7 @@ const PLAYLIST_SOURCES = [
     { country: "Österreich", code: "at" },
     { country: "Albanien / Kosovo", code: "al" },
     { country: "Albanien / Kosovo", code: "xk" },
+    { country: "Albanien / Kosovo", code: "xk" },
     { country: "Türkei", code: "tr" },
 ] as const;
 
@@ -61,6 +62,9 @@ export async function GET() {
     );
 
     const playlist = ["#EXTM3U", ...sections.flat()].join("\n") + "\n";
+    if (Buffer.byteLength(playlist, "utf8") > 20 * 1024 * 1024) {
+        return Response.json({ error: "Die zusammengeführte Playlist ist grösser als 20 MB." }, { status: 413 });
+    }
     return new Response(playlist, {
         headers: {
             "Content-Type": "audio/x-mpegurl; charset=utf-8",
