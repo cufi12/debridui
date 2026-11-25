@@ -18,10 +18,10 @@ const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
 async function fetchIPTVText(url: string): Promise<string> {
-    const response = await fetch(
-        url.startsWith("/") ? url : `/api/iptv/proxy?url=${encodeURIComponent(url)}`,
-        { method: "GET", cache: "no-store" }
-    );
+    const response = await fetch(url.startsWith("/") ? url : `/api/iptv/proxy?url=${encodeURIComponent(url)}`, {
+        method: "GET",
+        cache: "no-store",
+    });
     if (!response.ok) {
         let message = `IPTV-Abruf fehlgeschlagen (HTTP ${response.status}).`;
         try {
