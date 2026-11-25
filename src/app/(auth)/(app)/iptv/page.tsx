@@ -312,6 +312,10 @@ export default function IPTVPage() {
     return (
         <div className="mx-auto w-full max-w-6xl space-y-4 pb-16">
             <PageHeader icon={Tv} title="IPTV" description="Live-TV aus deiner M3U-Playlist" />
+            <p className="text-xs text-muted-foreground">
+                Standardmässig werden frei verfügbare Länder-Playlists für Deutschland, Schweiz, Österreich,
+                Albanien/Kosovo und Türkei geladen. Eigene autorisierte M3U-Quellen kannst du weiterhin eintragen.
+            </p>
             {!channels.length && (
                 <section className="rounded-lg border border-border/60 p-4 space-y-3">
                     <h2 className="font-medium">Playlist verbinden</h2>
