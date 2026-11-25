@@ -101,13 +101,13 @@ export default function IPTVPage() {
         setLoading(true);
         setError("");
         Promise.all([
-            idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY).catch(() => null),
+            idbGet<{ url?: string; channels?: IPTVChannel[]; savedAt?: number }>(PLAYLIST_CACHE_KEY).catch(() => null),
             Promise.resolve().then(() => {
                 try {
                     return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                         url?: string;
                         channels?: IPTVChannel[];
-                savedAt?: number;
+                        savedAt?: number;
                     } | null;
                 } catch {
                     return null;
