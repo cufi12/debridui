@@ -3,7 +3,7 @@ FROM oven/bun:1 AS base
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-venv \
+    && apt-get install -y --no-install-recommends python3 python3-venv postgresql postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv /opt/vxparser-venv \
     && /opt/vxparser-venv/bin/pip install --no-cache-dir --upgrade pip \
@@ -30,18 +30,22 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 LABEL org.opencontainers.image.title="DebridUI + VxParser (test)" \
-      org.opencontainers.image.description="DebridUI with a local VxParser FastAPI sidecar for integration testing." \
+      org.opencontainers.image.description="DebridUI with a local VxParser FastAPI sidecar and an isolated ephemeral PostgreSQL database." \
       org.opencontainers.image.source="https://github.com/cufi12/debridui"
 
 ENV NODE_ENV=production PORT=3000 HOSTNAME="0.0.0.0" \
     VX_PARSER_ENABLED="true" VX_PARSER_PORT="8080"
 
 RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --no-log-init -g nodejs nextjs
+    useradd --system --uid 1001 --no-log-init -g nodejs nextjs && \
+    mkdir -p /var/lib/postgresql/data && \
+    chown -R nextjs:nodejs /var/lib/postgresql && \
+    su -s /bin/sh nextjs -c "$(pg_config --bindir)/initdb -D /var/lib/postgresql/data -U nextjs --auth-local=trust --auth-host=trust"
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --chmod=755 .docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 USER nextjs
 EXPOSE 3000
