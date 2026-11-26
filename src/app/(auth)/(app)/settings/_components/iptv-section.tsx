@@ -169,7 +169,7 @@ function VXParserSettings() {
             const response = await fetch("/api/iptv/vxparser", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ settings: values }),
+                body: JSON.stringify({ settings: Object.fromEntries(items.filter((item) => !item.readOnly).map((item) => [item.name, values[item.name] ?? ""])) }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Speichern fehlgeschlagen.");
