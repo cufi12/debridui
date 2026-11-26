@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { SectionDivider } from "@/components/layout/section-divider";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "debridui-iptv-config";
 
@@ -154,11 +154,13 @@ function VXParserSettings() {
             .then(async (response) => {
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "VXParser ist nicht verfügbar.");
-                const settings = Array.isArray(data.settings) ? data.settings as VXParserSetting[] : [];
+                const settings = Array.isArray(data.settings) ? (data.settings as VXParserSetting[]) : [];
                 setItems(settings);
                 setValues(Object.fromEntries(settings.map((item) => [item.name, item.value ?? ""])));
             })
-            .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "VXParser konnte nicht geladen werden."))
+            .catch((error: unknown) =>
+                setMessage(error instanceof Error ? error.message : "VXParser konnte nicht geladen werden.")
+            )
             .finally(() => setLoading(false));
     }, []);
 
@@ -169,7 +171,11 @@ function VXParserSettings() {
             const response = await fetch("/api/iptv/vxparser", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ settings: Object.fromEntries(items.filter((item) => !item.readOnly).map((item) => [item.name, values[item.name] ?? ""])) }),
+                body: JSON.stringify({
+                    settings: Object.fromEntries(
+                        items.filter((item) => !item.readOnly).map((item) => [item.name, values[item.name] ?? ""])
+                    ),
+                }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Speichern fehlgeschlagen.");
@@ -200,7 +206,11 @@ function VXParserSettings() {
             const response = await fetch("/api/iptv/vxparser/refresh", { method: "POST" });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Aktualisierung konnte nicht gestartet werden.");
-            setMessage(data.status === "running" ? "Die VXParser-Daten werden bereits aktualisiert." : "VXParser-Datenaktualisierung wurde gestartet. Bitte etwas warten und danach den M3U-Link öffnen.");
+            setMessage(
+                data.status === "running"
+                    ? "Die VXParser-Daten werden bereits aktualisiert."
+                    : "VXParser-Datenaktualisierung wurde gestartet. Bitte etwas warten und danach den M3U-Link öffnen."
+            );
         } catch (error) {
             setMessage(error instanceof Error ? error.message : "Aktualisierung fehlgeschlagen.");
         }
@@ -221,7 +231,8 @@ function VXParserSettings() {
                     {Object.entries(
                         items.reduce<Record<string, VXParserSetting[]>>((groups, item) => {
                             const key = item.group || "Weitere Einstellungen";
-                            (groups[key] ||= []).push(item);
+                            if (!groups[key]) groups[key] = [];
+                            groups[key].push(item);
                             return groups;
                         }, {})
                     ).map(([group, settings]) => (
@@ -229,13 +240,15 @@ function VXParserSettings() {
                             <h4 className="text-sm font-medium">{group}</h4>
                             {settings.map((item) => (
                                 <div key={item.name} className="space-y-1">
-                                    <Label htmlFor={"vx-" + item.name}>{item.info || item.name}</Label>
+                                    <Label htmlFor={`vx-${item.name}`}>{item.info || item.name}</Label>
                                     <Input
-                                        id={"vx-" + item.name}
+                                        id={`vx-${item.name}`}
                                         type={item.sensitive ? "password" : "text"}
                                         value={values[item.name] ?? ""}
                                         disabled={item.readOnly || saving}
-                                        onChange={(event) => setValues((current) => ({ ...current, [item.name]: event.target.value }))}
+                                        onChange={(event) =>
+                                            setValues((current) => ({ ...current, [item.name]: event.target.value }))
+                                        }
                                     />
                                 </div>
                             ))}
@@ -262,13 +275,16 @@ function VXParserSettings() {
                     <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => void navigator.clipboard.writeText(playlistUrl)}
-                    >
+                        onClick={() => void navigator.clipboard.writeText(playlistUrl)}>
                         M3U-Link kopieren
                     </Button>
                 </div>
             )}
-            {message && <p role="status" className="text-xs text-muted-foreground">{message}</p>}
+            {message && (
+                <p role="status" className="text-xs text-muted-foreground">
+                    {message}
+                </p>
+            )}
         </div>
     );
 }
