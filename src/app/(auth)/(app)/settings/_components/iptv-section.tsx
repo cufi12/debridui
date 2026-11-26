@@ -221,7 +221,8 @@ function VXParserSettings() {
             <div>
                 <h3 className="font-medium">VXParser</h3>
                 <p className="text-sm text-muted-foreground">
-                    VXParser-Optionen und deine persönliche M3U-Playlist. Die Einstellungen werden getrennt von deinen DebridUI-Kontodaten gespeichert.
+                    VXParser-Optionen und deine persönliche M3U-Playlist. Die Einstellungen werden getrennt von deinen
+                    DebridUI-Kontodaten gespeichert.
                 </p>
             </div>
             {loading ? (
@@ -260,7 +261,8 @@ function VXParserSettings() {
                 </>
             ) : (
                 <p className="text-sm text-muted-foreground">
-                    VXParser ist in dieser Umgebung noch nicht verbunden. Nach der Freigabe der Integration erscheint die vollständige Einstellungsliste hier.
+                    VXParser ist in dieser Umgebung noch nicht verbunden. Nach der Freigabe der Integration erscheint
+                    die vollständige Einstellungsliste hier.
                 </p>
             )}
             <Button onClick={refreshSources} variant="outline" className="w-full">
@@ -288,4 +290,3 @@ function VXParserSettings() {
         </div>
     );
 }
-
