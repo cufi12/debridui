@@ -1,10 +1,8 @@
-"""Small authenticated-by-loopback management extension for upstream VxParser."""
+"""Small loopback management extension for upstream VxParser."""
 from fastapi import Body, HTTPException
 from api import app
 import utils.common as common
 
-# VxParser is bound to 127.0.0.1 only. DebridUI's authenticated Next.js routes
-# are the only intended callers of these management endpoints.
 PROTECTED_SETTINGS = {"init", "VERSION", "server_host", "server_port"}
 
 @app.get("/debridui/health")
@@ -14,22 +12,15 @@ async def debridui_health():
 @app.get("/debridui/config")
 async def debridui_get_config():
     cur = common.con0.cursor()
-    cur.execute('SELECT name, grp, value, info, default, type, values FROM settings ORDER BY grp, name')
+    cur.execute('SELECT name, grp, value, info, "default", type, "values" FROM settings ORDER BY grp, name')
     rows = cur.fetchall()
-    result = []
-    for row in rows:
-        result.append({
-            "name": row["name"],
-            "group": row["grp"],
-            "value": row["value"],
-            "info": row["info"],
-            "default": row["default"],
-            "type": row["type"],
-            "values": row["values"],
-            "sensitive": any(word in row["name"].lower() for word in ("password", "token", "apikey", "api_key", "secret")),
-            "readOnly": row["name"] in PROTECTED_SETTINGS,
-        })
-    return {"settings": result}
+    return {"settings": [{
+        "name": row["name"], "group": row["grp"], "value": row["value"],
+        "info": row["info"], "default": row["default"], "type": row["type"],
+        "values": row["values"],
+        "sensitive": any(word in row["name"].lower() for word in ("password", "token", "apikey", "api_key", "secret")),
+        "readOnly": row["name"] in PROTECTED_SETTINGS,
+    } for row in rows]}
 
 @app.put("/debridui/config")
 async def debridui_update_config(payload: dict = Body(...)):
@@ -42,8 +33,7 @@ async def debridui_update_config(payload: dict = Body(...)):
     for name, value in updates.items():
         if name not in allowed or not isinstance(value, (str, int, float, bool)):
             raise HTTPException(status_code=400, detail="Unbekannte oder ungültige Einstellung: " + str(name))
-        text = str(value)
-        if len(text) > 4096:
+        if len(str(value)) > 4096:
             raise HTTPException(status_code=400, detail="Einstellungswert ist zu lang.")
     for name, value in updates.items():
         common.set_setting(name, str(value))
