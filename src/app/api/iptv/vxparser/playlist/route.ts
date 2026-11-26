@@ -18,15 +18,23 @@ export async function GET() {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
     try {
-        const upstream = await fetch("http://127.0.0.1:8080/get.php?username=debridui&password=pass&type=m3u_plus&output=hls", {
-            cache: "no-store",
-            signal: AbortSignal.timeout(30000),
-        });
-        if (!upstream.ok) return NextResponse.json({ error: "VXParser konnte die M3U nicht erstellen." }, { status: 502 });
+        const upstream = await fetch(
+            "http://127.0.0.1:8080/get.php?username=debridui&password=pass&type=m3u_plus&output=hls",
+            {
+                cache: "no-store",
+                signal: AbortSignal.timeout(30000),
+            }
+        );
+        if (!upstream.ok)
+            return NextResponse.json({ error: "VXParser konnte die M3U nicht erstellen." }, { status: 502 });
         const source = await upstream.text();
-        if (!source.startsWith("#EXTM3U")) return NextResponse.json({ error: "VXParser hat keine gültige M3U geliefert." }, { status: 502 });
+        if (!source.startsWith("#EXTM3U"))
+            return NextResponse.json({ error: "VXParser hat keine gültige M3U geliefert." }, { status: 502 });
         const token = playlistToken(session.user.id);
-        const prefix = new URL("/api/iptv/vxparser/stream/" + token + "/", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").toString();
+        const prefix = new URL(
+            `/api/iptv/vxparser/stream/${token}/`,
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        ).toString();
         const playlist = source.replace(/https?:\/\/127\.0\.0\.1:8080\//g, prefix);
         return new Response(playlist, {
             headers: {
@@ -37,9 +45,10 @@ export async function GET() {
             },
         });
     } catch (error) {
-        const message = error instanceof Error && error.message === "BETTER_AUTH_SECRET is not configured."
-            ? "Die sichere Playlist-Signatur ist nicht konfiguriert."
-            : "VXParser ist derzeit nicht verfügbar.";
+        const message =
+            error instanceof Error && error.message === "BETTER_AUTH_SECRET is not configured."
+                ? "Die sichere Playlist-Signatur ist nicht konfiguriert."
+                : "VXParser ist derzeit nicht verfügbar.";
         return NextResponse.json({ error: message }, { status: 503 });
     }
 }
