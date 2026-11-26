@@ -20,6 +20,12 @@ common.set_setting("epg_service", "0")
 common.set_setting("serienstream_username", "")
 common.set_setting("serienstream_password", "")
 
+# The upstream playlist builder derives its public host from the container NIC.
+# Force loopback: DebridUI rewrites these URLs to its signed public proxy routes.
+import utils.video as video
+video.server_ip = "127.0.0.1"
+video.port = int(common.get_setting("server_port"))
+
 import uvicorn
 print(f"[vxparser] Starting FastAPI bridge on 127.0.0.1:{common.get_setting('server_port')}", flush=True)
 uvicorn.run("vxparser_bridge:app", host="127.0.0.1", port=int(common.get_setting("server_port")), log_level="info", reload=False)
