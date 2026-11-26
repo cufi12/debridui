@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
     try {
         const token = createVxParserToken(session.user.id);
-        const url = new URL("/api/iptv/vxparser/playlist/" + token, request.nextUrl.origin);
+        const url = new URL(`/api/iptv/vxparser/playlist/${token}`, request.nextUrl.origin);
         return NextResponse.json({ url: url.toString() }, { headers: { "Cache-Control": "no-store" } });
     } catch {
         return NextResponse.json({ error: "Die sichere Playlist-Signatur ist nicht konfiguriert." }, { status: 503 });
