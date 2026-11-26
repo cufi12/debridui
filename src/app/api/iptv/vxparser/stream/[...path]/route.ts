@@ -4,10 +4,7 @@ import { verifyVxParserToken } from "@/lib/iptv/vxparser-token";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
-    _request: NextRequest,
-    context: { params: Promise<{ path: string[] }> }
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
     const { path } = await context.params;
     const [token, ...upstreamPath] = path;
     if (!token || !verifyVxParserToken(token) || !upstreamPath.length) {
@@ -21,7 +18,10 @@ export async function GET(
             signal: AbortSignal.timeout(60000),
         });
         if (!upstream.ok || !upstream.body) {
-            return NextResponse.json({ error: "VXParser konnte den Stream nicht öffnen." }, { status: upstream.status || 502 });
+            return NextResponse.json(
+                { error: "VXParser konnte den Stream nicht öffnen." },
+                { status: upstream.status || 502 }
+            );
         }
         const headers = new Headers();
         const contentType = upstream.headers.get("content-type");
