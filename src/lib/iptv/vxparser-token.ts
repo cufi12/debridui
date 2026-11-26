@@ -9,7 +9,7 @@ function secret(): string {
 export function createVxParserToken(userId: string): string {
     const encoded = Buffer.from(userId).toString("base64url");
     const signature = createHmac("sha256", secret()).update(encoded).digest("base64url");
-    return encoded + "." + signature;
+    return `${encoded}.${signature}`;
 }
 
 export function verifyVxParserToken(token: string): boolean {
