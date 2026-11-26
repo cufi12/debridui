@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "debridui-iptv-config";
 
@@ -127,6 +128,133 @@ export function IPTVSettingsSection() {
                     onCheckedChange={(checked) => update({ startMuted: checked })}
                 />
             </div>
+            <VXParserSettings />
         </section>
     );
 }
+type VXParserSetting = {
+    name: string;
+    group: string;
+    value: string;
+    info?: string;
+    sensitive?: boolean;
+    readOnly?: boolean;
+};
+
+function VXParserSettings() {
+    const [items, setItems] = useState<VXParserSetting[]>([]);
+    const [values, setValues] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [playlistUrl, setPlaylistUrl] = useState("");
+
+    useEffect(() => {
+        fetch("/api/iptv/vxparser", { cache: "no-store" })
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "VXParser ist nicht verfügbar.");
+                const settings = Array.isArray(data.settings) ? data.settings as VXParserSetting[] : [];
+                setItems(settings);
+                setValues(Object.fromEntries(settings.map((item) => [item.name, item.value ?? ""])));
+            })
+            .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "VXParser konnte nicht geladen werden."))
+            .finally(() => setLoading(false));
+    }, []);
+
+    async function saveSettings() {
+        setSaving(true);
+        setMessage("");
+        try {
+            const response = await fetch("/api/iptv/vxparser", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ settings: values }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Speichern fehlgeschlagen.");
+            setMessage("VXParser-Einstellungen gespeichert.");
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : "Speichern fehlgeschlagen.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function createPlaylist() {
+        setMessage("");
+        try {
+            const response = await fetch("/api/iptv/vxparser/playlist-link", { method: "POST" });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "M3U-Link konnte nicht erstellt werden.");
+            setPlaylistUrl(data.url);
+            setMessage("M3U-Link erstellt. Du kannst ihn jetzt kopieren und im IPTV-Player eintragen.");
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : "M3U-Link konnte nicht erstellt werden.");
+        }
+    }
+
+    return (
+        <div className="space-y-3 rounded-lg border border-border/60 p-3">
+            <div>
+                <h3 className="font-medium">VXParser</h3>
+                <p className="text-sm text-muted-foreground">
+                    VXParser-Optionen und deine persönliche M3U-Playlist. Die Einstellungen werden getrennt von deinen DebridUI-Kontodaten gespeichert.
+                </p>
+            </div>
+            {loading ? (
+                <p className="text-sm text-muted-foreground">VXParser-Einstellungen werden geladen…</p>
+            ) : items.length ? (
+                <>
+                    {Object.entries(
+                        items.reduce<Record<string, VXParserSetting[]>>((groups, item) => {
+                            const key = item.group || "Weitere Einstellungen";
+                            (groups[key] ||= []).push(item);
+                            return groups;
+                        }, {})
+                    ).map(([group, settings]) => (
+                        <div key={group} className="space-y-2">
+                            <h4 className="text-sm font-medium">{group}</h4>
+                            {settings.map((item) => (
+                                <div key={item.name} className="space-y-1">
+                                    <Label htmlFor={"vx-" + item.name}>{item.info || item.name}</Label>
+                                    <Input
+                                        id={"vx-" + item.name}
+                                        type={item.sensitive ? "password" : "text"}
+                                        value={values[item.name] ?? ""}
+                                        disabled={item.readOnly || saving}
+                                        onChange={(event) => setValues((current) => ({ ...current, [item.name]: event.target.value }))}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                    <Button onClick={saveSettings} disabled={saving} className="w-full">
+                        {saving ? "Speichert…" : "VXParser-Einstellungen speichern"}
+                    </Button>
+                </>
+            ) : (
+                <p className="text-sm text-muted-foreground">
+                    VXParser ist in dieser Umgebung noch nicht verbunden. Nach der Freigabe der Integration erscheint die vollständige Einstellungsliste hier.
+                </p>
+            )}
+            <Button onClick={createPlaylist} variant="outline" className="w-full">
+                M3U-Playlist-Link erstellen
+            </Button>
+            {playlistUrl && (
+                <div className="space-y-2">
+                    <Input readOnly value={playlistUrl} aria-label="VXParser M3U-URL" />
+                    <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => void navigator.clipboard.writeText(playlistUrl)}
+                    >
+                        M3U-Link kopieren
+                    </Button>
+                </div>
+            )}
+            {message && <p role="status" className="text-xs text-muted-foreground">{message}</p>}
+        </div>
+    );
+}
+
