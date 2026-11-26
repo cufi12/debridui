@@ -1,19 +1,8 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyVxParserToken } from "@/lib/iptv/vxparser-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function validToken(token: string): boolean {
-    const secret = process.env.BETTER_AUTH_SECRET;
-    if (!secret) return false;
-    const parts = token.split(".");
-    if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
-    const expected = createHmac("sha256", secret).update(parts[0]).digest();
-    let supplied: Buffer;
-    try { supplied = Buffer.from(parts[1], "base64url"); } catch { return false; }
-    return supplied.length === expected.length && timingSafeEqual(supplied, expected);
-}
 
 export async function GET(
     _request: NextRequest,
@@ -21,7 +10,7 @@ export async function GET(
 ) {
     const { path } = await context.params;
     const [token, ...upstreamPath] = path;
-    if (!token || !validToken(token) || !upstreamPath.length) {
+    if (!token || !verifyVxParserToken(token) || !upstreamPath.length) {
         return NextResponse.json({ error: "Ungültiger oder fehlender Playlist-Zugriff." }, { status: 401 });
     }
     const safePath = upstreamPath.map((part) => encodeURIComponent(part)).join("/");
