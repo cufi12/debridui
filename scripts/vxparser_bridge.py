@@ -1,7 +1,7 @@
 """Small loopback management extension for upstream VxParser."""
 from fastapi import Body, HTTPException
 from api import app
-import utils.common as common
+import utils.common as common\nimport services
 
 PROTECTED_SETTINGS = {"init", "VERSION", "server_host", "server_port"}
 
@@ -38,3 +38,11 @@ async def debridui_update_config(payload: dict = Body(...)):
     for name, value in updates.items():
         common.set_setting(name, str(value))
     return {"success": True, "updated": len(updates)}
+
+@app.post("/debridui/refresh")
+async def debridui_refresh():
+    running = services.proc.get("db_p")
+    if running and running.is_alive():
+        return {"success": True, "status": "running"}
+    services.handler("db_start")
+    return {"success": True, "status": "started"}
