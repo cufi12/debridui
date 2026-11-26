@@ -194,6 +194,18 @@ function VXParserSettings() {
         }
     }
 
+    async function refreshSources() {
+        setMessage("");
+        try {
+            const response = await fetch("/api/iptv/vxparser/refresh", { method: "POST" });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Aktualisierung konnte nicht gestartet werden.");
+            setMessage(data.status === "running" ? "Die VXParser-Daten werden bereits aktualisiert." : "VXParser-Datenaktualisierung wurde gestartet. Bitte etwas warten und danach den M3U-Link öffnen.");
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : "Aktualisierung fehlgeschlagen.");
+        }
+    }
+
     return (
         <div className="space-y-3 rounded-lg border border-border/60 p-3">
             <div>
@@ -238,6 +250,9 @@ function VXParserSettings() {
                     VXParser ist in dieser Umgebung noch nicht verbunden. Nach der Freigabe der Integration erscheint die vollständige Einstellungsliste hier.
                 </p>
             )}
+            <Button onClick={refreshSources} variant="outline" className="w-full">
+                VXParser-Senderdaten aktualisieren
+            </Button>
             <Button onClick={createPlaylist} variant="outline" className="w-full">
                 M3U-Playlist-Link erstellen
             </Button>
