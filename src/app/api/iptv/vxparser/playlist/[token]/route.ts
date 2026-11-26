@@ -20,9 +20,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
         const source = await upstream.text();
         if (!source.startsWith("#EXTM3U"))
             return NextResponse.json({ error: "VXParser hat keine gültige M3U geliefert." }, { status: 502 });
-        const streamCount = source
-            .split(/\r?\n/)
-            .filter((line) => line.trim() && !line.trim().startsWith("#")).length;
+        const streamCount = source.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#")).length;
         if (streamCount === 0)
             return NextResponse.json(
                 { error: "Noch keine Senderdaten vorhanden. Bitte zuerst die VXParser-Senderdaten aktualisieren." },
