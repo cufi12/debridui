@@ -28,7 +28,9 @@ export async function PUT(request: Request) {
     const session = await requireSession();
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
     let payload: unknown;
-    try { payload = await request.json(); } catch {
+    try {
+        payload = await request.json();
+    } catch {
         return NextResponse.json({ error: "Ungültige Anfrage." }, { status: 400 });
     }
     try {
