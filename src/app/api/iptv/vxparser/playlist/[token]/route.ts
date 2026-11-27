@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { verifyVxParserToken } from "@/lib/iptv/vxparser-token";
 
 export const runtime = "nodejs";
