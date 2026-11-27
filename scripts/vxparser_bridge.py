@@ -1,7 +1,8 @@
 """Small loopback management extension for upstream VxParser."""
 from fastapi import Body, HTTPException
 from api import app
-import utils.common as common\nimport services
+import utils.common as common
+import services
 
 PROTECTED_SETTINGS = {"init", "VERSION", "server_host", "server_port"}
 
