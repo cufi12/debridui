@@ -1,20 +1,12 @@
-import { createHmac } from "node:crypto";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { createVxParserToken } from "@/lib/iptv/vxparser-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function playlistToken(userId: string): string {
-    const secret = process.env.BETTER_AUTH_SECRET;
-    if (!secret) throw new Error("BETTER_AUTH_SECRET is not configured.");
-    const encoded = Buffer.from(userId).toString("base64url");
-    const signature = createHmac("sha256", secret).update(encoded).digest("base64url");
-    return encoded + "." + signature;
-}
-
-export async function GET() {
+export async function GET(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
     try {
@@ -30,11 +22,8 @@ export async function GET() {
         const source = await upstream.text();
         if (!source.startsWith("#EXTM3U"))
             return NextResponse.json({ error: "VXParser hat keine gültige M3U geliefert." }, { status: 502 });
-        const token = playlistToken(session.user.id);
-        const prefix = new URL(
-            `/api/iptv/vxparser/stream/${token}/`,
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        ).toString();
+        const { token } = createVxParserToken(session.user.id);
+        const prefix = new URL(`/api/iptv/vxparser/stream/${token}/`, request.nextUrl.origin).toString();
         const playlist = source.replace(/https?:\/\/127\.0\.0\.1:8080\//g, prefix);
         return new Response(playlist, {
             headers: {
@@ -44,11 +33,10 @@ export async function GET() {
                 "X-Content-Type-Options": "nosniff",
             },
         });
-    } catch (error) {
-        const message =
-            error instanceof Error && error.message === "BETTER_AUTH_SECRET is not configured."
-                ? "Die sichere Playlist-Signatur ist nicht konfiguriert."
-                : "VXParser ist derzeit nicht verfügbar.";
-        return NextResponse.json({ error: message }, { status: 503 });
+    } catch {
+        return NextResponse.json(
+            { error: "VXParser ist nicht verfügbar oder VXPARSER_TOKEN_SECRET ist nicht korrekt konfiguriert." },
+            { status: 503 }
+        );
     }
 }
