@@ -17,6 +17,17 @@ still isolated from the production branch and production database.
 - The stream proxy only accepts valid signed tokens and forwards requests to
   the loopback VxParser process.
 
+## Administrator access
+
+VXParser management endpoints (including reading settings that may contain
+credentials, saving settings, and starting sender refreshes) require an explicit
+server-side email allowlist. Configure `VXPARSER_ADMIN_EMAILS` as a comma-separated
+list of the exact DebridUI account email addresses allowed to manage the shared
+VxParser instance. Matching is case-insensitive. If the variable is unset or
+empty, management access is denied to every user; there is no implicit first-user
+or owner promotion. This variable must be configured only on the isolated test
+service first, then separately reviewed before any production change.
+
 ## Runtime requirements
 
 The VxParser process is started by `scripts/run-services.py` inside the Docker
