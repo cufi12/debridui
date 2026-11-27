@@ -22,6 +22,7 @@ def stop_children(_signum=None, _frame=None):
 signal.signal(signal.SIGTERM, stop_children)
 signal.signal(signal.SIGINT, stop_children)
 
+parser = None
 if os.getenv("VX_PARSER_ENABLED", "true").lower() == "true":
     parser = subprocess.Popen(
         ["/opt/vxparser-venv/bin/python", "scripts/vxparser_service.py"],
@@ -36,10 +37,13 @@ print(f"[supervisor] DebridUI started (pid={app.pid})", flush=True)
 
 try:
     while app.poll() is None:
-        if children and children[0] is not app and children[0].poll() is not None:
-            print("[supervisor] VxParser exited unexpectedly; stopping DebridUI", flush=True)
-            app.terminate()
-            break
+        if parser is not None and parser.poll() is not None:
+            print(
+                f"[supervisor] WARNING: VxParser exited with code {parser.returncode}; "
+                "DebridUI remains available, parser endpoints may be unavailable.",
+                flush=True,
+            )
+            parser = None
         time.sleep(1)
     exit_code = app.wait()
 finally:

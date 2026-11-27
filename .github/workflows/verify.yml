@@ -20,7 +20,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -41,6 +41,10 @@ jobs:
 
       - name: Smoke-test QuickJS provider runtime
         run: bun scripts/provider-runtime-smoke.ts
+
+      # Build the combined image without publishing it or deploying it.
+      - name: Build DebridUI + VxParser Docker image
+        run: docker build --tag debridui-vxparser-test:${GITHUB_SHA} .
 
       # The repository ruleset currently expects a classic commit status named
       # "verify". Publish it only after every verification step has succeeded.
