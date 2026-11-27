@@ -223,9 +223,11 @@ function VXParserSettings() {
             <div>
                 <h3 className="font-medium">VXParser</h3>
                 <p className="text-sm text-muted-foreground">
-                    VXParser-Optionen und M3U-Playlist-Link. Hinweis: Die VXParser-Konfiguration und Senderdaten werden derzeit
-                    von allen Benutzern dieser DebridUI-Instanz gemeinsam genutzt. Änderungen an den VXParser-Einstellungen
-                    wirken sich daher auf alle Benutzer aus. Der erzeugte M3U-Link ist signiert, dem angemeldeten Konto zugeordnet und 365 Tage gültig. Einstellungen und Senderaktualisierung sind nur für serverseitig freigeschaltete Administratoren verfügbar.
+                    VXParser-Optionen und M3U-Playlist-Link. Hinweis: Die VXParser-Konfiguration und Senderdaten werden
+                    derzeit von allen Benutzern dieser DebridUI-Instanz gemeinsam genutzt. Änderungen an den
+                    VXParser-Einstellungen wirken sich daher auf alle Benutzer aus. Der erzeugte M3U-Link ist signiert,
+                    dem angemeldeten Konto zugeordnet und 365 Tage gültig. Einstellungen und Senderaktualisierung sind
+                    nur für serverseitig freigeschaltete Administratoren verfügbar.
                 </p>
             </div>
             {loading ? (
@@ -279,7 +281,8 @@ function VXParserSettings() {
                     <Input readOnly value={playlistUrl} aria-label="VXParser M3U-URL" />
                     {playlistExpiresAt && (
                         <p className="text-xs text-muted-foreground">
-                            Gültig bis {new Date(playlistExpiresAt).toLocaleDateString()}. Zum sofortigen Widerruf aller M3U-Links muss VXPARSER_TOKEN_SECRET rotiert werden.
+                            Gültig bis {new Date(playlistExpiresAt).toLocaleDateString()}. Zum sofortigen Widerruf aller
+                            M3U-Links muss VXPARSER_TOKEN_SECRET rotiert werden.
                         </p>
                     )}
                     <Button
