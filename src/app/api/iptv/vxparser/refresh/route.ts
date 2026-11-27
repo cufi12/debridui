@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isVxParserAdmin } from "@/lib/iptv/vxparser-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +9,12 @@ export const dynamic = "force-dynamic";
 export async function POST() {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+    if (!isVxParserAdmin(session.user.email)) {
+        return NextResponse.json(
+            { error: "Die VXParser-Senderaktualisierung ist nur für freigeschaltete Administratoren verfügbar." },
+            { status: 403 }
+        );
+    }
     try {
         const response = await fetch("http://127.0.0.1:8080/debridui/refresh", {
             method: "POST",
