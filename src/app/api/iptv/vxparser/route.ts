@@ -1,17 +1,28 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isVxParserAdmin } from "@/lib/iptv/vxparser-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function requireSession() {
-    return auth.api.getSession({ headers: await headers() });
+async function requireAdmin() {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { response: NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 }) };
+    if (!isVxParserAdmin(session.user.email)) {
+        return {
+            response: NextResponse.json(
+                { error: "VXParser-Verwaltung ist nur für ausdrücklich freigeschaltete Administratoren verfügbar." },
+                { status: 403 }
+            ),
+        };
+    }
+    return { response: null };
 }
 
 export async function GET() {
-    const session = await requireSession();
-    if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+    const access = await requireAdmin();
+    if (access.response) return access.response;
     try {
         const response = await fetch("http://127.0.0.1:8080/debridui/config", {
             cache: "no-store",
@@ -25,8 +36,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-    const session = await requireSession();
-    if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+    const access = await requireAdmin();
+    if (access.response) return access.response;
     let payload: unknown;
     try {
         payload = await request.json();
