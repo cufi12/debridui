@@ -221,8 +221,9 @@ function VXParserSettings() {
             <div>
                 <h3 className="font-medium">VXParser</h3>
                 <p className="text-sm text-muted-foreground">
-                    VXParser-Optionen und deine persönliche M3U-Playlist. Die Einstellungen werden getrennt von deinen
-                    DebridUI-Kontodaten gespeichert.
+                    VXParser-Optionen und M3U-Playlist-Link. Hinweis: Die VXParser-Konfiguration und Senderdaten werden derzeit
+                    von allen Benutzern dieser DebridUI-Instanz gemeinsam genutzt. Änderungen an den VXParser-Einstellungen
+                    wirken sich daher auf alle Benutzer aus. Der erzeugte M3U-Link ist signiert und dem angemeldeten Konto zugeordnet.
                 </p>
             </div>
             {loading ? (
