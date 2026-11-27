@@ -15,7 +15,7 @@ still isolated from the production branch and production database.
   DebridUI proxy URLs protected by an HMAC token. IPTV players can use the
   resulting URL without a DebridUI browser session.
 - The stream proxy only accepts valid signed tokens and forwards requests to
-  the loopback VxParser process.
+  the loopback VxParser process. Playlist tokens expire after 365 days.
 
 ## Administrator access
 
@@ -39,7 +39,21 @@ approved.
 The bridge listens only on `127.0.0.1:8080`; it is not exposed as a public
 service. The Next.js routes enforce DebridUI authentication for configuration
 and playlist-link creation. The public M3U and stream URLs use a signed token
-derived from `BETTER_AUTH_SECRET`.
+signed with the separate `VXPARSER_TOKEN_SECRET` (minimum 32 characters). Do not
+reuse `BETTER_AUTH_SECRET` for IPTV token signing.
+
+## Playlist token lifetime and revocation
+
+Each generated M3U link is signed and expires 365 days after creation. The
+expiry is checked for both playlist retrieval and every proxied stream request.
+A new link can be generated from the DebridUI settings page at any time.
+
+Immediate revocation is currently global: rotate `VXPARSER_TOKEN_SECRET` to
+invalidate every previously issued M3U link. Configure this as a separate,
+random secret of at least 32 characters on the service. Rotation also means
+users must generate new playlist links. Individual per-link revocation is not
+implemented because it requires persistent token records and a database
+migration; no such migration is included or applied by this branch.
 
 ## Data and persistence
 
