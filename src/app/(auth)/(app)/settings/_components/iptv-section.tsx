@@ -148,6 +148,7 @@ function VXParserSettings() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [playlistUrl, setPlaylistUrl] = useState("");
+    const [playlistExpiresAt, setPlaylistExpiresAt] = useState("");
 
     useEffect(() => {
         fetch("/api/iptv/vxparser", { cache: "no-store" })
@@ -194,6 +195,7 @@ function VXParserSettings() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "M3U-Link konnte nicht erstellt werden.");
             setPlaylistUrl(data.url);
+            setPlaylistExpiresAt(data.expiresAt || "");
             setMessage("M3U-Link erstellt. Du kannst ihn jetzt kopieren und im IPTV-Player eintragen.");
         } catch (error) {
             setMessage(error instanceof Error ? error.message : "M3U-Link konnte nicht erstellt werden.");
@@ -275,6 +277,11 @@ function VXParserSettings() {
             {playlistUrl && (
                 <div className="space-y-2">
                     <Input readOnly value={playlistUrl} aria-label="VXParser M3U-URL" />
+                    {playlistExpiresAt && (
+                        <p className="text-xs text-muted-foreground">
+                            Gültig bis {new Date(playlistExpiresAt).toLocaleDateString()}. Zum sofortigen Widerruf aller M3U-Links muss VXPARSER_TOKEN_SECRET rotiert werden.
+                        </p>
+                    )}
                     <Button
                         variant="outline"
                         className="w-full"
