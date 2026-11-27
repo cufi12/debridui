@@ -12,13 +12,12 @@ export async function POST(request: NextRequest) {
     try {
         const { token, expiresAt } = createVxParserToken(session.user.id);
         const url = new URL(`/api/iptv/vxparser/playlist/${token}`, request.nextUrl.origin);
-        return NextResponse.json(
-            { url: url.toString(), expiresAt },
-            { headers: { "Cache-Control": "no-store" } }
-        );
+        return NextResponse.json({ url: url.toString(), expiresAt }, { headers: { "Cache-Control": "no-store" } });
     } catch {
         return NextResponse.json(
-            { error: "Die sichere Playlist-Signatur ist nicht konfiguriert. VXPARSER_TOKEN_SECRET muss mindestens 32 Zeichen lang sein." },
+            {
+                error: "Die sichere Playlist-Signatur ist nicht konfiguriert. VXPARSER_TOKEN_SECRET muss mindestens 32 Zeichen lang sein.",
+            },
             { status: 503 }
         );
     }
