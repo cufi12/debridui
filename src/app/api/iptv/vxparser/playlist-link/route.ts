@@ -10,10 +10,16 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
     try {
-        const token = createVxParserToken(session.user.id);
+        const { token, expiresAt } = createVxParserToken(session.user.id);
         const url = new URL(`/api/iptv/vxparser/playlist/${token}`, request.nextUrl.origin);
-        return NextResponse.json({ url: url.toString() }, { headers: { "Cache-Control": "no-store" } });
+        return NextResponse.json(
+            { url: url.toString(), expiresAt },
+            { headers: { "Cache-Control": "no-store" } }
+        );
     } catch {
-        return NextResponse.json({ error: "Die sichere Playlist-Signatur ist nicht konfiguriert." }, { status: 503 });
+        return NextResponse.json(
+            { error: "Die sichere Playlist-Signatur ist nicht konfiguriert. VXPARSER_TOKEN_SECRET muss mindestens 32 Zeichen lang sein." },
+            { status: 503 }
+        );
     }
 }
