@@ -7,7 +7,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv /opt/vxparser-venv \
     && /opt/vxparser-venv/bin/pip install --no-cache-dir --upgrade pip \
-    && /opt/vxparser-venv/bin/pip install --no-cache-dir vxparser==1.5.0 \
+    && /opt/vxparser-venv/bin/pip install --no-cache-dir vxparser==1.4.9 \
     && chmod -R a+rwX /opt/vxparser-venv/lib/python3.*/site-packages/vxparser
 
 FROM base AS deps
