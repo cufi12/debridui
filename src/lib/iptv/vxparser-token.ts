@@ -12,9 +12,9 @@ function secret(): string {
 
 export function createVxParserToken(userId: string): { token: string; expiresAt: string } {
     const expiresAtSeconds = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
-    const payload = Buffer.from(
-        JSON.stringify({ sub: userId, exp: expiresAtSeconds, jti: randomUUID() })
-    ).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({ sub: userId, exp: expiresAtSeconds, jti: randomUUID() })).toString(
+        "base64url"
+    );
     const signature = createHmac("sha256", secret()).update(payload).digest("base64url");
     return {
         token: `${payload}.${signature}`,
