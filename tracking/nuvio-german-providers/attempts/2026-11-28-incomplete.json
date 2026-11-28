@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "nuvio-german-providers-monitor-attempt",
+  "status": "incomplete-upstream-unavailable",
+  "complete": false,
+  "baselineEligible": false,
+  "recordedAt": "2026-11-28T10:20:41+01:00",
+  "previousBaseline": {
+    "path": "tracking/nuvio-german-providers/latest-source.json",
+    "recordedAt": "2026-11-21T10:33:54+01:00",
+    "scope": "checked-in-upstream-github-source-only",
+    "upstreamCommit": "1114046a836741728ab33d4bb90a2bd1833fbf99",
+    "manifestVersion": "1.0.5",
+    "manifestSha256": "b57afeffb965da6129d937625de59ddfe94fd509a6ad91c31cc7a97bc0a54287",
+    "providerFilesExpected": 20,
+    "providerFilesRetrieved": 20,
+    "deployedManifestVerified": false,
+    "deployedSnapshotPath": "tracking/nuvio-german-providers/latest.json",
+    "deployedSnapshotPresent": false
+  },
+  "upstreamRetrieval": {
+    "publishedManifestUrl": "https://invalidpandaa.github.io/nuvio-german-providers/manifest.json",
+    "publishedManifestStatus": "unavailable",
+    "publishedManifestError": "Direct retrieval could not resolve the host in this run; web open also reported the URL inaccessible.",
+    "githubRepository": "InvalidPandaa/nuvio-german-providers",
+    "githubRepositoryStatus": "404 Not Found",
+    "forgejoManifestUrl": "https://git.invalidpanda.dev/invalidpanda/nuvio-german-providers/raw/branch/main/manifest.json",
+    "forgejoManifestStatus": "unavailable",
+    "forgejoManifestError": "Direct retrieval could not resolve the host in this run.",
+    "rawGithubManifestUrl": "https://raw.githubusercontent.com/InvalidPandaa/nuvio-german-providers/main/manifest.json",
+    "rawGithubManifestStatus": "unavailable",
+    "rawGithubManifestError": "Direct retrieval could not resolve the host in this run.",
+    "manifestRetrieved": false,
+    "providerFilesRetrieved": 0,
+    "providerFilesExpected": null,
+    "complete": false
+  },
+  "upstreamComparison": {
+    "status": "not-performed",
+    "providerIdsCompared": false,
+    "providerPathsCompared": false,
+    "providerSha256Compared": false,
+    "hostsAndUrlPatternsCompared": false,
+    "reason": "The current manifest and referenced provider files could not be retrieved. No unchanged conclusion is inferred.",
+    "previousValidSnapshotRetained": true,
+    "latestSourceSnapshotOverwritten": false,
+    "latestPublishedSnapshotCreated": false
+  },
+  "targetProject": {
+    "repository": "cufi12/debridui",
+    "branch": "main",
+    "previousComparedCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
+    "currentCommit": "eee4aeac498b6d3c12f330461773fae94de28475",
+    "currentCommitDate": "2026-11-28T06:06:53Z",
+    "commitsAheadSincePreviousSnapshot": 96,
+    "relevantFiles": {
+      "providerRuntime": {
+        "path": "src/lib/plugins/provider-runtime.ts",
+        "previousBlobSha1": "6824e362e892c5899bb91fbd95bd4e7da6eb55fd",
+        "currentBlobSha1": "10e5a552315df6854f1c56b27b70f62cc2d816a1",
+        "findings": [
+          "Redirect ceiling changed from 5 to 10 in merged PR #56; each hop still goes through requestPinned and DNS/public-IPv4 pinning.",
+          "Added per-invocation host-only provider cookie handling.",
+          "Added default User-Agent and German Accept-Language headers when absent.",
+          "Added explicit static HTML redirect parsing for the Serienstream /r endpoint; challenge pages are detected and not bypassed.",
+          "Expanded the bounded Cheerio compatibility surface."
+        ]
+      },
+      "repositoryAdapter": {
+        "path": "src/features/plugins/actions/repositories.ts",
+        "previousBlobSha1": "731fef8562303b2bef3dc264dba9a626c9079161",
+        "currentBlobSha1": "1708c7f7605f694d4c053d5207d1cd872156b82e",
+        "findings": [
+          "Added git.invalidpanda.dev to the HTTPS manifest-host allowlist.",
+          "Added the default manifest URL https://git.invalidpanda.dev/invalidpanda/nuvio-german-providers/raw/branch/main/manifest.json.",
+          "Manifest and provider fetches still use redirect:error; provider file URLs must remain HTTPS, same-origin, and within the manifest directory.",
+          "Provider source remains capped at 500 KB and repository fetches at 12 seconds.",
+          "The enabled-provider and provider-file-status lists currently use a 32-provider cap, while the repository documentation says 20."
+        ]
+      },
+      "providerAdapter": {
+        "path": "src/lib/plugins/provider-adapter.ts",
+        "previousBlobSha1": "3e95d304b82fca6dff3d3708449a56b60413c375",
+        "currentBlobSha1": "fc41af56ab0fcc3fcb716ad072897a11e5152947",
+        "findings": [
+          "Serienstream sources are explicitly marked not cached; stream URL parsing remains limited to HTTP(S)."
+        ]
+      },
+      "providerStreamsAction": {
+        "path": "src/features/plugins/actions/provider-streams.ts",
+        "previousBlobSha1": "b1b0a4c8cde826305358d2edb5e106aaa0557fc7",
+        "currentBlobSha1": "b1b0a4c8cde826305358d2edb5e106aaa0557fc7",
+        "findings": [
+          "Unchanged since the previous target-project snapshot; provider fanout cap remains 32 on main."
+        ]
+      },
+      "runtimeSmoke": {
+        "path": "scripts/provider-runtime-smoke.ts",
+        "currentBlobSha1": "d3d520bbc80c904636c9b3e957c1ec6691b08642",
+        "findings": [
+          "QuickJS smoke covers sandbox execution, blocked loopback fetch, URL helpers, TMDB credential isolation, Cheerio/CryptoJS fixtures, and upstream provider load fixtures; it does not make live provider playback requests."
+        ]
+      },
+      "ipv4Smoke": {
+        "path": "scripts/provider-ipv4-ssrf-test.ts",
+        "currentBlobSha1": "1aabfcdb1fb2174b12d1ca9b98e003d6a8daff3e",
+        "findings": [
+          "Includes reserved IPv4 rejection coverage including 192.88.99.0/24."
+        ]
+      },
+      "documentation": {
+        "path": "docs/provider-repositories.md",
+        "currentBlobSha1": "4ba2f76dac8c9fd6f7edcb19beec880903095e55",
+        "findings": [
+          "Documents 20 provider modules and a 5-hop redirect ceiling; runtime currently uses 32 modules and 10 hops."
+        ]
+      }
+    },
+    "securityReview": {
+      "unchangedControls": [
+        "HTTP(S) only and standard ports",
+        "DNS resolution and public IPv4 pinning on each request/redirect hop",
+        "Private and reserved IP rejection",
+        "Cross-origin stripping of authorization, cookie, and proxy-authorization headers",
+        "QuickJS isolation without Node.js globals, filesystem, or process environment",
+        "24 requests per provider",
+        "1.5 MB per response and 6 MB aggregate response data",
+        "10 second HTTP request timeout and 28 second provider execution timeout",
+        "16 MB VM memory and 512 KB stack"
+      ],
+      "compatibilityChange": "The 10-hop redirect ceiling was intentionally merged for Megakino compatibility; this run leaves it unchanged and records the per-hop revalidation behavior.",
+      "proposedCorrection": "Restore the provider-module enumeration/source/status cap from 32 to the documented 20; preserve the separate 32-result stream cap."
+    },
+    "ci": {
+      "mainCommit": "eee4aeac498b6d3c12f330461773fae94de28475",
+      "mainVerifyStatus": "success",
+      "verifyWorkflowIncludes": [
+        "TypeScript typecheck and Biome checks",
+        "IPv4 SSRF regression test",
+        "QuickJS provider-runtime smoke test"
+      ],
+      "liveProviderPlaybackTest": "not-run-upstream-unavailable"
+    },
+    "pullRequest": {
+      "number": 62,
+      "url": "https://github.com/cufi12/debridui/pull/62",
+      "branch": "security/provider-module-cap-20-2026-11-28",
+      "headCommit": "d789164d5a32aa5ca597f60b335e8174f61fdcc6",
+      "state": "open",
+      "draft": true,
+      "mergeStatus": "not-yet-verified"
+    }
+  },
+  "safety": {
+    "providerFilesTreatedAsUntrustedData": true,
+    "providerCodeExecuted": false,
+    "secretsStored": false,
+    "tokensOrCookiesStored": false,
+    "queryStringsExcludedFromUrlPatternInventory": true
+  },
+  "nextRunInstruction": "Read this attempt record only as audit history. Read latest-source.json as the last complete checked-in-source baseline. Retry the published Pages manifest and the Forgejo source host; do not advance either baseline until the manifest and every referenced provider file have been fully retrieved and SHA-256 hashed."
+}
