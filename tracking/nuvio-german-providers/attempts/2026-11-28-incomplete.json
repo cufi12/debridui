@@ -50,9 +50,9 @@
     "repository": "cufi12/debridui",
     "branch": "main",
     "previousComparedCommit": "2ceef3d9ce2f8d1396482f1d93e029c98d4ea11d",
-    "currentCommit": "eee4aeac498b6d3c12f330461773fae94de28475",
-    "currentCommitDate": "2026-11-28T06:06:53Z",
-    "commitsAheadSincePreviousSnapshot": 96,
+    "currentCommit": "fe2dd9c18ca90407087e5310135265085f1d5581",
+    "currentCommitDate": "2026-11-28T09:33:40Z",
+    "commitsAheadSincePreviousSnapshot": 97,
     "relevantFiles": {
       "providerRuntime": {
         "path": "src/lib/plugins/provider-runtime.ts",
@@ -167,7 +167,9 @@
         "src/features/plugins/actions/provider-streams.ts",
         "docs/provider-repositories.md"
       ],
-      "codeqlStatus": "success"
+      "codeqlStatus": "success",
+      "currentMainHeadAtFinalCheck": "fe2dd9c18ca90407087e5310135265085f1d5581",
+      "behindMainBy": 1
     },
     "supersededPullRequest": {
       "number": 30,
@@ -175,6 +177,14 @@
       "state": "closed",
       "merged": false,
       "reason": "Superseded by #62. The old three-hop change was not carried forward because merged PR #56 intentionally raised the ceiling to ten for Megakino compatibility; the 20-provider cap was refreshed separately against current main."
+    },
+    "lastUnrelatedMainCommit": {
+      "sha": "fe2dd9c18ca90407087e5310135265085f1d5581",
+      "message": "Prepare safe full account data migration from legacy database (#63)",
+      "changedFiles": [
+        "src/app/api/_temporary-account-export/route.ts"
+      ],
+      "providerRuntimeOrRepositoryAdapterChanged": false
     }
   },
   "safety": {
