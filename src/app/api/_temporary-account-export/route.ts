@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
-import postgres from "postgres";
 import { and, eq, isNotNull } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import postgres from "postgres";
 import { account, user } from "@/lib/db/auth-schema";
 import { db } from "@/lib/db/drizzle";
 
