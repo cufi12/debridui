@@ -150,7 +150,7 @@
         "Smoke-test QuickJS provider runtime"
       ],
       "codeqlRunId": 46131139172,
-      "codeqlStatus": "in_progress"
+      "codeqlStatus": "success"
     },
     "pullRequest": {
       "number": 62,
@@ -167,7 +167,7 @@
         "src/features/plugins/actions/provider-streams.ts",
         "docs/provider-repositories.md"
       ],
-      "codeqlStatus": "in_progress"
+      "codeqlStatus": "success"
     },
     "supersededPullRequest": {
       "number": 30,
