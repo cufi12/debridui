@@ -14,6 +14,7 @@ const FAVORITES_KEY = "debridui-iptv-favorites";
 const EPG_CACHE_KEY = "debridui-iptv-epg";
 const PLAYLIST_CACHE_KEY = "debridui-iptv-playlist";
 const EPG_CACHE_TTL = 6 * 60 * 60 * 1000;
+const PLAYLIST_CACHE_TTL = 24 * 60 * 60 * 1000;
 
 type IPTVConfig = { playlistUrl?: string; epgUrl?: string };
 
@@ -74,6 +75,7 @@ export default function IPTVPage() {
             const localCache = JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                 url?: string;
                 channels?: IPTVChannel[];
+                savedAt?: number;
             } | null;
             if (
                 localCache?.url === config.playlistUrl &&
@@ -100,12 +102,13 @@ export default function IPTVPage() {
         setLoading(true);
         setError("");
         Promise.all([
-            idbGet<{ url?: string; channels?: IPTVChannel[] }>(PLAYLIST_CACHE_KEY).catch(() => null),
+            idbGet<{ url?: string; channels?: IPTVChannel[]; savedAt?: number }>(PLAYLIST_CACHE_KEY).catch(() => null),
             Promise.resolve().then(() => {
                 try {
                     return JSON.parse(localStorage.getItem(PLAYLIST_CACHE_KEY) || "null") as {
                         url?: string;
                         channels?: IPTVChannel[];
+                        savedAt?: number;
                     } | null;
                 } catch {
                     return null;
@@ -114,11 +117,16 @@ export default function IPTVPage() {
         ])
             .then(([idbCache, localCache]) => {
                 const cached = idbCache?.url === savedUrl ? idbCache : localCache;
+                const cacheIsFresh =
+                    cached?.url === savedUrl &&
+                    Array.isArray(cached.channels) &&
+                    cached.channels.length > 0 &&
+                    typeof cached.savedAt === "number" &&
+                    Date.now() - cached.savedAt < PLAYLIST_CACHE_TTL;
                 if (cached?.url === savedUrl && Array.isArray(cached.channels) && cached.channels.length) {
                     if (!cancelled) setChannels(cached.channels);
-                    return null;
                 }
-                return fetchIPTVText(savedUrl);
+                return cacheIsFresh ? null : fetchIPTVText(savedUrl);
             })
             .then((source) => {
                 if (!source || cancelled) return;
@@ -126,9 +134,10 @@ export default function IPTVPage() {
                 const parsed = parseM3U(source);
                 if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
                 setChannels(parsed);
-                void idbSet(PLAYLIST_CACHE_KEY, { url: savedUrl, channels: parsed });
+                const cacheEntry = { url: savedUrl, channels: parsed, savedAt: Date.now() };
+                void idbSet(PLAYLIST_CACHE_KEY, cacheEntry);
                 try {
-                    localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: savedUrl, channels: parsed }));
+                    localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify(cacheEntry));
                 } catch {
                     /* IndexedDB remains the durable cache. */
                 }
@@ -219,9 +228,10 @@ export default function IPTVPage() {
             const parsed = parseM3U(source);
             if (!parsed.length) throw new Error("Keine Sender gefunden. Bitte M3U-Format und URL prüfen.");
             setChannels(parsed);
-            void idbSet(PLAYLIST_CACHE_KEY, { url: playlistUrl.trim(), channels: parsed });
+            const cacheEntry = { url: playlistUrl.trim(), channels: parsed, savedAt: Date.now() };
+            void idbSet(PLAYLIST_CACHE_KEY, cacheEntry);
             try {
-                localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify({ url: playlistUrl.trim(), channels: parsed }));
+                localStorage.setItem(PLAYLIST_CACHE_KEY, JSON.stringify(cacheEntry));
             } catch {
                 /* IndexedDB remains the durable cache. */
             }
@@ -373,6 +383,14 @@ export default function IPTVPage() {
                             variant={showSettings ? "default" : "outline"}
                             onClick={() => setShowSettings((value) => !value)}>
                             <Tv className="size-4" /> Einstellungen
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={loadPlaylist}
+                            disabled={loading || !playlistUrl.trim()}>
+                            <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
+                            {loading ? "Aktualisiere…" : "Playlist aktualisieren"}
                         </Button>
                         <Button
                             size="sm"
