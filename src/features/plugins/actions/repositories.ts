@@ -95,6 +95,52 @@ function validateRepositoryUrl(value: string) {
     return url.toString();
 }
 
+/** Accept common Nuvio manifest spelling/casing variants before strict validation. */
+function normalizeManifestInput(input: unknown): unknown {
+    if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+    const manifest = input as Record<string, unknown>;
+    const rawProviders = manifest.providers ?? manifest.scrapers ?? manifest.Scraper;
+    if (!Array.isArray(rawProviders)) {
+        return {
+            ...manifest,
+            name: manifest.name ?? manifest.Name,
+            version: manifest.version ?? manifest.Version,
+        };
+    }
+
+    const providers = rawProviders.map((entry) => {
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) return entry;
+        const provider = entry as Record<string, unknown>;
+        const rawTypes = provider.supportedTypes;
+        const supportedTypes = Array.isArray(rawTypes)
+            ? rawTypes.map((value) => {
+                  if (typeof value !== "string") return value;
+                  const normalized = value.toLowerCase();
+                  if (normalized === "film" || normalized === "movie") return "movie";
+                  if (normalized === "tv" || normalized === "serie" || normalized === "series") return "tv";
+                  return normalized;
+              })
+            : rawTypes;
+
+        return {
+            ...provider,
+            name: provider.name ?? provider.Name,
+            version: provider.version ?? provider.Version,
+            filename: provider.filename ?? provider.file ?? provider.Dateiname,
+            logo: provider.logo ?? provider.Logo,
+            supportedTypes,
+        };
+    });
+
+    return {
+        ...manifest,
+        name: manifest.name ?? manifest.Name,
+        version: manifest.version ?? manifest.Version,
+        providers: manifest.providers ? providers : undefined,
+        scrapers: manifest.providers ? manifest.scrapers : providers,
+    };
+}
+
 async function readLimitedText(response: Response, maxBytes = 1_000_000): Promise<string> {
     const declaredLength = Number(response.headers.get("content-length") || 0);
     if (declaredLength > maxBytes) throw new Error("Datei ist zu groß (maximal 1 MB).");
@@ -133,7 +179,7 @@ async function loadManifest(url: string) {
         });
         if (!response.ok) throw new Error(`Repository antwortet mit HTTP ${response.status}.`);
         const text = await readLimitedText(response);
-        const parsed = repositoryManifestSchema.parse(JSON.parse(text));
+        const parsed = repositoryManifestSchema.parse(normalizeManifestInput(JSON.parse(text)));
         const base = new URL(".", url);
         const providers = (parsed.providers ?? parsed.scrapers ?? []).map((provider) => {
             const file = new URL(provider.filename, base);
