@@ -113,7 +113,9 @@
         "currentBlobSha1": "4ba2f76dac8c9fd6f7edcb19beec880903095e55",
         "findings": [
           "Documents 20 provider modules and a 5-hop redirect ceiling; runtime currently uses 32 modules and 10 hops."
-        ]
+        ],
+        "pullRequestBlobSha1": "b5bb6515c2260022a1d0a3646d0e17dc59234a53",
+        "pullRequestFinding": "PR #62 updates the documentation to the current 10-hop redirect ceiling while stating that each hop is revalidated."
       }
     },
     "securityReview": {
@@ -140,26 +142,32 @@
         "QuickJS provider-runtime smoke test"
       ],
       "liveProviderPlaybackTest": "not-run-upstream-unavailable",
-      "prVerifyRunId": 46130893556,
+      "prVerifyRunId": 46131139173,
       "prVerifyStatus": "success",
       "prVerifySteps": [
         "Typecheck and lint",
         "Test provider IPv4 SSRF protections",
         "Smoke-test QuickJS provider runtime"
       ],
-      "codeqlRunId": 46130893553,
-      "codeqlStatus": "success"
+      "codeqlRunId": 46131139172,
+      "codeqlStatus": "in_progress"
     },
     "pullRequest": {
       "number": 62,
       "url": "https://github.com/cufi12/debridui/pull/62",
       "branch": "security/provider-module-cap-20-2026-11-28",
-      "headCommit": "d789164d5a32aa5ca597f60b335e8174f61fdcc6",
+      "headCommit": "63869bdd8bf74ca4ff1f8f60b25cec4d12691d0e",
       "state": "open",
       "draft": false,
       "mergeStatus": "mergeable",
-      "verifyRunId": 46130893556,
-      "codeqlRunId": 46130893553
+      "verifyRunId": 46131139173,
+      "codeqlRunId": 46131139172,
+      "changedFiles": [
+        "src/features/plugins/actions/repositories.ts",
+        "src/features/plugins/actions/provider-streams.ts",
+        "docs/provider-repositories.md"
+      ],
+      "codeqlStatus": "in_progress"
     },
     "supersededPullRequest": {
       "number": 30,
